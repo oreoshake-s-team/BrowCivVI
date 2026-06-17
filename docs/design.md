@@ -10,7 +10,10 @@
 
 A browser, turn-based, 4X-*lite* strategy game themed on Civ 6's
 **"Conquest of Alexander"** scenario, on a fixed historical hex map, racing a
-**hard turn limit**. Two **asymmetric playable factions** (see §5):
+**hard turn limit**. The campaign **opens at the Battle of the Granicus
+(334 BC)** — Alexander's crossing into Asia Minor — and is won as much by
+**logistics (supply) and morale** as by battle: neglect either and an army can
+collapse without losing a fight. Two **asymmetric playable factions** (see §5):
 
 - **Macedon / Alexander** — offense: conquer-by-deadline score.
 - **Persia / Darius** — defense: attrition score (Macedonian units destroyed +
@@ -94,23 +97,28 @@ Optional later: persist the full action log so any leaderboard entry can be
 Browser (RSC + minimal client islands)
   │  user clicks a hex / unit / "End Turn"
   ▼
-Server Action  submitIntent(matchId, intent, version, idempotencyKey)
+GraphQL mutation  submitIntent(matchId, intent, version, idempotencyKey)
   │  1. authenticate (session) → playerId
   │  2. load authoritative MatchState from DB (with version)
   │  3. validate intent against rules engine
   │  4. apply: state' = engine(state, intent)   [pure]
   │  5. run AI turn if End-Turn → state''        [pure, seeded]
   │  6. persist state'' with version+1 (optimistic lock)
-  ▼  7. revalidate → stream re-rendered RSC view (or return JSON)
+  ▼  7. return the requesting player's authoritative view (GraphQL)
 Browser re-renders authoritative view
 ```
 
 - **Next.js App Router** on **Vercel** (serverless functions).
-- **Server Actions** are the intent channel (the "API"). Component-over-the-wire:
-  the server returns a freshly rendered tree, so the client holds almost no
-  logic — directly serving the integrity goal.
+- **GraphQL is the required API contract** (hard requirement, §8). The intent
+  channel is a GraphQL **mutation** (`submitIntent`), per-viewer state is a
+  GraphQL **query**, and PvP turn-handoff/live updates use a GraphQL
+  **subscription** (superseding the polling/SSE TBD in §10). A thin route handler
+  (or Server Action) may host the endpoint, but the contract the client speaks is
+  GraphQL — and the client still only *sends intents and reads authoritative
+  state*, never computing outcomes (§2/§3).
 - The **rules engine** is a framework-agnostic pure TS module (`/engine`),
-  trivially unit-testable with no Next.js in scope.
+  trivially unit-testable with no Next.js in scope; GraphQL resolvers call the
+  engine, they never contain rules.
 
 ### Persistence
 
@@ -149,12 +157,11 @@ interface MatchStore {
   `playerId` or `ai`. Solo = one human + one AI; PvP = two humans.
 - The active slot is authoritative state; **only the active player's intents are
   accepted** (turn ownership, §3).
-- **Per-viewer rendering:** the Server Action builds the response from the
+- **Per-viewer rendering:** the GraphQL resolver builds the response from the
   *requesting* player's visibility, so a human never receives the opponent's
   hidden state. The AI "sees" only inside the engine, server-side.
 - **Turn handoff (PvP):** when a player ends their turn, the waiting player is
-  notified it's their turn. Transport TBD (§10) — turn-based latency tolerance
-  makes simple polling viable; SSE is the nicer upgrade.
+  notified it's their turn via a GraphQL subscription (§4).
 
 ---
 
@@ -192,9 +199,9 @@ interface MatchStore {
 - Data-driven `UnitType` (e.g. Hetairoi cavalry, Hypaspist, generic enemy
   garrison): `{ movement, strength, abilities[], domain }`, where `domain`
   (`land` or `naval`) gates which hexes the unit may enter (see Map).
-- A `Unit` instance: `{ id, typeId, owner, hex, facing, hp, hasMovedThisTurn }`.
+- A `Unit` instance: `{ id, typeId, owner, hex, facing, hp, morale, supplied, hasMovedThisTurn }`.
   `facing` (a hex direction) drives the front / flank / rear combat arcs used by
-  flanking (§13).
+  flanking (§13); `morale` and `supplied` feed the Supply & morale system below.
 
 ### Turn structure
 - `turn` counter with a fixed `turnLimit`.
@@ -202,13 +209,54 @@ interface MatchStore {
 - At `turn === turnLimit`, match is `finished`; score is computed and written to
   the leaderboard.
 
+### Run structure (roguelite framing)
+A match is a **seeded run**, not a persistent save: deterministic from its secret
+seed (§3), bounded by the turn limit, and scored to a leaderboard. Replayability
+comes from seed + divergence-node choices + seeded events (e.g. Bessus) + the
+opponent — **not** procedural generation: the historical map is always authored
+(§10). So it is a **strategy roguelite**, with two guardrails:
+- **No procedural map** — accuracy is fixed; only the playthrough varies.
+- **No *power* meta-progression** — it would corrupt leaderboard comparability
+  (§3). Meta-progression is **knowledge/cosmetic only**: the educational media
+  cards you unlock (§11) and a log of which divergence endings you've reached.
+
+The post-game seed is shown for sharing and feeds the §3 replay-verification idea.
+
 ### Combat (stripped-down, modular)
 - Resolve via a **pure `resolveCombat(attacker, defender, terrain, rng)`** where
   `rng` is the seeded stream. v0 formula: deterministic strength differential +
-  small seeded variance → HP damage. The defender's `defenseModifier` and any
-  river-crossing penalty against the attacker (see Map) feed the formula. The
-  *formula is a swappable module* so we can tune toward / away from Civ 6's
-  combat math freely.
+  small seeded variance → HP damage. The defender's `defenseModifier`, any
+  river-crossing penalty against the attacker (see Map), and each side's
+  **morale** feed the formula (low morale weakens a unit and can trigger a
+  **rout**; see Supply & morale). The *formula is a swappable module* so we can
+  tune toward / away from Civ 6's combat math freely.
+
+### Supply & morale
+Two coupled systems, both **pure per-turn engine passes** (server-authoritative,
+content-as-data, tunable) — and both **devastating if neglected**.
+
+**Supply.** Supply flows from **supply sources** (controlled cities, the home
+base, captured naval bases + the fleet, the Royal Road network) outward through
+friendly/controlled hexes; impassable terrain, rivers, and enemy-held ground
+break the line. A unit **out of supply** (cut off, or pushed too far beyond a
+source) takes escalating **attrition** (HP/strength loss) and bleeds **morale**.
+This is where **Memnon's scorched earth** (§13) bites (burned hexes deny supply),
+and where **navigable rivers / naval bases** (Tigris, Euphrates, Nile; the fleet)
+and the **Royal Road** act as supply arteries. Overextension by pure conquest
+stretches supply thin; consolidating **loyal** territory secures it — another
+nudge toward eXpand.
+
+**Morale.** Each unit has **morale**, raised by victories and nearby leadership
+(a **great general** / Alexander), lowered by losses, being **flanked / rear-hit**
+(§13), going **out of supply**, and **war-weariness** from overextension and
+distance from home. Low morale weakens units and can trigger a **rout** (flee /
+refuse orders); a **leader's death or flight** craters morale army-wide — the
+mechanism behind the **king's-flight rout** at Issus/Gaugamela (§10/§12) and the
+**Hyphasis mutiny** (§12). Alexander's **"To the World's End"** (no war-weariness,
+§13) is the systemic counter.
+
+Both resolve **server-side** in the pure engine (§3); the client only sees the
+result. Thresholds/rates are authored data, so harshness is tunable (§14).
 
 ### Factions (asymmetric, data-driven)
 A `Faction` is authored data — `{ id, leader, objective, abilities[],
@@ -284,7 +332,9 @@ type SubmitResult =
 
 The server is the only authority on whether an intent is legal. `incite` is
 rejected `under-threat` when the target city is being threatened (the §5
-freeze); `scorch` is legal only on a controlled, unthreatened hex.
+freeze); `scorch` is legal only on a controlled, unthreatened hex. This contract
+is exposed via **GraphQL** (§4): `Intent` as mutation input, `SubmitResult` /
+`MatchView` as schema types, with `MatchView` resolved **per-viewer** (§3).
 
 ---
 
@@ -300,6 +350,9 @@ freeze); `scorch` is legal only on a controlled, unthreatened hex.
 
 ## 8. Conventions
 - Strict TypeScript, no `any`. ESM. Compartmentalized modules + CSS.
+- **GraphQL is a strict requirement** for the client–server API (§4): intents are
+  mutations, authoritative state is a query, live updates are subscriptions. No
+  ad-hoc REST/JSON endpoints for game state.
 - All functionality test-covered; engine gets exhaustive pure unit tests;
   one full-flow integration test mounts a match and plays a short sequence.
 - i18n-ready strings; accessible hex board (keyboard navigation + ARIA) —
@@ -332,21 +385,25 @@ per repo policy. Proposed sequence:
     momentum, affinity); bloodless defection as the eXpand path; the
     under-threat freeze; the `incite` intent (§6); sack/scorch value penalties
     in scoring (§5). Depends on the authored map + cities.
-11. **PvP foundation** — two human slots in a match; turn-ownership enforcement.
-12. **PvP turn handoff & live updates** — waiting player learns it's their turn
-    (polling first, SSE later — §10).
-13. **Per-viewer rendering / fog isolation** — each human sees only their own
+11. **Supply & morale** — two pure per-turn passes (supply propagation from
+    sources; morale from supply/combat/leadership/war-weariness) feeding
+    attrition and combat (§5). Lands as ≥2 slices (supply first, then morale).
+    Depends on the authored map + cities.
+12. **PvP foundation** — two human slots in a match; turn-ownership enforcement.
+13. **PvP turn handoff & live updates** — GraphQL subscriptions (§4) push the
+    waiting player their turn.
+14. **Per-viewer rendering / fog isolation** — each human sees only their own
     visible state.
-14. **PvP robustness** — turn timers, abandonment/disconnect, per-faction
+15. **PvP robustness** — turn timers, abandonment/disconnect, per-faction
     leaderboards.
 
 *Cross-cutting foundations & enrichment:*
 
-15. **Content schema + accuracy-validation harness** — typed content entries
+16. **Content schema + accuracy-validation harness** — typed content entries
     (coordinates / dates / citations) and a CI test suite that rejects
     anachronisms and geographic errors. *Needed as soon as the first map is
     authored (Phase 1).*
-16. **Educational media layer** — contextual-unlock cards that link out to
+17. **Educational media layer** — contextual-unlock cards that link out to
     Tides of History episodes / curated videos; authored media data doubles as
     citations (§10). Enrichment after the core loop renders.
 
@@ -359,10 +416,13 @@ initial curated media set, optional set-piece battle mode (Issus/Gaugamela).
 ## 10. Historical accuracy & chronology
 
 Model: **accurate start, divergent play.** The authored historical baseline —
-the 336 BC starting state, map, and content — is exact; the campaign may then
-diverge (alternate history). Accuracy constraints bind the **data and initial
-setup, not the player's emergent outcomes.** Conquering a city "ahead of
-schedule" is fine; the world it diverges *from* must be accurate.
+the **334 BC opening at the Granicus** (Alexander's army crossing the Hellespont
+into Asia Minor; the Persian satraps and Memnon's Greek mercenaries arrayed
+behind the river — Darius is not yet personally in the field), the map, and
+content — is exact; the campaign may then diverge (alternate history). Accuracy
+constraints bind the **data and initial setup, not the player's emergent
+outcomes.** Conquering a city "ahead of schedule" is fine; the world it diverges
+*from* must be accurate.
 
 - **Provenance on every entry.** Cities, people, battles, units, and events
   carry `{ coordinates?, dates, citations[] }`. Geography is exact and enforced;
@@ -378,11 +438,38 @@ schedule" is fine; the world it diverges *from* must be accurate.
 - **Single source of truth.** Citations are the same URLs the educational layer
   links to (§11), so one dataset serves both accuracy and education.
 
+### Balanced perspective — Darius is not a villain
+Both factions are protagonists of their own campaign (mirrored objectives,
+**separate leaderboards**, §5); the content must reflect that:
+- **Two valid causes.** Darius defends a legitimate, sophisticated empire against
+  an invader; frame his choices (defense-in-depth, the satraps' dilemma at
+  Granicus, standing at Gaugamela) as **reasonable strategy**, not cowardice or
+  decadence.
+- **Source criticism.** The surviving narratives (Arrian, Plutarch, Diodorus,
+  Curtius) descend from **pro-Macedonian** sources (Ptolemy, Aristobulus,
+  Callisthenes); flag that bias in media cards and **seek Achaemenid/Persian-
+  perspective sources** to balance it.
+- **No orientalist tropes.** Avoid "effete/despotic East vs. heroic West";
+  show Persian administration, tolerance, and military competence.
+- **Flight is morale, not character.** The king's-flight rout (§5/§10) is a
+  command-and-morale mechanic — present it as such, not personal cowardice.
+- **Atrocities cut both ways.** Surface Macedonian brutality too (Thebes, Tyre,
+  Gaza, Persepolis, the Branchidae) so the player isn't handed a sanitized hero.
+
+Enforced by the §10 editorial review, not the automated harness.
+
 ### Set-piece battle fidelity — Issus & Gaugamela
 Two battles get accurate, hand-authored representation. **Approach: hybrid** —
 authored **campaign-map** engagements first (terrain and units reproduce the
 historical situation), with optional dedicated **set-piece** battlefields for
 these marquee fights in a later phase:
+- **Granicus (334 BC):** the campaign's **opening** engagement and turn-1
+  situation — a **river-line crossing** on the campaign map (river-edge penalty +
+  defender bonus, §5). It opens *in medias res*: both armies start in their
+  **historical deployment** at the river with **no pre-battle
+  repositioning/deployment phase** — you fight from where history placed you. The
+  Persian side is the **satraps + Memnon's Greek mercenaries** (Darius is absent —
+  he first takes the field at Issus). First divergence node (§12).
 - **Issus (333 BC):** a narrow coastal plain pinned between the Amanus
   mountains and the sea, split by the Pinarus River. The defining fact to model
   is that the **constricted frontage caps Persia's numerical advantage** — not
@@ -407,6 +494,18 @@ these marquee fights in a later phase:
   `rel="noopener noreferrer"`); it **never gates progress**. No third-party
   embeds — the client stays thin, privacy is preserved, CSP surface stays
   minimal (consistent with §3).
+- **Curated starting set (Tides of History).** Verified episodes seeding the
+  media data and §10 citations (exact trigger mapping pending editorial review):
+  - *Alexander the Great Invades Persia* (the 334 BC invasion under Darius III) →
+    the **Granicus** opening — https://open.spotify.com/episode/0ZWSBCirAa9gajYNw9hdQ8
+  - *Issus, Gaugamela, and Alexander's Conquest of Persia* → the **Issus** and
+    **Gaugamela** nodes — https://open.spotify.com/episode/1hyzYmdIsEVOI72nNUZwOM
+  - *Alexander the Great: Soldier, Priest, and God* (with Fred Naiden) and
+    *Alexander the Great with Patrick Wyman* → general background —
+    https://podcasts.apple.com/us/podcast/alexander-the-great-soldier-priest-and-god/id1257202425?i=1000673355560 ,
+    https://podcasts.apple.com/us/podcast/alexander-the-great-with-patrick-wyman/id1800530353?i=1000718829309
+  - *Still needed for balance (§10): an Achaemenid/Persian-perspective source
+    (e.g. the History of Persia podcast) — to be verified before inclusion.*
 - **Data model.** Media entries are authored data —
   `{ id, title, source, url, citation, triggers[], entityRefs[] }` — and double
   as the §10 accuracy citations. Curation (which media maps to which entity) is
@@ -417,19 +516,24 @@ these marquee fights in a later phase:
 ## 12. Divergence points (alternate-history decision nodes)
 
 Per §10 (accurate start, divergent play): each node is grounded in a real
-moment from 336–323 BC; for most, the *choice* is where history forks. Authored
+moment from 334–323 BC; for most, the *choice* is where history forks. Authored
 as data (`{ id, trigger, options[], effects[], citations[], media[] }`) so nodes
 are added/tuned without engine changes, and each carries an educational link
 (§11). A few nodes are instead **seeded events** with no player choice (no
 `options[]`, just `effects[]`), resolved server-side from the match seed (§3) so
 they can't be save-scummed.
 
-- **Granicus (334 BC)** — *Persia:* **scorched earth** (Memnon's counsel — burn
-  the land to deny Alexander supply: imposes attrition on advancing Macedonian
-  units and lowers the value of cities he takes, *but* devastating one's own
-  satrapies **erodes loyalty and invites defections** — §5/§13) vs. pitched
-  battle (the satraps' historical choice — they rejected Memnon and lost).
-  *Macedon:* reckless crossing (Alexander-death risk) vs. cautious crossing.
+- **Granicus (334 BC)** — *the game's opening situation (turn 1), fought from a
+  fixed historical deployment (no repositioning); the Persian side here is the
+  satraps + Memnon, not Darius (who first fights at Issus).* *Persia:* **scorched
+  earth** (Memnon's counsel — burn the land to deny Alexander supply: imposes
+  attrition on advancing Macedonian units and lowers the value of cities he
+  takes, *but* devastating one's own satrapies **erodes loyalty and invites
+  defections** — §5/§13) vs. pitched battle (the satraps' historical choice —
+  they rejected Memnon and lost). *Macedon:* reckless crossing vs. cautious
+  crossing — but a reckless Alexander who would fall is **saved by Cleitus the
+  Black** (a scripted rescue, exactly as in 334 BC): a near-death morale beat,
+  not a game-over.
 - **Tyre (332 BC)** — conquer **Old Tyre** (mainland) and **New Tyre** (island).
   Choose the **land bridge** (causeway: slow, exposed) vs. a **navy** (requires
   a captured naval base — unlocked early by taking **Athens**).
@@ -443,6 +547,16 @@ they can't be save-scummed.
   commit chariots/elephants vs. hold.
 - **Persepolis (330 BC)** — burn (vengeance for the 480 BC sack of Athens;
   pleases Greeks, alienates Persians) vs. preserve (legitimate-successor path).
+- **Roxana (327 BC, Macedon)** — after taking the Sogdian Rock in rebellious
+  Bactria–Sogdiana, **marry Roxana** (daughter of the baron Oxyartes): a large,
+  localized **loyalty swing** that pacifies the east (cities flip / stop
+  revolting; eastern attrition drops — §5) — vs. **rule by force** (garrison and
+  suppress; you hold ground but the east stays restive). The trade-off is
+  historical: the marriage/fusion policy **buys eastern loyalty at the cost of
+  legitimacy with the Macedonian-Greek old guard** ("going native" — proskynesis,
+  the pages' conspiracy), echoing the Persepolis burn-vs-preserve tension. A
+  Macedon-only lever; ties to Hellenistic Fusion (§13). Decision: a **one-shot
+  node** (a persistent eastern-loyalty aura is an optional later add — §14).
 - **Hyphasis (326 BC)** — press east (overextension risk) vs. consolidate;
   map-edge endgame.
 - **Bessus (330 BC, Persia)** — a **seeded event, not a choice** (the player
@@ -472,6 +586,9 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
   units.
 - **Hypaspists**: no bonus when sieging a city.
 - **Hetairoi**: +1 movement while benefiting from a great general.
+- **To the World's End**: immune to **war-weariness** morale decay from
+  overextension/distance (§5 Supply & morale) — the systemic counter to the
+  Hyphasis mutiny.
 - Capturing a **wonder-city** with **Alexander adjacent** grants **that city's
   own unique unit** (Hellenistic Fusion); further copies are purchasable
   thereafter at **+50% cost**.
@@ -500,8 +617,9 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
 > "golden road" treated as the same feature pending your confirmation.
 
 ## 14. Open questions for review
-- Map size / which historical cities to include in the first slice (suggest a
-  small 3–4 city vertical slice first).
+- Map size / which cities anchor the first slice — suggest a small vertical slice
+  around the **Granicus and NW Asia Minor** (the river crossing plus a few cities,
+  e.g. Dascylium / Sardis / Ephesus) before widening east.
 - Auth: NextAuth/Auth.js session vs. a hand-rolled signed cookie for Phase 1.
 - Postgres host preference (Neon vs Supabase vs Vercel Postgres).
 - PvP matchmaking: private invite-link vs. open queue (suggest invite-link
@@ -523,3 +641,12 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
   Euphrates/Nile corridors).
 - Bessus event: the coup probability (currently 25%) and the magnitudes of the
   loyal **buff** vs. the coup **setback**.
+- Supply & morale: per-unit vs. per-army/region granularity (open fork);
+  out-of-supply attrition rate, morale decay/recovery, rout/mutiny thresholds,
+  and how harsh "devastating" should be.
+- API: GraphQL stack (e.g. schema-first SDL + codegen) and whether subscriptions
+  ship in the PvP slice or earlier.
+- Roguelite meta-progression: confirm knowledge/cosmetic-only (no power) and what
+  persists across runs (unlocked media cards, endings seen).
+- Roxana: keep as a one-shot node vs. add a persistent eastern-loyalty aura;
+  magnitudes of the eastern loyalty gain vs. the Greek-base legitimacy cost.
