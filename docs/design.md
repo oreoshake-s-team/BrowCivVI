@@ -417,9 +417,12 @@ these marquee fights in a later phase:
 ## 12. Divergence points (alternate-history decision nodes)
 
 Per §10 (accurate start, divergent play): each node is grounded in a real
-moment from 336–323 BC; the *choice* is where history forks. Authored as data
-(`{ id, trigger, options[], effects[], citations[], media[] }`) so nodes are
-added/tuned without engine changes, and each carries an educational link (§11).
+moment from 336–323 BC; for most, the *choice* is where history forks. Authored
+as data (`{ id, trigger, options[], effects[], citations[], media[] }`) so nodes
+are added/tuned without engine changes, and each carries an educational link
+(§11). A few nodes are instead **seeded events** with no player choice (no
+`options[]`, just `effects[]`), resolved server-side from the match seed (§3) so
+they can't be save-scummed.
 
 - **Granicus (334 BC)** — *Persia:* **scorched earth** (Memnon's counsel — burn
   the land to deny Alexander supply: imposes attrition on advancing Macedonian
@@ -442,8 +445,14 @@ added/tuned without engine changes, and each carries an educational link (§11).
   pleases Greeks, alienates Persians) vs. preserve (legitimate-successor path).
 - **Hyphasis (326 BC)** — press east (overextension risk) vs. consolidate;
   map-edge endgame.
-- **Bessus's coup (330 BC, Persia)** — trust satraps vs. purge usurpers
-  (internal stability).
+- **Bessus (330 BC, Persia)** — a **seeded event, not a choice** (the player
+  can't steer it). After Darius's flight east, one server-seeded roll resolves
+  the Bactrian satrap: **~75% loyal** — he reinforces the eastern satrapies, a
+  **modest, lasting buff** to Persian defense/loyalty — and **~25% coup** — he
+  murders Darius and usurps the throne, a **contained setback** (a one-time
+  legitimacy/loyalty hit, not a collapse). Most games he helps; the betrayal is
+  the rarer, deliberately lesser outcome. Authored with `effects[]`, no
+  `options[]`.
 
 ## 13. Faction mechanics catalog (data-driven, phased)
 
@@ -512,3 +521,5 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
   mountains are strictly impassable vs. very-high-cost, and which navigable
   rivers/coastlines are in the first slice (Granicus/Pinarus crossings; Tigris/
   Euphrates/Nile corridors).
+- Bessus event: the coup probability (currently 25%) and the magnitudes of the
+  loyal **buff** vs. the coup **setback**.
