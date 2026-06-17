@@ -57,18 +57,16 @@ decisions early. Front-load discovery before writing UI code.
 
 - Squash all PRs into a single commit instead of merging/rebasing.
 - All functionality must have test coverage.
-- Ensure there are no typescript issues before committing.
 - If a change requires more than 150 lines of changes to application code
   (excluding CSS, tests, config, etc), split it up into multiple changes and
   create followup tasks.
 - Code should be as compartmentalized as possible, including CSS.
 - Code should be written in strict typescript, no use of any types.
-- Only use strict typescript. No use of JS or "any" types.
 - The client is untrusted and near-stateless: it renders authoritative state and
   sends *intents*; it never computes outcomes. Game logic lives in the pure
   `/engine` module and on the server (design §2–§4).
 - Prioritize accessibility and i18n.
-- When developing new branches, work in worktrees.
+- When developing new branches, only work in worktrees.
 - Always use the issue template at `.github/ISSUE_TEMPLATE/issue.yml` when
   creating issues.
 - Use yarn for all package management and script execution (e.g.
