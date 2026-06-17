@@ -222,6 +222,13 @@ opponent — **not** procedural generation: the historical map is always authore
 
 The post-game seed is shown for sharing and feeds the §3 replay-verification idea.
 
+**Mutators (unlockable "Civ 6 bugs").** Optional, opt-in run modifiers — think
+relics / daily mutators — re-create infamous Civ 6 quirks for fun (e.g.
+*Improper Siege Support*, §13). To protect the guardrail above, mutator runs are
+**flagged and ranked on a separate leaderboard lane**; the canonical per-faction
+boards only count clean, mutator-free runs. Unlocking a mutator is knowledge/
+cosmetic progression, not a power edge on the real boards.
+
 ### Combat (stripped-down, modular)
 - Resolve via a **pure `resolveCombat(attacker, defender, terrain, rng)`** where
   `rng` is the seeded stream. v0 formula: deterministic strength differential +
@@ -578,6 +585,9 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
 **Macedon / Alexander**
 - Catapults, archers, and cavalry gain **no** benefit from siege towers /
   battering rams (those aid melee siege infantry only).
+  - *Mutator — "Improper Siege Support" (§5):* the opt-in mutator **inverts**
+    this, letting ranged, cavalry, and bombard units leech ram/tower bonuses
+    (the actual Civ 6 bug). Mutator-lane only; countered by Heated Sand below.
 - Hoplite **adjacency** (phalanx) bonuses apply. *(Adjacency target + magnitude:
   TBD tuning.)*
 - **Flanking** mirrors Humankind and uses **unit facing**: each unit has an
@@ -611,6 +621,13 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
 - **Loyalty suppression:** a garrison or an adjacent army **freezes** a wavering
   city's defection (the under-threat rule, §5); the Royal Road lets Darius rush
   a garrison to hold a city about to flip.
+- **Heated Sand** (counter-siege sortie): a besieged Persian garrison may sortie
+  to **destroy or disable adjacent enemy siege-support units** (rams/towers).
+  Because the *Improper Siege Support* mutator routes its bonus **through** those
+  support units, burning them collapses the leeched ranged/cavalry/bombard bonus
+  too — the counter hits the dependency, not the symptom. Historically grounded
+  at the Siege of Tyre (defenders poured red-hot sand and fired the towers); it
+  is Persia's unlockable counter-relic to that mutator.
 
 > Naming note: the doc uses **"Royal Road"** (the historical Achaemenid road
 > built under Darius I) for the §5 redeploy buff *and* this maintenance rule —
@@ -650,3 +667,6 @@ maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is
   persists across runs (unlocked media cards, endings seen).
 - Roxana: keep as a one-shot node vs. add a persistent eastern-loyalty aura;
   magnitudes of the eastern loyalty gain vs. the Greek-base legitimacy cost.
+- Mutators: which Civ 6 quirks to expose (first: Improper Siege Support vs.
+  Heated Sand), and confirming mutator runs rank on a separate leaderboard lane,
+  never the canonical boards.
