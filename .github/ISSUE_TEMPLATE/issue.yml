@@ -1,0 +1,84 @@
+name: Issue
+description: Default template for all BrowCivVI issues (feature, task, bug, refactor, chore).
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting:
+        - Use a **semantic, descriptive title** (e.g. `feat(map): navigable river corridors`).
+        - Set the **issue type** (Bug / Feature / Task / Refactor / Chore) with GitHub's
+          native issue type — **not** a label.
+        - Add a **feature-space label** (e.g. `map`, `combat`, `ai`, `leaderboard`, `content`).
+        - Keep each slice to **≤150 lines of app code** (excl. tests/CSS/config); split if bigger (`docs/design.md` §9).
+        - Never reference issue numbers in source code, test names, or filenames.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is this issue, in one or two sentences?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & motivation
+      description: Why does this matter? Link the relevant `docs/design.md` section(s) by number (e.g. §5, §13).
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature area
+      description: Primary area this touches. Add the matching label to the issue after filing.
+      options:
+        - map
+        - combat
+        - units / factions
+        - ai
+        - persistence
+        - leaderboard
+        - content / historical accuracy
+        - educational media
+        - ui / board
+        - engine
+        - infra / ci
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Conditions for "done", including the test coverage expected (happy path + at least one negative/edge case).
+      value: |
+        - [ ]
+        - [ ] Tests: happy path
+        - [ ] Tests: at least one negative / edge case (illegal intent, out of turn, stale version, out of range, …)
+    validations:
+      required: true
+  - type: textarea
+    id: historical
+    attributes:
+      label: Historical accuracy & citations
+      description: >
+        For any content (cities, units, battles, events, dates, coordinates), cite sources.
+        Geography must be exact and is enforced; dates are flavor (`docs/design.md` §10).
+        Enter "N/A" if this issue touches no historical content.
+      placeholder: "N/A — or: <claim> — <citation URL>"
+    validations:
+      required: false
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope & size
+      description: >
+        Rough app-code size. If it exceeds ~150 lines (excl. tests/CSS/config), list the
+        sub-issues you'll split it into (`docs/design.md` §9).
+    validations:
+      required: false
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Out of scope / non-goals
+    validations:
+      required: false
