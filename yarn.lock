@@ -746,6 +746,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@neondatabase/serverless@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@neondatabase/serverless@npm:1.1.0"
+  checksum: 10c0/ba24391bd53f94b76a817c9bfd09f91259024119b51e64192f2f97f627253d4370699e051d73918352e71fb93ae4575177ca1f5b38f2c27fcf5dc1adda70c677
+  languageName: node
+  linkType: hard
+
 "@next/env@npm:15.5.19":
   version: 15.5.19
   resolution: "@next/env@npm:15.5.19"
@@ -1345,6 +1352,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browcivvi@workspace:."
   dependencies:
+    "@neondatabase/serverless": "npm:^1.1.0"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/react": "npm:^16.1.0"
     "@types/node": "npm:^22.13.0"
