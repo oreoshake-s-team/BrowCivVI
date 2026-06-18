@@ -3,39 +3,27 @@ import { aggregateDefenseMultiplier } from "./registry";
 import { PHALANX_ABILITY } from "./phalanx";
 
 describe("aggregateDefenseMultiplier", () => {
-  it("applies the registered phalanx modifier for a front attack", () => {
+  it("applies the registered phalanx wall bonus when unflanked", () => {
     expect(
-      aggregateDefenseMultiplier({
-        defenderAbilities: [PHALANX_ABILITY],
-        arc: "front",
-        terrainMoveCost: 1,
-      }),
+      aggregateDefenseMultiplier({ defenderAbilities: [PHALANX_ABILITY], flanked: false, terrainMoveCost: 1 }),
     ).toBeCloseTo(1.5);
   });
 
-  it("combines the phalanx flank and rough-terrain effects", () => {
+  it("combines the flanked penalty with rough terrain", () => {
     expect(
-      aggregateDefenseMultiplier({
-        defenderAbilities: [PHALANX_ABILITY],
-        arc: "flank",
-        terrainMoveCost: 2,
-      }),
+      aggregateDefenseMultiplier({ defenderAbilities: [PHALANX_ABILITY], flanked: true, terrainMoveCost: 2 }),
     ).toBeCloseTo(0.75);
   });
 
   it("is identity for an unregistered ability", () => {
     expect(
-      aggregateDefenseMultiplier({
-        defenderAbilities: ["heated-sand"],
-        arc: "front",
-        terrainMoveCost: 1,
-      }),
+      aggregateDefenseMultiplier({ defenderAbilities: ["heated-sand"], flanked: false, terrainMoveCost: 1 }),
     ).toBe(1);
   });
 
   it("is identity for a unit with no abilities", () => {
     expect(
-      aggregateDefenseMultiplier({ defenderAbilities: [], arc: "rear", terrainMoveCost: 1 }),
+      aggregateDefenseMultiplier({ defenderAbilities: [], flanked: true, terrainMoveCost: 1 }),
     ).toBe(1);
   });
 });
