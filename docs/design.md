@@ -324,7 +324,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
 
 - Catapults, archers, and cavalry gain **no** benefit from siege towers / battering rams (those aid melee siege infantry only).
   - _Mutator — "Improper Siege Support" (§5):_ the opt-in mutator **inverts** this, letting ranged, cavalry, and bombard units leech ram/tower bonuses (the actual Civ 6 bug). Mutator-lane only; countered by Heated Sand below.
-- Hoplite **adjacency** (phalanx) bonuses apply. _(Adjacency target + magnitude: TBD tuning.)_
+- Hoplite **adjacency** (phalanx) bonuses apply: **+10% combat strength per adjacent friendly hoplite, cap +30%** (provisional, §14).
 - **Flanking** mirrors Humankind and uses **unit facing**: each unit has an orientation, and an attack lands in the defender's **front / flank / rear** arc (rear > flank); the bonus _also_ scales with the **number** of flanking units.
 - **Hypaspists**: no bonus when sieging a city.
 - **Hetairoi**: +1 movement while benefiting from a great general.
@@ -333,7 +333,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
 
 **Persia / Darius**
 
-- **Heavy cavalry**: a **flat per-attack chance** of an **instant kill** (seeded server-side, so not save-scummable), offset by **-2 attack strength**. (Probability value: tuning.)
+- **Heavy cavalry**: a **flat per-attack chance** of an **instant kill** (seeded server-side, so not save-scummable), offset by **-2 attack strength**. Provisional probability **10%** (§14).
 - **One** great general only; all units within **2 tiles** have **zero maintenance**.
 - Units on the **Royal Road** (see naming note) have **zero maintenance**.
 - **Immortals**: much lower build cost, but **no new Immortals** may be trained while **15** Persian Immortals already exist (echoes Herodotus's fixed-number corps).
@@ -343,22 +343,59 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
 
 > Naming note: the doc uses **"Royal Road"** (the historical Achaemenid road built under Darius I) for the §5 redeploy buff _and_ this maintenance rule — "golden road" treated as the same feature pending your confirmation.
 
-## 14. Open questions for review
+## 14. Decisions & open questions
 
-- Map size / which cities anchor the first slice — suggest a small vertical slice around the **Granicus and NW Asia Minor** (the river crossing plus a few cities, e.g. Dascylium / Sardis / Ephesus) before widening east.
-- Auth: NextAuth/Auth.js session vs. a hand-rolled signed cookie for Phase 1.
-- Postgres host preference (Neon vs Supabase vs Vercel Postgres).
-- PvP matchmaking: private invite-link vs. open queue (suggest invite-link first).
-- PvP turn-handoff transport: short polling vs. SSE vs. websockets (suggest polling first; SSE upgrade later).
-- PvP turn timer / abandonment policy (forfeit after N minutes?).
-- Initial curated media set (which Tides of History episodes / videos) and the citation schema/format.
-- Which anachronism classes to enforce first in the validation harness.
-- Balance tuning: flanking magnitudes (rear vs. flank, per-unit), heavy-cav instant-kill probability, hoplite-adjacency value, the Immortal cap (15).
-- Loyalty tuning: defection threshold and pressure weights (proximity vs. momentum vs. affinity), the sack and scorch value reductions, scorched earth's loyalty cost, and any `incite` cost/cooldown/range.
-- Map tuning: river-crossing penalty magnitude (movement + combat), whether mountains are strictly impassable vs. very-high-cost, and which navigable rivers/coastlines are in the first slice (Granicus/Pinarus crossings; Tigris/Euphrates/Nile corridors).
-- Bessus event: the coup probability (currently 25%) and the magnitudes of the loyal **buff** vs. the coup **setback**.
-- Supply & morale: per-unit vs. per-army/region granularity (open fork); out-of-supply attrition rate, morale decay/recovery, rout/mutiny thresholds, and how harsh "devastating" should be.
-- API: GraphQL stack (e.g. schema-first SDL + codegen) and whether subscriptions ship in the PvP slice or earlier.
-- Roguelite meta-progression: confirm knowledge/cosmetic-only (no power) and what persists across runs (unlocked media cards, endings seen).
-- Roxana: keep as a one-shot node vs. add a persistent eastern-loyalty aura; magnitudes of the eastern loyalty gain vs. the Greek-base legitimacy cost.
-- Mutators: which Civ 6 quirks to expose (first: Improper Siege Support vs. Heated Sand), and confirming mutator runs rank on a separate leaderboard lane, never the canonical boards.
+The forks below were resolved in review. **Balance numbers are provisional** — combat is a swappable module (§5) and all thresholds/rates are authored data (§5 Supply & morale), so every value here is tunable after playtest without an engine change.
+
+### Platform & API
+
+- **Auth.** Phase 1 (solo vs AI) uses an **anonymous signed-cookie** identity — enough to own a match. Adopt **Auth.js (NextAuth)** when leaderboard identity / PvP accounts need real logins.
+- **Postgres host: Neon** — serverless, Vercel-native, scale-to-zero, with DB branching per preview deploy (pairs with the `JSONB` `MatchStore`, §4). (Vercel Postgres is Neon-backed.)
+- **GraphQL: schema-first SDL + `graphql-codegen`** for both resolver and client types. The explicit SDL is the contract artifact and doubles as the trust-boundary doc for the untrusted-client threat model (§3).
+
+### First slice & map
+
+- **First-slice scope: all of Greece + NW Asia Minor through the Granicus crossing** — Macedon's home base eastward across the river to the first cities (Dascylium / Sardis / Ephesus). Widen east in later slices.
+- **Mountains & deep sea are strictly impassable** (confirms §5; they channel armies, e.g. Issus).
+- **Navigable-river corridors (Tigris / Euphrates / Nile) are _not_ in the first slice** — they lie outside its geography and arrive as the map widens east/south. The first slice's only river feature is the **Granicus** non-navigable crossing edge.
+- **Non-navigable river-crossing penalty: +2 movement to cross the edge, −25% attacker strength across it** (≡ +25% defender) — the Granicus/Pinarus defensive line.
+
+### Combat balance (provisional)
+
+- **Flanking (facing-based arcs): rear +100%, flank +50%**, plus **+15% per additional adjacent flanking unit, capped at +60%**. Encirclement and cavalry envelopment are decisive.
+- **Persian heavy-cavalry instant-kill: 10% per attack**, offset by the −2 attack strength (§13).
+- **Hoplite phalanx adjacency: +10% combat strength per adjacent friendly hoplite, cap +30%** (§13).
+- **Immortal cap: 15** (confirms §13).
+
+### Supply & morale
+
+- **Granularity: per-army/region** (not per-unit).
+- **Out-of-supply attrition: −10% HP turn 1, +5%/turn, capped at −25%; also bleeds morale.** Cut-off armies bleed over several turns and recover once resupplied.
+- **Morale: rout below 25/100; recover +10/turn while supplied and out of combat; a leader's death/flight = −40 morale army-wide** (the Issus/Gaugamela king's-flight collapse, §10/§12).
+
+### Loyalty & scoring
+
+- **Pressure weights: momentum 50 / proximity 30 / affinity 20** on a meter from −100 (Darius) to +100 (Macedon); a city **defects at sustained ±50** (held for one full turn, and not under-threat per §5).
+- **City value by condition: defection 100% / sacked 60% / scorched 30%** of base `value` (§5 Scoring).
+- **Scorched earth costs −20 region loyalty** (drift toward the enemy).
+- **`incite`: one per turn**, targeting a city **within 3 hexes of a friendly unit or city**, with a **2-turn per-city cooldown** and a fixed pressure bump toward the inciting side.
+
+### Events & content
+
+- **Bessus: 25% coup probability.** A loyal Bessus grants a legitimacy/morale boost; the coup costs you Bessus's army and dents Persian legitimacy.
+- **Roxana: persistent eastern-loyalty aura** (upgraded from a one-shot node) — while active it raises eastern-city loyalty each turn and drags Greek-base legitimacy each turn.
+- **Mutators: _Improper Siege Support_ ships first** (with **Heated Sand** as Persia's counter, §13). Mutator runs are always flagged to a **separate leaderboard lane** — never the canonical per-faction boards.
+
+### Roguelite, educational layer & accuracy harness
+
+- **Meta-progression is knowledge/cosmetic only** (no power carryover, protecting leaderboard comparability, §3). Persisted across runs: **unlocked media cards, divergence endings reached, and unlocked mutators**.
+- **Citation schema: a typed `Citation` record on content entries** — `{ claim, source: { title, author, work, url, type }, confidence }` (strict TS, no `any`); machine-checkable and feeds both the media layer and the accuracy harness.
+- **Accuracy harness enforces first: geographic exactness (hard errors) + chronological bounds (date flavor-warnings)** (§10).
+- **Initial media set: campaign-beat cards** — Granicus, Issus, Gaugamela, the Royal Road, the Siege of Tyre, and Darius III — tied to first-slice beats and divergence nodes.
+
+### Still open
+
+- **PvP turn-handoff transport** (short polling vs. SSE vs. websockets) and whether GraphQL **subscriptions** ship in the PvP slice or earlier — deferred until PvP work begins.
+- **PvP matchmaking** (private invite-link vs. open queue) — deferred until PvP work begins.
+- **PvP turn timer / abandonment** — **Phase 3 v1 ships with no timer**; revisit once real games surface the need.
+- **Scoring tie-breakers** (§5) — TBD.
