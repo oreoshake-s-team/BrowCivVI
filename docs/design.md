@@ -120,7 +120,10 @@ interface MatchStore {
 
 ### Units
 
-- Data-driven `UnitType` (e.g. Hetairoi cavalry, Hypaspist, generic enemy garrison): `{ movement, strength, abilities[], domain }`, where `domain` (`land` or `naval`) gates which hexes the unit may enter (see Map).
+- Data-driven `UnitType` (e.g. Hetairoi cavalry, Hypaspist, generic enemy garrison): `{ id, name, class, movement, strength, capabilities[], abilities[] }`. Two orthogonal axes describe a unit:
+  - **`class`** — _what the unit is_, a Civ 6 promotion class: `civilian · recon · melee · ranged · antiCavalry · lightCavalry · heavyCavalry · siege · navalMelee · navalRanged · navalRaider · support`. The `class` also **derives the movement `domain`** (`land` / `naval`) that gates which hexes it may enter (see Map) — the naval classes are the only `naval`-domain units, so domain is computed from class, not stored twice.
+  - **`capabilities[]`** — _what the unit can do_: `move · meleeAttack · rangedAttack · bombard · settle · siegeSupport · heal`. Each class has an authored **default capability set** (e.g. `melee → [move, meleeAttack]`, `ranged → [move, rangedAttack]`, `siege → [move, bombard]`); a `UnitType` may list **extra** capabilities to specialise it (e.g. a settler is `class: civilian` + `[settle]`; a siege-tower is `class: support` + `[siegeSupport]`). The server turns a unit's effective capabilities into the **legal intents** (§6) it surfaces — capabilities map to intent kinds (`move → moveUnit`, `meleeAttack/rangedAttack/bombard → attack`, `settle → settle`), while passive capabilities (`siegeSupport`, `heal`) authorise no active intent.
+  - **`abilities[]`** stays distinct: it holds combat/effect **modifiers** (`phalanx`, flanking, instant-kill — §13) resolved behind the effect registry, _not_ actions. "Can act" (capabilities) and "gets a bonus" (abilities) are kept separate.
 - A `Unit` instance: `{ id, typeId, owner, hex, facing, hp, morale, supplied, hasMovedThisTurn }`. `facing` (a hex direction) drives the front / flank / rear combat arcs used by flanking (§13); `morale` and `supplied` feed the Supply & morale system below.
 
 ### Turn structure
@@ -163,7 +166,7 @@ A `Faction` is authored data — `{ id, leader, objective, abilities[], uniqueUn
 
 ### Loyalty & defection (peaceful expansion)
 
-Cities are won two ways: **conquest** (combat) or **loyal defection** (no battle). Each city carries a **loyalty** meter pulled between the two factions, updated each turn by a pure engine pass from:
+Cities are won **three** ways: **conquest** (combat), **loyal defection** (no battle), or **founding** a new city with a settler (the `settle` intent, §6). Founding is a **Macedon-flavored** acquisition path — historically grounded in the ~20 cities Alexander founded across the campaign (Alexandria-in-Egypt, 331 BC; Alexandria Eschate on the Jaxartes — Arrian, _Anabasis_ III.1, IV.4). A founded city enters owned by its founder with loyalty seeded toward that faction and a low starting `value` that grows as it is held; Persia does not settle, expanding only by holding and scorching. (Founding sits within §10's "accurate start, divergent play": the authored 334 BC map is fixed, but a divergent run may plant new Alexandrias.) Each city carries a **loyalty** meter pulled between the two factions, updated each turn by a pure engine pass from:
 
 - **proximity** to each side's held cities and units,
 - **legitimacy / momentum** — recent captures, holding a faction's anchor cities, and leader presence (a routed king craters his side's legitimacy — ties to the Issus/Gaugamela flight nodes, §12),
@@ -190,6 +193,7 @@ When net pressure crosses a threshold the city **defects bloodlessly** — a pla
 type Intent =
   | { kind: "moveUnit"; unitId: string; to: Hex }
   | { kind: "attack"; unitId: string; target: Hex }
+  | { kind: "settle"; unitId: string } // found a city with a settler (§5, Macedon)
   | { kind: "incite"; cityId: string } // apply loyalty pressure / negotiate (§5)
   | { kind: "scorch"; hex: Hex } // Persia scorched earth (§13)
   | { kind: "endTurn" };
