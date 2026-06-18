@@ -36,8 +36,8 @@ describe("FIRST_SLICE_REGIONS", () => {
     expect(FIRST_SLICE_REGIONS.find((region) => region.id === "aegean")?.labelHex).toBeDefined();
   });
 
-  it("authors named Aegean islands", () => {
-    expect(FIRST_SLICE_REGIONS.filter((region) => region.kind === "island")).toHaveLength(5);
+  it("keeps only the tile-sized Aegean islands", () => {
+    expect(FIRST_SLICE_REGIONS.filter((region) => region.kind === "island")).toHaveLength(2);
   });
 });
 
