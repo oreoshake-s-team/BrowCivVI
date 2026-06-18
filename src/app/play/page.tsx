@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
+import { FIRST_SLICE_MAP, FIRST_SLICE_UNITS } from "@/content/firstSlice";
 import { HexBoard } from "@/components/board/HexBoard";
 
 export const metadata = {
@@ -8,13 +8,16 @@ export const metadata = {
 
 export default function PlayPage() {
   return (
-    <main style={{ maxWidth: "1080px", margin: "0 auto", padding: "2rem 1.5rem" }}>
+    <main style={{ maxWidth: "1280px", margin: "0 auto", padding: "2rem 1.5rem" }}>
       <p>
         <Link href="/">← Home</Link>
       </p>
       <h1>The Granicus, 334 BC</h1>
-      <p>Macedon (gold) faces the Persian satraps (crimson) across the river. Click a unit to inspect it.</p>
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />
+      <p>
+        Macedon (gold) crosses the Hellespont to face the Persian satraps (crimson) mustered at Zeleia, from
+        Pella west to Ionia in the south. Click a unit to inspect it.
+      </p>
+      <HexBoard map={FIRST_SLICE_MAP} units={FIRST_SLICE_UNITS} />
     </main>
   );
 }

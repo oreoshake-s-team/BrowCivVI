@@ -1,6 +1,9 @@
 import type { Hex } from "../hex";
 import type { Terrain, TerrainType } from "./terrain";
+import type { Citation } from "../content/citation";
 import { TERRAIN_CATALOG } from "./terrain";
+
+export type Affinity = "macedon" | "persia" | "neutral";
 
 export function hexKey(hex: Hex): string {
   return `${hex.q},${hex.r}`;
@@ -19,6 +22,9 @@ export interface City {
   readonly owner: string | null;
   readonly value: number;
   readonly defense: number;
+  readonly affinity?: Affinity;
+  readonly citation?: Citation;
+  readonly firstAttestedBce?: number;
 }
 
 export interface RiverEdge {
