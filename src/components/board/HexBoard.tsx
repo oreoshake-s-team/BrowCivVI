@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { GameMap } from "@/engine/map/types";
+import type { Hex } from "@/engine/hex";
 import type { Unit } from "@/engine/unit/types";
 import type { NamedRegion } from "@/engine/content/region";
 import { hexKey } from "@/engine/map/types";
@@ -17,15 +18,16 @@ const SIZE = 36;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 
-export function HexBoard({
-  map,
-  units,
-  regions = [],
-}: {
-  map: GameMap;
-  units: readonly Unit[];
-  regions?: readonly NamedRegion[];
-}) {
+export interface HexBoardProps {
+  readonly map: GameMap;
+  readonly units: readonly Unit[];
+  readonly regions?: readonly NamedRegion[];
+  readonly reachable?: readonly Hex[];
+  readonly onSelect?: (unitId: string | null) => void;
+  readonly onMove?: (unitId: string, to: Hex) => void;
+}
+
+export function HexBoard({ map, units, regions = [], reachable = [], onSelect, onMove }: HexBoardProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -36,6 +38,18 @@ export function HexBoard({
   } ${bounds.maxY - bounds.minY + pad * 2}`;
 
   const selectedUnit = units.find((unit) => unit.id === selectedId) ?? null;
+  const reachableKeys = new Set(reachable.map(hexKey));
+
+  const select = (unitId: string | null) => {
+    setSelectedId(unitId);
+    onSelect?.(unitId);
+  };
+
+  const tryMove = (target: Hex) => {
+    if (selectedId !== null && onMove && reachableKeys.has(hexKey(target))) {
+      onMove(selectedId, target);
+    }
+  };
 
   return (
     <div className={styles.layout}>
@@ -52,11 +66,17 @@ export function HexBoard({
           return (
             <g key={key}>
               <polygon
+                data-hex={key}
                 className={`hex ${styles.hex} ${hovered === key ? styles.hexHover : ""}`}
                 points={hexPolygonPoints(center, SIZE)}
                 fill={TERRAIN_COLORS[mapHex.terrain]}
                 onMouseEnter={() => setHovered(key)}
                 onMouseLeave={() => setHovered((current) => (current === key ? null : current))}
+                onClick={() => select(null)}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  tryMove(mapHex.hex);
+                }}
               />
               <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
                 {mapHex.hex.q},{mapHex.hex.r}
@@ -70,17 +90,18 @@ export function HexBoard({
           );
         })}
 
+        {reachable.map((hex) => (
+          <polygon
+            key={`reach-${hexKey(hex)}`}
+            className={`reach ${styles.reach}`}
+            points={hexPolygonPoints(hexToPixel(hex, SIZE), SIZE)}
+          />
+        ))}
+
         {map.rivers.map((river, index) => {
           const [p1, p2] = riverSegmentPoints(river.a, river.b, SIZE);
           return (
-            <line
-              key={`river-${index}`}
-              className={styles.river}
-              x1={p1.x}
-              y1={p1.y}
-              x2={p2.x}
-              y2={p2.y}
-            />
+            <line key={`river-${index}`} className={styles.river} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} />
           );
         })}
 
@@ -101,36 +122,31 @@ export function HexBoard({
           const type = unitTypeById(unit.typeId);
           const style = factionStyle(unit.owner);
           const selected = unit.id === selectedId;
-          const select = () => setSelectedId(unit.id);
           return (
             <g
               key={unit.id}
               data-unit-id={unit.id}
               className={styles.token}
+              transform={`translate(${center.x}, ${center.y})`}
               role="button"
               tabIndex={0}
               aria-label={`${type?.name ?? unit.typeId} (${unit.owner})`}
               aria-pressed={selected}
-              onClick={select}
+              onClick={(event) => {
+                event.stopPropagation();
+                select(selected ? null : unit.id);
+              }}
+              onContextMenu={(event) => event.preventDefault()}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  select();
+                  select(selected ? null : unit.id);
                 }
               }}
             >
-              {selected ? (
-                <circle className={styles.selectedRing} cx={center.x} cy={center.y} r={SIZE * 0.62} />
-              ) : null}
-              <circle
-                cx={center.x}
-                cy={center.y}
-                r={SIZE * 0.5}
-                fill={style.fill}
-                stroke={style.stroke}
-                strokeWidth={2}
-              />
-              <text className={styles.glyph} x={center.x} y={center.y} fill={style.text}>
+              {selected ? <circle className={styles.selectedRing} cx={0} cy={0} r={SIZE * 0.62} /> : null}
+              <circle cx={0} cy={0} r={SIZE * 0.5} fill={style.fill} stroke={style.stroke} strokeWidth={2} />
+              <text className={styles.glyph} x={0} y={0} fill={style.text}>
                 {type ? CLASS_GLYPHS[type.class] : "?"}
               </text>
             </g>
