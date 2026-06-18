@@ -9,6 +9,8 @@ body:
         - Set the **issue type** (Bug / Feature / Task / Refactor / Chore) with GitHub's
           native issue type — **not** a label.
         - Add a **feature-space label** (e.g. `map`, `combat`, `ai`, `leaderboard`, `content`).
+        - Keep each slice to **≤150 lines of app code** (excl. tests/CSS/config); split if bigger (`docs/design.md` §9).
+        - Never reference issue numbers in source code, test names, or filenames.
   - type: textarea
     id: summary
     attributes:
@@ -41,6 +43,17 @@ body:
         - engine
         - infra / ci
         - other
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Conditions for "done", including the test coverage expected (happy path + at least one negative/edge case).
+      value: |
+        - [ ]
+        - [ ] Tests: happy path
+        - [ ] Tests: at least one negative / edge case (illegal intent, out of turn, stale version, out of range, …)
     validations:
       required: true
   - type: textarea
