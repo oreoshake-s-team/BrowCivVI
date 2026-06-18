@@ -2,14 +2,14 @@ import type { TerrainType } from "@/engine/map/terrain";
 import type { UnitClass } from "@/engine/unit/classes";
 
 export const TERRAIN_COLORS: Readonly<Record<TerrainType, string>> = {
-  plains: "#cfe3a3",
-  hills: "#c4ad74",
-  forest: "#6b8f57",
-  marsh: "#7fa8a0",
-  desert: "#e6d3a3",
-  mountain: "#8a8a8a",
-  coast: "#9fc6e0",
-  deepSea: "#4a7fb0",
+  plains: "var(--color-terrain-plains)",
+  hills: "var(--color-terrain-hills)",
+  forest: "var(--color-terrain-forest)",
+  marsh: "var(--color-terrain-marsh)",
+  desert: "var(--color-terrain-desert)",
+  mountain: "var(--color-terrain-mountain)",
+  coast: "var(--color-terrain-coast)",
+  deepSea: "var(--color-terrain-deep-sea)",
 };
 
 export const TERRAIN_LABELS: Readonly<Record<TerrainType, string>> = {
@@ -45,11 +45,23 @@ export interface FactionStyle {
 }
 
 const FACTION_STYLES: Readonly<Record<string, FactionStyle>> = {
-  macedon: { fill: "#d4af37", stroke: "#7a5c00", text: "#3a2c00" },
-  persia: { fill: "#a01f2e", stroke: "#5e0f18", text: "#ffffff" },
+  macedon: {
+    fill: "var(--faction-macedon-fill)",
+    stroke: "var(--faction-macedon-stroke)",
+    text: "var(--faction-macedon-text)",
+  },
+  persia: {
+    fill: "var(--faction-persia-fill)",
+    stroke: "var(--faction-persia-stroke)",
+    text: "var(--faction-persia-text)",
+  },
 };
 
-const NEUTRAL_STYLE: FactionStyle = { fill: "#9aa0a6", stroke: "#5f6368", text: "#ffffff" };
+const NEUTRAL_STYLE: FactionStyle = {
+  fill: "var(--faction-neutral-fill)",
+  stroke: "var(--faction-neutral-stroke)",
+  text: "var(--faction-neutral-text)",
+};
 
 export function factionStyle(owner: string | null): FactionStyle {
   if (owner === null) return NEUTRAL_STYLE;

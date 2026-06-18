@@ -85,6 +85,11 @@ Consult `docs/design.md` before diving into unfamiliar areas — it is the singl
 
 As the codebase grows, add focused onboarding docs under `docs/onboarding/` (architecture, the engine, persistence, the board UI) and keep them cross-linked from here.
 
+Onboarding docs:
+
+- [`docs/onboarding/dev-setup.md`](docs/onboarding/dev-setup.md) — local setup.
+- [`docs/onboarding/styling-tokens.md`](docs/onboarding/styling-tokens.md) — the two-tier CSS design-token system (color primitives → semantic aliases, plus radius/spacing/type/motion scales); component CSS must use tokens, enforced in CI.
+
 ## Project Environment
 
 - This project uses **Yarn** (Berry0 and pnpm), not npm. Use `yarn` commands. Run `yarn install` in every fresh clone or worktree before anything else.

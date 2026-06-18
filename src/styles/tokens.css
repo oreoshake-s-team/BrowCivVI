@@ -1,0 +1,80 @@
+:root {
+  --parchment: #f3efe3;
+  --parchment-light: #faf8f1;
+  --sand-200: #e0d8c5;
+  --sand-300: #d8d0bd;
+  --taupe-500: #6f6750;
+  --ink-900: #1b1b1b;
+  --ink-800: #2a2418;
+  --ink-700: #3a3526;
+  --ink-600: #4a4636;
+  --ink-500: #5a5340;
+  --ink-400: #6a6453;
+  --blue-500: #2f6fb0;
+  --blue-800: #1f4d77;
+  --gold-400: #d4af37;
+  --gold-700: #9a7d1e;
+  --gold-400-a38: rgba(212, 175, 55, 0.38);
+
+  --color-surface-board: var(--parchment);
+  --color-surface-raised: var(--parchment-light);
+  --color-text-halo: var(--parchment);
+  --color-border: var(--sand-300);
+  --color-border-muted: var(--sand-200);
+  --color-border-strong: var(--taupe-500);
+  --color-hex-stroke: var(--taupe-500);
+  --color-outline-emphasis: var(--ink-900);
+  --color-ink: var(--ink-800);
+  --color-ink-feature: var(--ink-700);
+  --color-ink-coord: var(--ink-600);
+  --color-ink-muted: var(--ink-500);
+  --color-ink-subtle: var(--ink-400);
+  --color-water-river: var(--blue-500);
+  --color-water-sea: var(--blue-800);
+  --color-reach-fill: var(--gold-400-a38);
+  --color-reach-stroke: var(--gold-700);
+
+  --radius-sm: 3px;
+  --radius-md: 8px;
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.35rem;
+  --space-xs: 0.4rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.25rem;
+  --space-2xl: 1.5rem;
+
+  --font-size-label-sm: 9px;
+  --font-size-label-md: 11px;
+  --font-size-label-lg: 12px;
+  --font-size-glyph: 20px;
+  --font-size-ui-sm: 0.85rem;
+  --font-size-ui-md: 0.9rem;
+  --font-size-ui-lg: 1rem;
+  --letter-spacing-wide: 0.08em;
+
+  --ease-standard: ease;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+
+  --color-terrain-plains: #cfe3a3;
+  --color-terrain-hills: #c4ad74;
+  --color-terrain-forest: #6b8f57;
+  --color-terrain-marsh: #7fa8a0;
+  --color-terrain-desert: #e6d3a3;
+  --color-terrain-mountain: #8a8a8a;
+  --color-terrain-coast: #9fc6e0;
+  --color-terrain-deep-sea: #4a7fb0;
+
+  --faction-macedon-fill: #d4af37;
+  --faction-macedon-stroke: #7a5c00;
+  --faction-macedon-text: #3a2c00;
+  --faction-persia-fill: #a01f2e;
+  --faction-persia-stroke: #5e0f18;
+  --faction-persia-text: #ffffff;
+  --faction-neutral-fill: #9aa0a6;
+  --faction-neutral-stroke: #5f6368;
+  --faction-neutral-text: #ffffff;
+}

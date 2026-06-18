@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
 
 describe("TERRAIN_COLORS", () => {
-  it("assigns a color to plains", () => {
-    expect(TERRAIN_COLORS.plains).toMatch(/^#[0-9a-f]{6}$/i);
+  it("assigns a token-backed color to plains", () => {
+    expect(TERRAIN_COLORS.plains).toMatch(/^var\(--color-terrain-plains\)$/);
   });
 });
 
