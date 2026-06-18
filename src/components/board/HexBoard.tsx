@@ -145,7 +145,7 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
                 data-hex={key}
                 className={`hex ${styles.hex} ${hovered === key ? styles.hexHover : ""}`}
                 points={hexPolygonPoints(center, SIZE)}
-                fill={TERRAIN_COLORS[mapHex.terrain]}
+                style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
                 onMouseEnter={() => setHovered(key)}
                 onMouseLeave={() => setHovered((current) => (current === key ? null : current))}
                 onClick={() => tapHex(mapHex.hex)}
@@ -225,8 +225,14 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
               }}
             >
               {selected ? <circle className={styles.selectedRing} cx={0} cy={0} r={SIZE * 0.62} /> : null}
-              <circle cx={0} cy={0} r={SIZE * 0.5} fill={style.fill} stroke={style.stroke} strokeWidth={2} />
-              <text className={styles.glyph} x={0} y={0} fill={style.text}>
+              <circle
+                cx={0}
+                cy={0}
+                r={SIZE * 0.5}
+                style={{ fill: style.fill, stroke: style.stroke }}
+                strokeWidth={2}
+              />
+              <text className={styles.glyph} x={0} y={0} style={{ fill: style.text }}>
                 {type ? CLASS_GLYPHS[type.class] : "?"}
               </text>
             </g>
