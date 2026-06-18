@@ -1,4 +1,5 @@
 import type { City, GameMap } from "../map/types";
+import { hexKey } from "../map/types";
 import { TERRAIN_CATALOG } from "../map/terrain";
 
 export interface ValidationResult {
@@ -75,6 +76,19 @@ export function geographyErrors(map: GameMap): string[] {
   return errors;
 }
 
+export function cityTerrainErrors(map: GameMap): string[] {
+  const errors: string[] = [];
+  for (const city of map.cities.values()) {
+    const mapHex = map.hexes.get(hexKey(city.hex));
+    if (mapHex === undefined) {
+      errors.push(`City ${city.id} sits off the map`);
+    } else if (!TERRAIN_CATALOG[mapHex.terrain].passableBy.includes("land")) {
+      errors.push(`City ${city.id} sits on a non-land (${mapHex.terrain}) tile`);
+    }
+  }
+  return errors;
+}
+
 export function citationErrors(map: GameMap): string[] {
   return [...map.cities.values()]
     .filter((city) => city.citation === undefined)
@@ -109,6 +123,7 @@ export function validateFirstSlice(map: GameMap): ValidationResult {
     errors: [
       ...requiredCityErrors(map),
       ...geographyErrors(map),
+      ...cityTerrainErrors(map),
       ...citationErrors(map),
       ...anachronismErrors(map),
     ],

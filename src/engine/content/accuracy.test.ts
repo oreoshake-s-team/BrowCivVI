@@ -8,6 +8,7 @@ import {
   geographyErrors,
   anachronismErrors,
   citationErrors,
+  cityTerrainErrors,
   chronologyWarnings,
 } from "./accuracy";
 
@@ -82,6 +83,18 @@ describe("citationErrors", () => {
   it("flags a city with no citation", () => {
     const map = createGameMap([], [city("uncited", 0, 0, { cited: false })]);
     expect(citationErrors(map)).toHaveLength(1);
+  });
+});
+
+describe("cityTerrainErrors", () => {
+  it("flags a city placed on a water tile", () => {
+    const map = createGameMap([{ hex: { q: 0, r: 0 }, terrain: "coast" }], [city("porto", 0, 0)]);
+    expect(cityTerrainErrors(map).some((error) => /non-land/.test(error))).toBe(true);
+  });
+
+  it("accepts a city on a land tile", () => {
+    const map = createGameMap([{ hex: { q: 0, r: 0 }, terrain: "plains" }], [city("inland", 0, 0)]);
+    expect(cityTerrainErrors(map)).toEqual([]);
   });
 });
 
