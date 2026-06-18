@@ -14,8 +14,9 @@ export interface Bounds {
 }
 
 export function hexToPixel(hex: Hex, size: number): Point {
+  const rowOffset = ((hex.r % 2) + 2) % 2;
   return {
-    x: size * Math.sqrt(3) * (hex.q + hex.r / 2),
+    x: size * Math.sqrt(3) * (hex.q + 0.5 * rowOffset),
     y: size * (3 / 2) * hex.r,
   };
 }

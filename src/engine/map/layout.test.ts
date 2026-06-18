@@ -10,6 +10,14 @@ describe("hexToPixel", () => {
   it("offsets a row by 3/2 * size vertically", () => {
     expect(hexToPixel({ q: 0, r: 1 }, 10).y).toBeCloseTo(15);
   });
+
+  it("keeps even rows vertically aligned (no cumulative slant)", () => {
+    expect(hexToPixel({ q: 0, r: 2 }, 10).x).toBeCloseTo(0);
+  });
+
+  it("staggers odd rows by half a hex", () => {
+    expect(hexToPixel({ q: 0, r: 1 }, 10).x).toBeCloseTo(10 * Math.sqrt(3) * 0.5);
+  });
 });
 
 describe("hexCorners", () => {
