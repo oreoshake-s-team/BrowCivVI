@@ -15,14 +15,12 @@
   border-radius: var(--radius-md);
   touch-action: none;
   user-select: none;
-  -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
-@media (max-width: 720px) {
+@media (width <= 720px) {
   .layout {
-    flex-direction: column;
-    flex-wrap: nowrap;
+    flex-flow: column nowrap;
   }
 
   .board {
@@ -39,7 +37,8 @@
 .hex {
   stroke: var(--color-hex-stroke);
   stroke-width: 1;
-  transition: stroke var(--motion-fast) var(--ease-standard),
+  transition:
+    stroke var(--motion-fast) var(--ease-standard),
     stroke-width var(--motion-fast) var(--ease-standard);
 }
 

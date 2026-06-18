@@ -1,6 +1,6 @@
+import type { Citation } from "../content/citation";
 import type { Hex } from "../hex";
 import type { Terrain, TerrainType } from "./terrain";
-import type { Citation } from "../content/citation";
 import { TERRAIN_CATALOG } from "./terrain";
 
 export type Affinity = "macedon" | "persia" | "neutral";

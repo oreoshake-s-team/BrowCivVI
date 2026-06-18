@@ -1,23 +1,35 @@
 import { describe, it, expect } from "vitest";
-import { aggregateDefenseMultiplier } from "./registry";
 import { PHALANX_ABILITY } from "./phalanx";
+import { aggregateDefenseMultiplier } from "./registry";
 
 describe("aggregateDefenseMultiplier", () => {
   it("applies the registered phalanx wall bonus when unflanked", () => {
     expect(
-      aggregateDefenseMultiplier({ defenderAbilities: [PHALANX_ABILITY], flanked: false, terrainMoveCost: 1 }),
+      aggregateDefenseMultiplier({
+        defenderAbilities: [PHALANX_ABILITY],
+        flanked: false,
+        terrainMoveCost: 1,
+      }),
     ).toBeCloseTo(1.5);
   });
 
   it("combines the flanked penalty with rough terrain", () => {
     expect(
-      aggregateDefenseMultiplier({ defenderAbilities: [PHALANX_ABILITY], flanked: true, terrainMoveCost: 2 }),
+      aggregateDefenseMultiplier({
+        defenderAbilities: [PHALANX_ABILITY],
+        flanked: true,
+        terrainMoveCost: 2,
+      }),
     ).toBeCloseTo(0.75);
   });
 
   it("is identity for an unregistered ability", () => {
     expect(
-      aggregateDefenseMultiplier({ defenderAbilities: ["heated-sand"], flanked: false, terrainMoveCost: 1 }),
+      aggregateDefenseMultiplier({
+        defenderAbilities: ["heated-sand"],
+        flanked: false,
+        terrainMoveCost: 1,
+      }),
     ).toBe(1);
   });
 

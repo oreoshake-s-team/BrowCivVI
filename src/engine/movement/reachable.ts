@@ -1,8 +1,8 @@
 import type { Hex, HexDirection } from "../hex";
 import { HEX_DIRECTIONS, neighbor } from "../hex";
 import type { GameMap } from "../map/types";
-import type { MovementDomain } from "../unit/classes";
 import { hexKey, terrainAt } from "../map/types";
+import type { MovementDomain } from "../unit/classes";
 
 export interface ReachableInput {
   readonly start: Hex;
@@ -27,7 +27,7 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
         const key = hexKey(step);
         if (blocked?.has(key)) continue;
         const terrain = terrainAt(map, step);
-        if (terrain === undefined || !terrain.passableBy.includes(domain)) continue;
+        if (!terrain?.passableBy.includes(domain)) continue;
         const remaining = budget - terrain.moveCost;
         if (remaining < 0) continue;
         const prev = best.get(key);

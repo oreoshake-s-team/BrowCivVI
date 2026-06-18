@@ -8,8 +8,8 @@ The repo currently contains **documentation only** (this guide, the design doc, 
 
 ## Prerequisites
 
-- **Git for Windows** (includes Git Bash) — https://git-scm.com/download/win
-- **Node.js LTS (>= 20)** — https://nodejs.org
+- **Git for Windows** (includes Git Bash) — <https://git-scm.com/download/win>
+- **Node.js LTS (>= 20)** — <https://nodejs.org>
 - **Yarn Berry via Corepack** (do *not* `npm i -g yarn`). Corepack ships with Node; enable it once: `corepack enable`. The project pins Yarn in `package.json` (`packageManager`) once scaffolded, so Corepack picks the right version automatically.
 - A terminal: **PowerShell**, **Git Bash**, or (recommended) a **WSL2** shell.
 
@@ -27,7 +27,7 @@ Native Windows works too — just mind the gotchas below.
 
 ## First-time setup
 
-```
+```bash
 git clone <repo-url> BrowCivVI
 cd BrowCivVI
 corepack enable

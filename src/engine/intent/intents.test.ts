@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { availableIntentKinds } from "./intents";
 import { SETTLER, ARCHER, CATAPULT, GREAT_GENERAL, PHALANGITE } from "../unit/fixtures";
+import { availableIntentKinds } from "./intents";
 
 describe("availableIntentKinds", () => {
   it("lets a settler settle", () => {

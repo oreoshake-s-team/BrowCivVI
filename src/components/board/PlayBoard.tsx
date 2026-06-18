@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { GameMap } from "@/engine/map/types";
-import type { Hex } from "@/engine/hex";
-import type { Unit } from "@/engine/unit/types";
+import { fetchReachable, submitMove } from "@/app/play/actions";
 import type { NamedRegion } from "@/engine/content/region";
+import type { Hex } from "@/engine/hex";
+import type { GameMap } from "@/engine/map/types";
 import { hexKey } from "@/engine/map/types";
 import { unitTypeById } from "@/engine/unit/catalog";
-import { fetchReachable, submitMove } from "@/app/play/actions";
+import type { Unit } from "@/engine/unit/types";
 import { HexBoard } from "./HexBoard";
 
 function initialRemaining(units: readonly Unit[]): Record<string, number> {
@@ -26,7 +26,9 @@ export interface PlayBoardProps {
 
 export function PlayBoard({ map, units: initialUnits, regions = [] }: PlayBoardProps) {
   const [units, setUnits] = useState<readonly Unit[]>(initialUnits);
-  const [remaining, setRemaining] = useState<Record<string, number>>(() => initialRemaining(initialUnits));
+  const [remaining, setRemaining] = useState<Record<string, number>>(() =>
+    initialRemaining(initialUnits),
+  );
   const [reachable, setReachable] = useState<readonly Hex[]>([]);
 
   const occupiedExcept = (unitId: string): readonly string[] =>
@@ -71,8 +73,8 @@ export function PlayBoard({ map, units: initialUnits, regions = [] }: PlayBoardP
       units={units}
       regions={regions}
       reachable={reachable}
-      onSelect={handleSelect}
-      onMove={handleMove}
+      onSelect={(unitId) => void handleSelect(unitId)}
+      onMove={(unitId, to) => void handleMove(unitId, to)}
     />
   );
 }

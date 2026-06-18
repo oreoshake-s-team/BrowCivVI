@@ -1,6 +1,6 @@
+import { TERRAIN_CATALOG } from "../map/terrain";
 import type { City, GameMap } from "../map/types";
 import { hexKey } from "../map/types";
-import { TERRAIN_CATALOG } from "../map/terrain";
 
 export interface ValidationResult {
   readonly errors: readonly string[];
@@ -11,9 +11,22 @@ export const CAMPAIGN_BCE = 334;
 export const RECENT_WINDOW_BCE = 384;
 
 export const REQUIRED_CITY_IDS: readonly string[] = [
-  "pella", "amphipolis", "athens", "corinth", "sparta", "sestos", "elaeus",
-  "abydos", "ilium", "zeleia", "dascylium", "cyzicus", "sardis", "ephesus",
-  "halicarnassus", "miletus",
+  "pella",
+  "amphipolis",
+  "athens",
+  "corinth",
+  "sparta",
+  "sestos",
+  "elaeus",
+  "abydos",
+  "ilium",
+  "zeleia",
+  "dascylium",
+  "cyzicus",
+  "sardis",
+  "ephesus",
+  "halicarnassus",
+  "miletus",
 ];
 
 function cityOf(map: GameMap, id: string): City | undefined {
@@ -52,7 +65,11 @@ export function geographyErrors(map: GameMap): string[] {
 
   const sestos = cityOf(map, "sestos");
   const abydos = cityOf(map, "abydos");
-  if (sestos && abydos && (Math.abs(sestos.hex.q - abydos.hex.q) > 2 || sestos.hex.r > 1 || abydos.hex.r > 1)) {
+  if (
+    sestos &&
+    abydos &&
+    (Math.abs(sestos.hex.q - abydos.hex.q) > 2 || sestos.hex.r > 1 || abydos.hex.r > 1)
+  ) {
     errors.push("Geography: Sestos and Abydos must flank the narrow Hellespont");
   }
 
@@ -64,14 +81,17 @@ export function geographyErrors(map: GameMap): string[] {
       const isSea = passable.includes("naval") || passable.length === 0;
       return isSea && mapHex.hex.q > athens.hex.q && mapHex.hex.q < ilium.hex.q;
     });
-    if (aegeanHexes.length === 0) errors.push("Geography: the Aegean must separate Europe from Asia");
-    if (aegeanHexes.length < 6) errors.push("Geography: the Aegean must be rendered as a sea body, not a sliver");
+    if (aegeanHexes.length === 0)
+      errors.push("Geography: the Aegean must separate Europe from Asia");
+    if (aegeanHexes.length < 6)
+      errors.push("Geography: the Aegean must be rendered as a sea body, not a sliver");
   }
 
   if (map.rivers.length === 0) errors.push("Geography: the Granicus river edge must be present");
 
   const hasMountain = [...map.hexes.values()].some((mapHex) => mapHex.terrain === "mountain");
-  if (!hasMountain) errors.push("Geography: Mount Ida must channel the Troad with impassable terrain");
+  if (!hasMountain)
+    errors.push("Geography: Mount Ida must channel the Troad with impassable terrain");
 
   return errors;
 }
@@ -112,7 +132,9 @@ export function chronologyWarnings(map: GameMap): string[] {
   for (const city of map.cities.values()) {
     const bce = city.firstAttestedBce;
     if (bce !== undefined && bce >= CAMPAIGN_BCE && bce < RECENT_WINDOW_BCE) {
-      warnings.push(`Chronology: ${city.id} was founded within ~50 years of the campaign — verify period fit`);
+      warnings.push(
+        `Chronology: ${city.id} was founded within ~50 years of the campaign — verify period fit`,
+      );
     }
   }
   return warnings;

@@ -30,10 +30,7 @@ describe("component CSS stays token-based", () => {
 });
 
 describe("board palette stays token-based", () => {
-  const paletteSource = readFileSync(
-    resolve(srcRoot, "components/board/palette.ts"),
-    "utf8",
-  );
+  const paletteSource = readFileSync(resolve(srcRoot, "components/board/palette.ts"), "utf8");
 
   it("declares no raw color literals", () => {
     expect(findRawColorLiterals(paletteSource)).toEqual([]);
@@ -46,15 +43,11 @@ describe("the guards detect raw values", () => {
   });
 
   it("flags a functional color literal", () => {
-    expect(findRawColorLiterals(".a { fill: rgba(212, 175, 55, 0.38); }")).toContain(
-      "rgba(",
-    );
+    expect(findRawColorLiterals(".a { fill: rgba(212, 175, 55, 0.38); }")).toContain("rgba(");
   });
 
   it("flags a raw pixel border-radius", () => {
-    expect(findRawBorderRadii(".a { border-radius: 8px; }")).toEqual([
-      "border-radius: 8px",
-    ]);
+    expect(findRawBorderRadii(".a { border-radius: 8px; }")).toEqual(["border-radius: 8px"]);
   });
 
   it("accepts a tokenized border-radius", () => {

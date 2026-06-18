@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { SETTLER, PHALANGITE } from "./fixtures";
 import type { UnitType } from "./types";
 import { effectiveCapabilities } from "./types";
-import { SETTLER, PHALANGITE } from "./fixtures";
 
 describe("effectiveCapabilities", () => {
   it("includes the class default capabilities", () => {

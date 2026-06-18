@@ -1,0 +1,7 @@
+.next
+coverage
+.yarn
+yarn.lock
+.pnp.*
+next-env.d.ts
+*.md

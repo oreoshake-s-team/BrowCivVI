@@ -43,6 +43,9 @@ describe("FIRST_SLICE_REGIONS", () => {
 
 describe("FIRST_SLICE_UNITS", () => {
   it("places Alexander's companions on the approach to the river", () => {
-    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-companions")?.hex).toEqual({ q: 6, r: 1 });
+    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-companions")?.hex).toEqual({
+      q: 6,
+      r: 1,
+    });
   });
 });

@@ -41,5 +41,13 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Typecheck
         run: yarn typecheck
+      - name: Lint (ESLint)
+        run: yarn lint
+      - name: Lint CSS (Stylelint)
+        run: yarn lint:css
+      - name: Lint Markdown
+        run: yarn lint:md
+      - name: Format check (Prettier)
+        run: yarn format:check
       - name: Test
         run: yarn test

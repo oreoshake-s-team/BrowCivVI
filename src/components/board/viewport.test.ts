@@ -3,13 +3,23 @@ import { fitView, panView, zoomView, MIN_SPAN } from "./viewport";
 
 describe("fitView", () => {
   it("pads the bounds into a viewBox", () => {
-    expect(fitView({ minX: 0, minY: 0, maxX: 100, maxY: 50 }, 10)).toEqual({ x: -10, y: -10, w: 120, h: 70 });
+    expect(fitView({ minX: 0, minY: 0, maxX: 100, maxY: 50 }, 10)).toEqual({
+      x: -10,
+      y: -10,
+      w: 120,
+      h: 70,
+    });
   });
 });
 
 describe("panView", () => {
   it("shifts the viewBox opposite the drag", () => {
-    expect(panView({ x: 0, y: 0, w: 100, h: 100 }, 10, 5)).toEqual({ x: -10, y: -5, w: 100, h: 100 });
+    expect(panView({ x: 0, y: 0, w: 100, h: 100 }, 10, 5)).toEqual({
+      x: -10,
+      y: -5,
+      w: 100,
+      h: 100,
+    });
   });
 });
 

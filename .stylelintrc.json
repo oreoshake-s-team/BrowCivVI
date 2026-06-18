@@ -1,0 +1,16 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "overrides": [
+    {
+      "files": ["**/*.module.css"],
+      "rules": {
+        "selector-class-pattern": [
+          "^[a-z][a-zA-Z0-9]*$",
+          {
+            "message": "Expected CSS Module class selector to be camelCase"
+          }
+        ]
+      }
+    }
+  ]
+}

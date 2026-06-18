@@ -1,5 +1,5 @@
-import type { Unit } from "@/engine/unit/types";
 import { unitTypeById } from "@/engine/unit/catalog";
+import type { Unit } from "@/engine/unit/types";
 import styles from "./HexBoard.module.css";
 
 const FACTION_NAMES: Readonly<Record<string, string>> = {
