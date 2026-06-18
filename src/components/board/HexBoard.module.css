@@ -1,0 +1,145 @@
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.board {
+  flex: 1 1 480px;
+  max-width: 720px;
+  height: auto;
+  background: #f3efe3;
+  border: 1px solid #d8d0bd;
+  border-radius: 8px;
+}
+
+.hex {
+  stroke: #6f6750;
+  stroke-width: 1;
+  transition: stroke 120ms ease, stroke-width 120ms ease;
+}
+
+.hexHover {
+  stroke: #1b1b1b;
+  stroke-width: 3;
+}
+
+.coord {
+  font-size: 9px;
+  fill: #4a4636;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: #f3efe3;
+  stroke-width: 2.5px;
+  pointer-events: none;
+}
+
+.city {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #2a2418;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: #f3efe3;
+  stroke-width: 3px;
+  pointer-events: none;
+}
+
+.river {
+  stroke: #2f6fb0;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.token {
+  cursor: pointer;
+  outline: none;
+}
+
+.token:focus-visible circle {
+  stroke: #1b1b1b;
+  stroke-width: 3;
+}
+
+.glyph {
+  font-size: 20px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.selectedRing {
+  fill: none;
+  stroke: #1b1b1b;
+  stroke-width: 2.5;
+  stroke-dasharray: 4 3;
+}
+
+.sidebar {
+  flex: 1 1 220px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.panelHeading {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.legend,
+.info {
+  padding: 0.75rem 1rem;
+  background: #faf8f1;
+  border: 1px solid #e0d8c5;
+  border-radius: 8px;
+}
+
+.legendList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #6f6750;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.stats dt {
+  font-weight: 600;
+  color: #5a5340;
+}
+
+.stats dd {
+  margin: 0;
+}
+
+.infoEmpty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6a6453;
+}
