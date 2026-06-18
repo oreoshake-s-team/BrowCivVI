@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FIRST_SLICE_MAP, FIRST_SLICE_UNITS } from "@/content/firstSlice";
+import { FIRST_SLICE_MAP, FIRST_SLICE_UNITS, FIRST_SLICE_REGIONS } from "@/content/firstSlice";
 import { HexBoard } from "@/components/board/HexBoard";
 
 export const metadata = {
@@ -14,10 +14,10 @@ export default function PlayPage() {
       </p>
       <h1>The Granicus, 334 BC</h1>
       <p>
-        Macedon (gold) crosses the Hellespont to face the Persian satraps (crimson) mustered at Zeleia, from
-        Pella west to Ionia in the south. Click a unit to inspect it.
+        From Sparta in the south Peloponnese, across the Aegean, to the Persian satraps (crimson) mustered at
+        Zeleia: Macedon (gold) crosses the Hellespont to open the campaign. Click a unit to inspect it.
       </p>
-      <HexBoard map={FIRST_SLICE_MAP} units={FIRST_SLICE_UNITS} />
+      <HexBoard map={FIRST_SLICE_MAP} units={FIRST_SLICE_UNITS} regions={FIRST_SLICE_REGIONS} />
     </main>
   );
 }

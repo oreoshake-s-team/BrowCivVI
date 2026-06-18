@@ -10,8 +10,9 @@ export const CAMPAIGN_BCE = 334;
 export const RECENT_WINDOW_BCE = 384;
 
 export const REQUIRED_CITY_IDS: readonly string[] = [
-  "pella", "amphipolis", "sestos", "elaeus", "abydos", "ilium", "zeleia",
-  "dascylium", "cyzicus", "sardis", "ephesus", "halicarnassus", "miletus",
+  "pella", "amphipolis", "athens", "corinth", "sparta", "sestos", "elaeus",
+  "abydos", "ilium", "zeleia", "dascylium", "cyzicus", "sardis", "ephesus",
+  "halicarnassus", "miletus",
 ];
 
 function cityOf(map: GameMap, id: string): City | undefined {
@@ -41,9 +42,12 @@ export function geographyErrors(map: GameMap): string[] {
   westOf("sestos", "abydos", "the European bank (Sestos) must lie west of the Asian bank (Abydos)");
   westOf("abydos", "dascylium", "the road from Abydos must run east to Dascylium");
   westOf("ephesus", "sardis", "the Ionian coast (Ephesus) must lie west of inland Sardis");
+  westOf("athens", "ilium", "the Greek mainland (Athens) must lie west of Asia Minor (Ilium)");
   southOf("sardis", "dascylium", "Sardis must lie inland to the south of the Granicus region");
   southOf("ephesus", "sardis", "Ephesus must lie south of Sardis");
   southOf("miletus", "ephesus", "Miletus must lie south of Ephesus");
+  southOf("corinth", "athens", "Corinth must lie south of Athens toward the isthmus");
+  southOf("sparta", "corinth", "Sparta must lie deep in the southern Peloponnese, below Corinth");
 
   const sestos = cityOf(map, "sestos");
   const abydos = cityOf(map, "abydos");
@@ -51,15 +55,16 @@ export function geographyErrors(map: GameMap): string[] {
     errors.push("Geography: Sestos and Abydos must flank the narrow Hellespont");
   }
 
-  const pella = cityOf(map, "pella");
+  const athens = cityOf(map, "athens");
   const ilium = cityOf(map, "ilium");
-  if (pella && ilium) {
-    const seaBetween = [...map.hexes.values()].some((mapHex) => {
+  if (athens && ilium) {
+    const aegeanHexes = [...map.hexes.values()].filter((mapHex) => {
       const passable = TERRAIN_CATALOG[mapHex.terrain].passableBy;
       const isSea = passable.includes("naval") || passable.length === 0;
-      return isSea && mapHex.hex.q > pella.hex.q && mapHex.hex.q < ilium.hex.q;
+      return isSea && mapHex.hex.q > athens.hex.q && mapHex.hex.q < ilium.hex.q;
     });
-    if (!seaBetween) errors.push("Geography: the Aegean must separate Europe from Asia");
+    if (aegeanHexes.length === 0) errors.push("Geography: the Aegean must separate Europe from Asia");
+    if (aegeanHexes.length < 6) errors.push("Geography: the Aegean must be rendered as a sea body, not a sliver");
   }
 
   if (map.rivers.length === 0) errors.push("Geography: the Granicus river edge must be present");

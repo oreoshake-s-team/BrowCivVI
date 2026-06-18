@@ -29,15 +29,25 @@ const HEXES: readonly MapHex[] = [
   h(0, 2, "hills"), h(1, 2, "plains"), h(2, 2, "coast"), h(3, 2, "coast", "elaeus"),
   h(4, 2, "deepSea"), h(5, 2, "plains", "ilium"), h(6, 2, "plains"), h(7, 2, "hills"),
   h(8, 2, "hills"), h(9, 2, "hills"),
-  h(3, 3, "deepSea"), h(4, 3, "deepSea"), h(5, 3, "coast"), h(6, 3, "hills"),
-  h(7, 3, "hills"), h(8, 3, "plains"), h(9, 3, "hills"),
-  h(5, 4, "coast"), h(6, 4, "mountain"), h(7, 4, "mountain"), h(8, 4, "hills", "sardis"),
-  h(9, 4, "hills"),
-  h(5, 5, "coast"), h(6, 5, "hills"), h(7, 5, "plains"), h(8, 5, "plains"), h(9, 5, "hills"),
-  h(5, 6, "deepSea"), h(6, 6, "coast", "ephesus"), h(7, 6, "plains"), h(8, 6, "hills"),
-  h(5, 7, "deepSea"), h(6, 7, "coast"), h(7, 7, "plains"), h(8, 7, "hills"),
-  h(6, 8, "coast", "miletus"), h(7, 8, "plains"),
-  h(6, 9, "deepSea"), h(7, 9, "coast", "halicarnassus"),
+  h(0, 3, "plains"), h(1, 3, "hills"), h(2, 3, "hills"), h(3, 3, "deepSea"),
+  h(4, 3, "coast"), h(5, 3, "coast"), h(6, 3, "hills"), h(7, 3, "hills"),
+  h(8, 3, "plains"), h(9, 3, "hills"),
+  h(0, 4, "hills"), h(1, 4, "hills"), h(2, 4, "plains"), h(3, 4, "coast"),
+  h(4, 4, "deepSea"), h(5, 4, "coast"), h(6, 4, "mountain"), h(7, 4, "mountain"),
+  h(8, 4, "hills", "sardis"), h(9, 4, "hills"),
+  h(0, 5, "hills"), h(1, 5, "hills"), h(2, 5, "coast", "athens"), h(3, 5, "deepSea"),
+  h(4, 5, "coast"), h(5, 5, "coast"), h(6, 5, "hills"), h(7, 5, "plains"),
+  h(8, 5, "plains"), h(9, 5, "hills"),
+  h(0, 6, "hills"), h(1, 6, "plains", "corinth"), h(2, 6, "hills"), h(3, 6, "deepSea"),
+  h(4, 6, "deepSea"), h(5, 6, "coast"), h(6, 6, "coast", "ephesus"), h(7, 6, "plains"),
+  h(8, 6, "hills"),
+  h(0, 7, "mountain"), h(1, 7, "hills"), h(2, 7, "hills"), h(3, 7, "deepSea"),
+  h(4, 7, "deepSea"), h(5, 7, "deepSea"), h(6, 7, "coast"), h(7, 7, "plains"),
+  h(8, 7, "hills"),
+  h(0, 8, "hills"), h(1, 8, "hills", "sparta"), h(2, 8, "hills"), h(3, 8, "deepSea"),
+  h(4, 8, "deepSea"), h(5, 8, "deepSea"), h(6, 8, "coast", "miletus"), h(7, 8, "plains"),
+  h(1, 9, "hills"), h(2, 9, "coast"), h(3, 9, "deepSea"), h(4, 9, "deepSea"),
+  h(5, 9, "deepSea"), h(6, 9, "deepSea"), h(7, 9, "coast", "halicarnassus"),
 ];
 
 const GRANICUS = "https://en.wikipedia.org/wiki/Battle_of_the_Granicus";
@@ -52,6 +62,21 @@ const CITIES: readonly City[] = [
     id: "amphipolis", name: "Amphipolis", hex: { q: 2, r: 1 }, owner: "macedon", affinity: "macedon",
     value: 90, defense: 20, firstAttestedBce: 437,
     citation: ref("Amphipolis on the Strymon was the army's eastward staging point.", "Amphipolis", "https://en.wikipedia.org/wiki/Amphipolis"),
+  },
+  {
+    id: "athens", name: "Athens", hex: { q: 2, r: 5 }, owner: "macedon", affinity: "macedon",
+    value: 105, defense: 20, firstAttestedBce: 1400,
+    citation: ref("Athens, the great Attic city, was a reluctant member of the League of Corinth.", "Classical Athens", "https://en.wikipedia.org/wiki/Classical_Athens"),
+  },
+  {
+    id: "corinth", name: "Corinth", hex: { q: 1, r: 6 }, owner: "macedon", affinity: "macedon",
+    value: 90, defense: 20, firstAttestedBce: 900,
+    citation: ref("Corinth gave its name to the League of Corinth through which Macedon led the Greeks.", "League of Corinth", "https://en.wikipedia.org/wiki/League_of_Corinth"),
+  },
+  {
+    id: "sparta", name: "Sparta", hex: { q: 1, r: 8 }, owner: null, affinity: "neutral",
+    value: 80, defense: 26, firstAttestedBce: 1000,
+    citation: ref("Sparta alone refused to join Alexander's League of Corinth, remaining an independent holdout.", "League of Corinth", "https://en.wikipedia.org/wiki/League_of_Corinth"),
   },
   {
     id: "sestos", name: "Sestos", hex: { q: 4, r: 0 }, owner: "macedon", affinity: "macedon",
@@ -115,15 +140,24 @@ const RIVERS: readonly RiverEdge[] = [
   { a: { q: 6, r: 2 }, b: { q: 7, r: 2 } },
 ];
 
+function island(id: string, name: string, q: number, r: number, claim: string, title: string, url: string): NamedRegion {
+  return { id, name, kind: "island", labelHex: { q, r }, citation: ref(claim, title, url) };
+}
+
 export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
   { id: "granicus", name: "Granicus", kind: "river", citation: ref("The Granicus (mod. Biga Çayı) rises on Mount Ida and runs NE to the Propontis; site of the 334 BC battle.", "Battle of the Granicus", GRANICUS, "primary") },
-  { id: "aegean", name: "Aegean Sea", kind: "sea", citation: ref("The Aegean separates the Greek mainland from Asia Minor.", "Aegean Sea", "https://en.wikipedia.org/wiki/Aegean_Sea") },
-  { id: "propontis", name: "Propontis", kind: "sea", citation: ref("The Propontis (Sea of Marmara) lies north of Hellespontine Phrygia.", "Sea of Marmara", "https://en.wikipedia.org/wiki/Sea_of_Marmara") },
+  { id: "aegean", name: "Aegean Sea", kind: "sea", labelHex: { q: 3, r: 6 }, citation: ref("The Aegean separates the Greek mainland from Asia Minor.", "Aegean Sea", "https://en.wikipedia.org/wiki/Aegean_Sea") },
+  { id: "propontis", name: "Propontis", kind: "sea", labelHex: { q: 7, r: 0 }, citation: ref("The Propontis (Sea of Marmara) lies north of Hellespontine Phrygia.", "Sea of Marmara", "https://en.wikipedia.org/wiki/Sea_of_Marmara") },
   { id: "hellespont", name: "Hellespont", kind: "strait", citation: ref("The Hellespont strait was crossed Sestos to Abydos.", "Dardanelles", "https://en.wikipedia.org/wiki/Dardanelles") },
   { id: "mount-ida", name: "Mount Ida", kind: "mountain", citation: ref("Mount Ida in the Troad is the source of the Granicus.", "Mount Ida (Turkey)", "https://en.wikipedia.org/wiki/Mount_Ida_(Turkey)") },
   { id: "troad", name: "Troad", kind: "region", citation: ref("The Troad is the NW Anatolian peninsula around Ilium.", "Troad", "https://en.wikipedia.org/wiki/Troad") },
   { id: "lydia", name: "Lydia", kind: "region", citation: ref("Lydia, with its capital Sardis, lay inland to the southeast.", "Lydia", "https://en.wikipedia.org/wiki/Lydia") },
   { id: "ionia", name: "Ionia", kind: "region", citation: ref("Ionia is the central Aegean coast of Asia Minor (Ephesus, Miletus).", "Ionia", "https://en.wikipedia.org/wiki/Ionia") },
+  island("euboea", "Euboea", 3, 4, "Euboea is the long island off the coast of central Greece.", "Euboea", "https://en.wikipedia.org/wiki/Euboea"),
+  island("cyclades", "Cyclades", 4, 5, "The Cyclades are the central Aegean archipelago.", "Cyclades", "https://en.wikipedia.org/wiki/Cyclades"),
+  island("lesbos", "Lesbos", 4, 3, "Lesbos lies in the northeast Aegean off the Troad.", "Lesbos", "https://en.wikipedia.org/wiki/Lesbos"),
+  island("chios", "Chios", 5, 5, "Chios lies off the Ionian coast of Asia Minor.", "Chios", "https://en.wikipedia.org/wiki/Chios"),
+  island("samos", "Samos", 5, 6, "Samos lies off the Ionian coast near Ephesus and Miletus.", "Samos", "https://en.wikipedia.org/wiki/Samos"),
 ];
 
 export const FIRST_SLICE_MAP: GameMap = createGameMap(HEXES, CITIES, RIVERS);

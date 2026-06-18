@@ -51,6 +51,19 @@ describe("geographyErrors", () => {
     const map = createGameMap([], []);
     expect(geographyErrors(map).some((error) => /Granicus river/.test(error))).toBe(true);
   });
+
+  it("flags Sparta placed north of Corinth", () => {
+    const map = createGameMap([], [city("sparta", 1, 2), city("corinth", 1, 6)]);
+    expect(geographyErrors(map).some((error) => /Sparta must lie/.test(error))).toBe(true);
+  });
+
+  it("flags an Aegean rendered as a thin sliver", () => {
+    const map = createGameMap(
+      [{ hex: { q: 3, r: 5 }, terrain: "coast" }],
+      [city("athens", 2, 5), city("ilium", 5, 2)],
+    );
+    expect(geographyErrors(map).some((error) => /sliver/.test(error))).toBe(true);
+  });
 });
 
 describe("anachronismErrors", () => {

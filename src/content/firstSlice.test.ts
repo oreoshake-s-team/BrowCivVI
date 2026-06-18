@@ -14,14 +14,30 @@ describe("FIRST_SLICE_MAP", () => {
     expect(FIRST_SLICE_MAP.cities.get("ephesus")?.affinity).toBe("macedon");
   });
 
-  it("authors all thirteen named cities", () => {
-    expect(FIRST_SLICE_MAP.cities.size).toBe(13);
+  it("authors all sixteen named cities", () => {
+    expect(FIRST_SLICE_MAP.cities.size).toBe(16);
+  });
+
+  it("models Sparta as an independent holdout (no owner)", () => {
+    expect(FIRST_SLICE_MAP.cities.get("sparta")?.owner).toBeNull();
+  });
+
+  it("gives independent Sparta a neutral affinity", () => {
+    expect(FIRST_SLICE_MAP.cities.get("sparta")?.affinity).toBe("neutral");
   });
 });
 
 describe("FIRST_SLICE_REGIONS", () => {
   it("includes the Granicus as a cited river feature", () => {
     expect(FIRST_SLICE_REGIONS.find((region) => region.id === "granicus")?.kind).toBe("river");
+  });
+
+  it("labels the Aegean Sea", () => {
+    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "aegean")?.labelHex).toBeDefined();
+  });
+
+  it("authors named Aegean islands", () => {
+    expect(FIRST_SLICE_REGIONS.filter((region) => region.kind === "island")).toHaveLength(5);
   });
 });
 
