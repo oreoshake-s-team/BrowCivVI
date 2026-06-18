@@ -1,0 +1,55 @@
+name: Issue
+description: Default template for all BrowCivVI issues (feature, task, bug, refactor, chore).
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting:
+        - Use a **semantic, descriptive title** (e.g. `feat(map): navigable river corridors`).
+        - Set the **issue type** (Bug / Feature / Task / Refactor / Chore) with GitHub's
+          native issue type — **not** a label.
+        - Add a **feature-space label** (e.g. `map`, `combat`, `ai`, `leaderboard`, `content`).
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is this issue, in one or two sentences?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature area
+      description: Primary area this touches.
+      options:
+        - map
+        - combat
+        - units / factions
+        - ai
+        - persistence
+        - leaderboard
+        - content / historical accuracy
+        - educational media
+        - ui / board
+        - engine
+        - infra / ci
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: historical
+    attributes:
+      label: Historical accuracy & citations
+      description: >
+        For any content (cities, units, battles, events, dates, coordinates), cite sources.
+        Geography must be exact and is enforced; dates are flavor (`docs/design.md` §10).
+        Enter "N/A" if this issue touches no historical content.
+      placeholder: "N/A — or: <claim> — <citation URL>"
+    validations:
+      required: false
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Out of scope / non-goals
+    validations:
+      required: false

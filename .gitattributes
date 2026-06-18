@@ -1,0 +1,12 @@
+# Normalize line endings to LF across platforms (important on Windows).
+* text=auto eol=lf
+
+# Treat common binaries as binary so Git never rewrites them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.woff binary
+*.woff2 binary
+*.ico binary
