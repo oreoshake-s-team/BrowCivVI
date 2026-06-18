@@ -16,18 +16,11 @@ body:
       description: What is this issue, in one or two sentences?
     validations:
       required: true
-  - type: textarea
-    id: context
-    attributes:
-      label: Context & motivation
-      description: Why does this matter? Link the relevant `docs/design.md` section(s) by number (e.g. §5, §13).
-    validations:
-      required: true
   - type: dropdown
     id: area
     attributes:
       label: Feature area
-      description: Primary area this touches. Add the matching label to the issue after filing.
+      description: Primary area this touches.
       options:
         - map
         - combat
@@ -52,15 +45,6 @@ body:
         Geography must be exact and is enforced; dates are flavor (`docs/design.md` §10).
         Enter "N/A" if this issue touches no historical content.
       placeholder: "N/A — or: <claim> — <citation URL>"
-    validations:
-      required: false
-  - type: textarea
-    id: scope
-    attributes:
-      label: Scope & size
-      description: >
-        Rough app-code size. If it exceeds ~150 lines (excl. tests/CSS/config), list the
-        sub-issues you'll split it into (`docs/design.md` §9).
     validations:
       required: false
   - type: textarea
