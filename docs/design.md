@@ -326,6 +326,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
   - _Mutator — "Improper Siege Support" (§5):_ the opt-in mutator **inverts** this, letting ranged, cavalry, and bombard units leech ram/tower bonuses (the actual Civ 6 bug). Mutator-lane only; countered by Heated Sand below.
 - Hoplite **adjacency** (phalanx) bonuses apply: **+10% combat strength per adjacent friendly hoplite, cap +30%** (provisional, §14).
 - **Flanking** mirrors Humankind and uses **unit facing**: each unit has an orientation, and an attack lands in the defender's **front / flank / rear** arc (rear > flank); the bonus _also_ scales with the **number** of flanking units.
+- **Sarissa wall** (phalangite front-arc defense): a phalangite (a unit with the `phalanx` ability) presents a hedge of sarissas to its **front** arc — a strong **defensive** bonus when attacked head-on, but it is **negated** when the attack lands in the phalangite's **flank or rear** arc (the formation can't face the threat), and it is **reduced on rough terrain** (any hex with `moveCost > 1`), where the line loses cohesion. This is distinct from the hoplite **adjacency** bonus above (formation density) — it is about **facing** and **ground**, and it reuses the same front/flank/rear arc the flanking system already computes. The historical strength-and-weakness of the Macedonian phalanx: irresistible from the front, fatally exposed once flanked or broken up on uneven ground (the gap at Gaugamela; Arrian, _Anabasis_ III.13–14). Provisional values in §14; resolved as a pure modifier behind the combat/effect registry (§5).
 - **Hypaspists**: no bonus when sieging a city.
 - **Hetairoi**: +1 movement while benefiting from a great general.
 - **To the World's End**: immune to **war-weariness** morale decay from overextension/distance (§5 Supply & morale) — the systemic counter to the Hyphasis mutiny.
@@ -365,6 +366,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 - **Flanking (facing-based arcs): rear +100%, flank +50%**, plus **+15% per additional adjacent flanking unit, capped at +60%**. Encirclement and cavalry envelopment are decisive.
 - **Persian heavy-cavalry instant-kill: 10% per attack**, offset by the −2 attack strength (§13).
 - **Hoplite phalanx adjacency: +10% combat strength per adjacent friendly hoplite, cap +30%** (§13).
+- **Sarissa wall (phalangite front-arc): +50% defensive strength when attacked in the front arc; bonus negated in flank/rear; −25% defensive strength when the phalangite defends on rough terrain (`moveCost > 1`)** (§13). Stacks multiplicatively with the flanking arc the attacker earns — a flank hit both denies the wall _and_ takes the flank bonus.
 - **Immortal cap: 15** (confirms §13).
 
 ### Supply & morale
