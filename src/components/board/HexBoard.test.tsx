@@ -92,4 +92,31 @@ describe("HexBoard interaction", () => {
     fireEvent.contextMenu(container.querySelector('[data-hex="2,2"]') as Element);
     expect(onMove).not.toHaveBeenCalled();
   });
+
+  it("moves on a tap of a reachable hex (touch)", () => {
+    const onMove = vi.fn();
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onMove={onMove} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    const hex = container.querySelector('[data-hex="1,0"]') as Element;
+    fireEvent.pointerDown(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.click(hex);
+    expect(onMove).toHaveBeenCalledWith("macedon-phalanx-1", { q: 1, r: 0 });
+  });
+
+  it("deselects on a tap of an unreachable hex (touch)", () => {
+    const onSelect = vi.fn();
+    const onMove = vi.fn();
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onSelect={onSelect} onMove={onMove} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    const hex = container.querySelector('[data-hex="2,2"]') as Element;
+    fireEvent.pointerDown(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.click(hex);
+    expect(onMove).not.toHaveBeenCalled();
+  });
 });
