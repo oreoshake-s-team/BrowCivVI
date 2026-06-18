@@ -16,6 +16,20 @@ export const UNIT_TYPES: Readonly<Record<string, UnitType>> = {
     movement: 4,
     strength: 35,
   },
+  hetairoi: {
+    id: "hetairoi",
+    name: "Hetairoi",
+    class: "heavyCavalry",
+    movement: 4,
+    strength: 38,
+  },
+  immortal: {
+    id: "immortal",
+    name: "Immortal",
+    class: "melee",
+    movement: 2,
+    strength: 36,
+  },
 };
 
 export function unitTypeById(id: string): UnitType | undefined {

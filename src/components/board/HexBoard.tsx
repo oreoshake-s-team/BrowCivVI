@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { GameMap } from "@/engine/map/types";
 import type { Unit } from "@/engine/unit/types";
+import type { NamedRegion } from "@/engine/content/region";
 import { hexKey } from "@/engine/map/types";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
 import { unitTypeById } from "@/engine/unit/catalog";
@@ -14,7 +15,17 @@ import styles from "./HexBoard.module.css";
 
 const SIZE = 36;
 
-export function HexBoard({ map, units }: { map: GameMap; units: readonly Unit[] }) {
+const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
+
+export function HexBoard({
+  map,
+  units,
+  regions = [],
+}: {
+  map: GameMap;
+  units: readonly Unit[];
+  regions?: readonly NamedRegion[];
+}) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -70,6 +81,18 @@ export function HexBoard({ map, units }: { map: GameMap; units: readonly Unit[] 
               x2={p2.x}
               y2={p2.y}
             />
+          );
+        })}
+
+        {regions.map((region) => {
+          const labelHex = region.labelHex;
+          if (labelHex === undefined) return null;
+          const center = hexToPixel(labelHex, SIZE);
+          const className = SEA_KINDS.has(region.kind) ? styles.seaLabel : styles.featureLabel;
+          return (
+            <text key={region.id} className={className} x={center.x} y={center.y}>
+              {region.name}
+            </text>
           );
         })}
 
