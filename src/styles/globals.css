@@ -1,4 +1,9 @@
-:root {
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme static {
   --parchment: #f3efe3;
   --parchment-light: #faf8f1;
   --sand-200: #e0d8c5;

@@ -1,5 +1,25 @@
 {
   "extends": ["stylelint-config-standard"],
+  "rules": {
+    "import-notation": "string",
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "theme",
+          "tailwind",
+          "apply",
+          "variant",
+          "utility",
+          "custom-variant",
+          "source",
+          "config",
+          "plugin",
+          "reference"
+        ]
+      }
+    ]
+  },
   "overrides": [
     {
       "files": ["**/*.module.css"],

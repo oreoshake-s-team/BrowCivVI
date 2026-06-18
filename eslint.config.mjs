@@ -11,7 +11,14 @@ import globals from "globals";
 
 export default tseslint.config(
   {
-    ignores: [".next/**", "node_modules/**", "next-env.d.ts", "coverage/**", "eslint.config.mjs"],
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "next-env.d.ts",
+      "coverage/**",
+      "eslint.config.mjs",
+      "postcss.config.mjs",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
