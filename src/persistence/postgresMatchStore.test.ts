@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import type { Unit } from "@/engine/unit/types";
 import { createMatch } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
-import type { SqlExecutor, SqlRow } from "./sql";
+import type { Unit } from "@/engine/unit/types";
 import { PostgresMatchStore } from "./postgresMatchStore";
+import type { SqlExecutor, SqlRow } from "./sql";
 
 const UNIT: Unit = {
   id: "u1",
@@ -16,16 +16,23 @@ const UNIT: Unit = {
   hasMovedThisTurn: false,
 };
 
-const STATE = createMatch({ id: "m1", seed: 7, mapId: "first-slice", turnLimit: 20, units: [UNIT], movementOf: () => 4 });
+const STATE = createMatch({
+  id: "m1",
+  seed: 7,
+  mapId: "first-slice",
+  turnLimit: 20,
+  units: [UNIT],
+  movementOf: () => 4,
+});
 
 function fakeExec(responses: readonly SqlRow[][]) {
   const calls: { text: string; params: readonly unknown[] }[] = [];
   let index = 0;
-  const exec: SqlExecutor = async (text, params) => {
+  const exec: SqlExecutor = (text, params) => {
     calls.push({ text, params });
     const rows = responses[index] ?? [];
     index += 1;
-    return rows;
+    return Promise.resolve(rows);
   };
   return { exec, calls };
 }
