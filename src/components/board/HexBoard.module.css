@@ -6,8 +6,9 @@
 }
 
 .board {
-  flex: 1 1 480px;
-  max-width: 720px;
+  flex: 1 1 640px;
+  width: 100%;
+  max-height: 82vh;
   height: auto;
   background: #f3efe3;
   border: 1px solid #d8d0bd;

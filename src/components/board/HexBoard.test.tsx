@@ -106,6 +106,16 @@ describe("HexBoard interaction", () => {
     expect(onMove).toHaveBeenCalledWith("macedon-phalanx-1", { q: 1, r: 0 });
   });
 
+  it("zooms the viewBox on a mouse wheel", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    svg.getBoundingClientRect = () =>
+      ({ x: 0, y: 0, top: 0, left: 0, right: 600, bottom: 600, width: 600, height: 600, toJSON() {} }) as DOMRect;
+    const before = svg.getAttribute("viewBox");
+    fireEvent.wheel(svg, { deltaY: -120, clientX: 300, clientY: 300 });
+    expect(svg.getAttribute("viewBox")).not.toBe(before);
+  });
+
   it("deselects on a tap of an unreachable hex (touch)", () => {
     const onSelect = vi.fn();
     const onMove = vi.fn();

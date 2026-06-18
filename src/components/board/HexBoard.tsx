@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { GameMap } from "@/engine/map/types";
 import type { Hex } from "@/engine/hex";
 import type { Unit } from "@/engine/unit/types";
@@ -39,7 +39,7 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
   const [view, setView] = useState(() => fitView(bounds, PAD));
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pointers = useRef(new Map<number, { x: number; y: number; sx: number; sy: number }>());
   const pinchDist = useRef<number | null>(null);
   const moved = useRef(false);
   const pointerType = useRef<string>("mouse");
@@ -65,16 +65,15 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     pointerType.current = event.pointerType;
     moved.current = false;
-    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, sx: event.clientX, sy: event.clientY });
     const [a, b] = [...pointers.current.values()];
     if (a && b) pinchDist.current = Math.hypot(a.x - b.x, a.y - b.y);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
   const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
     const prev = pointers.current.get(event.pointerId);
     if (prev === undefined) return;
-    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, sx: prev.sx, sy: prev.sy });
     const rect = svgRef.current?.getBoundingClientRect();
     if (rect === undefined || rect.width === 0) return;
     const [a, b] = [...pointers.current.values()];
@@ -92,11 +91,30 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
       }
       return;
     }
+    if (Math.hypot(event.clientX - prev.sx, event.clientY - prev.sy) > PAN_THRESHOLD && !moved.current) {
+      moved.current = true;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
     const dx = event.clientX - prev.x;
     const dy = event.clientY - prev.y;
-    if (Math.abs(dx) + Math.abs(dy) > PAN_THRESHOLD) moved.current = true;
     setView((v) => panView(v, (dx / rect.width) * v.w, (dy / rect.height) * v.h));
   };
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (svg === null) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      if (rect.width === 0) return;
+      const factor = event.deltaY > 0 ? 1.1 : 0.9;
+      setView((v) =>
+        zoomView(v, factor, v.x + ((event.clientX - rect.left) / rect.width) * v.w, v.y + ((event.clientY - rect.top) / rect.height) * v.h, fitW),
+      );
+    };
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [fitW]);
 
   const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
     pointers.current.delete(event.pointerId);
