@@ -1,4 +1,4 @@
-import type { Hex, HexDirection } from "../hex";
+import type { Hex } from "../hex";
 import type { UnitClass } from "./classes";
 import type { UnitCapability } from "./capabilities";
 import { UNIVERSAL_CAPABILITIES, CLASS_CAPABILITIES } from "./capabilities";
@@ -18,7 +18,6 @@ export interface Unit {
   readonly typeId: string;
   readonly owner: string;
   readonly hex: Hex;
-  readonly facing: HexDirection;
   readonly hp: number;
   readonly morale: number;
   readonly supplied: boolean;

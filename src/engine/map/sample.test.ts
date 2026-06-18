@@ -27,7 +27,7 @@ describe("SAMPLE_UNITS", () => {
     expect(SAMPLE_UNITS.find((unit) => unit.owner === "macedon")?.hex).toEqual({ q: 1, r: 1 });
   });
 
-  it("faces the Persian cavalry toward the crossing", () => {
-    expect(SAMPLE_UNITS.find((unit) => unit.owner === "persia")?.facing).toBe(3);
+  it("stations the Persian cavalry on the east bank", () => {
+    expect(SAMPLE_UNITS.find((unit) => unit.owner === "persia")?.hex).toEqual({ q: 2, r: 1 });
   });
 });

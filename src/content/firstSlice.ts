@@ -162,8 +162,8 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
 export const FIRST_SLICE_MAP: GameMap = createGameMap(HEXES, CITIES, RIVERS);
 
 export const FIRST_SLICE_UNITS: readonly Unit[] = [
-  { id: "mac-phalanx", typeId: "pezhetairos", owner: "macedon", hex: { q: 5, r: 1 }, facing: 0, hp: 100, morale: 85, supplied: true, hasMovedThisTurn: false },
-  { id: "mac-companions", typeId: "hetairoi", owner: "macedon", hex: { q: 6, r: 1 }, facing: 0, hp: 100, morale: 90, supplied: true, hasMovedThisTurn: false },
-  { id: "per-cavalry", typeId: "persian-cavalry", owner: "persia", hex: { q: 7, r: 1 }, facing: 3, hp: 100, morale: 70, supplied: true, hasMovedThisTurn: false },
-  { id: "per-immortals", typeId: "immortal", owner: "persia", hex: { q: 7, r: 2 }, facing: 3, hp: 100, morale: 75, supplied: true, hasMovedThisTurn: false },
+  { id: "mac-phalanx", typeId: "pezhetairos", owner: "macedon", hex: { q: 5, r: 1 }, hp: 100, morale: 85, supplied: true, hasMovedThisTurn: false },
+  { id: "mac-companions", typeId: "hetairoi", owner: "macedon", hex: { q: 6, r: 1 }, hp: 100, morale: 90, supplied: true, hasMovedThisTurn: false },
+  { id: "per-cavalry", typeId: "persian-cavalry", owner: "persia", hex: { q: 7, r: 1 }, hp: 100, morale: 70, supplied: true, hasMovedThisTurn: false },
+  { id: "per-immortals", typeId: "immortal", owner: "persia", hex: { q: 7, r: 2 }, hp: 100, morale: 75, supplied: true, hasMovedThisTurn: false },
 ];
