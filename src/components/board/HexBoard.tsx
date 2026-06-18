@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { GameMap } from "@/engine/map/types";
 import type { Hex } from "@/engine/hex";
 import type { Unit } from "@/engine/unit/types";
@@ -10,11 +10,14 @@ import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layou
 import { unitTypeById } from "@/engine/unit/catalog";
 import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
 import { riverSegmentPoints } from "./geometry";
+import { fitView, panView, zoomView, viewBoxString } from "./viewport";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
 import styles from "./HexBoard.module.css";
 
 const SIZE = 36;
+const PAD = SIZE;
+const PAN_THRESHOLD = 4;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 
@@ -28,14 +31,18 @@ export interface HexBoardProps {
 }
 
 export function HexBoard({ map, units, regions = [], reachable = [], onSelect, onMove }: HexBoardProps) {
+  const bounds = mapPixelBounds(map, SIZE);
+  const fitW = bounds.maxX - bounds.minX + PAD * 2;
+
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [view, setView] = useState(() => fitView(bounds, PAD));
 
-  const bounds = mapPixelBounds(map, SIZE);
-  const pad = SIZE;
-  const viewBox = `${bounds.minX - pad} ${bounds.minY - pad} ${
-    bounds.maxX - bounds.minX + pad * 2
-  } ${bounds.maxY - bounds.minY + pad * 2}`;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number; sx: number; sy: number }>());
+  const pinchDist = useRef<number | null>(null);
+  const moved = useRef(false);
+  const pointerType = useRef<string>("mouse");
 
   const selectedUnit = units.find((unit) => unit.id === selectedId) ?? null;
   const reachableKeys = new Set(reachable.map(hexKey));
@@ -46,18 +53,87 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
   };
 
   const tryMove = (target: Hex) => {
-    if (selectedId !== null && onMove && reachableKeys.has(hexKey(target))) {
-      onMove(selectedId, target);
+    if (selectedId !== null && onMove && reachableKeys.has(hexKey(target))) onMove(selectedId, target);
+  };
+
+  const tapHex = (hex: Hex) => {
+    if (moved.current) return;
+    if (pointerType.current !== "mouse" && reachableKeys.has(hexKey(hex))) tryMove(hex);
+    else select(null);
+  };
+
+  const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
+    pointerType.current = event.pointerType;
+    moved.current = false;
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, sx: event.clientX, sy: event.clientY });
+    const [a, b] = [...pointers.current.values()];
+    if (a && b) pinchDist.current = Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const prev = pointers.current.get(event.pointerId);
+    if (prev === undefined) return;
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, sx: prev.sx, sy: prev.sy });
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (rect === undefined || rect.width === 0) return;
+    const [a, b] = [...pointers.current.values()];
+    if (a && b) {
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinchDist.current !== null && dist > 0) {
+        const factor = pinchDist.current / dist;
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2;
+        setView((v) =>
+          zoomView(v, factor, v.x + ((midX - rect.left) / rect.width) * v.w, v.y + ((midY - rect.top) / rect.height) * v.h, fitW),
+        );
+        pinchDist.current = dist;
+        moved.current = true;
+      }
+      return;
     }
+    if (Math.hypot(event.clientX - prev.sx, event.clientY - prev.sy) > PAN_THRESHOLD && !moved.current) {
+      moved.current = true;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+    const dx = event.clientX - prev.x;
+    const dy = event.clientY - prev.y;
+    setView((v) => panView(v, (dx / rect.width) * v.w, (dy / rect.height) * v.h));
+  };
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (svg === null) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      if (rect.width === 0) return;
+      const factor = event.deltaY > 0 ? 1.1 : 0.9;
+      setView((v) =>
+        zoomView(v, factor, v.x + ((event.clientX - rect.left) / rect.width) * v.w, v.y + ((event.clientY - rect.top) / rect.height) * v.h, fitW),
+      );
+    };
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [fitW]);
+
+  const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
+    pointers.current.delete(event.pointerId);
+    if (pointers.current.size < 2) pinchDist.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
 
   return (
     <div className={styles.layout}>
       <svg
+        ref={svgRef}
         className={styles.board}
-        viewBox={viewBox}
+        viewBox={viewBoxString(view)}
         role="img"
         aria-label="Hex map of the Granicus crossing"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
         {Array.from(map.hexes.values()).map((mapHex) => {
           const key = hexKey(mapHex.hex);
@@ -72,10 +148,10 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
                 fill={TERRAIN_COLORS[mapHex.terrain]}
                 onMouseEnter={() => setHovered(key)}
                 onMouseLeave={() => setHovered((current) => (current === key ? null : current))}
-                onClick={() => select(null)}
+                onClick={() => tapHex(mapHex.hex)}
                 onContextMenu={(event) => {
                   event.preventDefault();
-                  tryMove(mapHex.hex);
+                  if (!moved.current) tryMove(mapHex.hex);
                 }}
               />
               <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
@@ -122,6 +198,10 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
           const type = unitTypeById(unit.typeId);
           const style = factionStyle(unit.owner);
           const selected = unit.id === selectedId;
+          const toggle = () => {
+            if (moved.current) return;
+            select(selected ? null : unit.id);
+          };
           return (
             <g
               key={unit.id}
@@ -134,7 +214,7 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
               aria-pressed={selected}
               onClick={(event) => {
                 event.stopPropagation();
-                select(selected ? null : unit.id);
+                toggle();
               }}
               onContextMenu={(event) => event.preventDefault()}
               onKeyDown={(event) => {

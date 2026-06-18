@@ -92,4 +92,41 @@ describe("HexBoard interaction", () => {
     fireEvent.contextMenu(container.querySelector('[data-hex="2,2"]') as Element);
     expect(onMove).not.toHaveBeenCalled();
   });
+
+  it("moves on a tap of a reachable hex (touch)", () => {
+    const onMove = vi.fn();
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onMove={onMove} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    const hex = container.querySelector('[data-hex="1,0"]') as Element;
+    fireEvent.pointerDown(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.click(hex);
+    expect(onMove).toHaveBeenCalledWith("macedon-phalanx-1", { q: 1, r: 0 });
+  });
+
+  it("zooms the viewBox on a mouse wheel", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    const svg = container.querySelector("svg") as SVGSVGElement;
+    svg.getBoundingClientRect = () =>
+      ({ x: 0, y: 0, top: 0, left: 0, right: 600, bottom: 600, width: 600, height: 600, toJSON() {} }) as DOMRect;
+    const before = svg.getAttribute("viewBox");
+    fireEvent.wheel(svg, { deltaY: -120, clientX: 300, clientY: 300 });
+    expect(svg.getAttribute("viewBox")).not.toBe(before);
+  });
+
+  it("deselects on a tap of an unreachable hex (touch)", () => {
+    const onSelect = vi.fn();
+    const onMove = vi.fn();
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onSelect={onSelect} onMove={onMove} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    const hex = container.querySelector('[data-hex="2,2"]') as Element;
+    fireEvent.pointerDown(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
+    fireEvent.click(hex);
+    expect(onMove).not.toHaveBeenCalled();
+  });
 });

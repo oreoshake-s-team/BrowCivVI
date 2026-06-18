@@ -6,12 +6,34 @@
 }
 
 .board {
-  flex: 1 1 480px;
-  max-width: 720px;
+  flex: 1 1 640px;
+  width: 100%;
+  max-height: 82vh;
   height: auto;
   background: #f3efe3;
   border: 1px solid #d8d0bd;
   border-radius: 8px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .board {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .sidebar {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 .hex {
