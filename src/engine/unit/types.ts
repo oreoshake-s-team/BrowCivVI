@@ -1,7 +1,7 @@
 import type { Hex, HexDirection } from "../hex";
 import type { UnitClass } from "./classes";
 import type { UnitCapability } from "./capabilities";
-import { DEFAULT_CAPABILITIES } from "./capabilities";
+import { UNIVERSAL_CAPABILITIES, CLASS_CAPABILITIES } from "./capabilities";
 
 export interface UnitType {
   readonly id: string;
@@ -26,5 +26,9 @@ export interface Unit {
 }
 
 export function effectiveCapabilities(type: UnitType): ReadonlySet<UnitCapability> {
-  return new Set<UnitCapability>([...DEFAULT_CAPABILITIES[type.class], ...(type.capabilities ?? [])]);
+  return new Set<UnitCapability>([
+    ...UNIVERSAL_CAPABILITIES,
+    ...CLASS_CAPABILITIES[type.class],
+    ...(type.capabilities ?? []),
+  ]);
 }

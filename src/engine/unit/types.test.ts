@@ -12,8 +12,12 @@ describe("effectiveCapabilities", () => {
     expect(effectiveCapabilities(SETTLER).has("settle")).toBe(true);
   });
 
-  it("keeps the class default move alongside extras", () => {
+  it("keeps the universal move alongside extras", () => {
     expect(effectiveCapabilities(SETTLER).has("move")).toBe(true);
+  });
+
+  it("lets every unit heal, not just support units", () => {
+    expect(effectiveCapabilities(PHALANGITE).has("heal")).toBe(true);
   });
 
   it("deduplicates an extra capability that repeats a class default", () => {
@@ -25,6 +29,6 @@ describe("effectiveCapabilities", () => {
       strength: 10,
       capabilities: ["meleeAttack"],
     };
-    expect(effectiveCapabilities(redundant).size).toBe(2);
+    expect(effectiveCapabilities(redundant).size).toBe(3);
   });
 });
