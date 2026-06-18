@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { PlayBoard } from "@/components/board/PlayBoard";
-import { FIRST_SLICE_MAP, FIRST_SLICE_UNITS, FIRST_SLICE_REGIONS } from "@/content/firstSlice";
+import { FIRST_SLICE_MAP, FIRST_SLICE_REGIONS } from "@/content/firstSlice";
 
 export const metadata = {
   title: "Play — Conquests of Alexander",
 };
+
+export const dynamic = "force-dynamic";
 
 export default function PlayPage() {
   return (
@@ -19,7 +21,7 @@ export default function PlayPage() {
         hexes, then <strong>tap a highlighted hex</strong> to move there (right-click also moves on
         desktop). Drag to pan; pinch or scroll the mouse wheel to zoom.
       </p>
-      <PlayBoard map={FIRST_SLICE_MAP} units={FIRST_SLICE_UNITS} regions={FIRST_SLICE_REGIONS} />
+      <PlayBoard map={FIRST_SLICE_MAP} regions={FIRST_SLICE_REGIONS} />
     </main>
   );
 }
