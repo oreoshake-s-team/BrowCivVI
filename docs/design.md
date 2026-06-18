@@ -120,7 +120,10 @@ interface MatchStore {
 
 ### Units
 
-- Data-driven `UnitType` (e.g. Hetairoi cavalry, Hypaspist, generic enemy garrison): `{ movement, strength, abilities[], domain }`, where `domain` (`land` or `naval`) gates which hexes the unit may enter (see Map).
+- Data-driven `UnitType` (e.g. Hetairoi cavalry, Hypaspist, generic enemy garrison): `{ id, name, class, movement, strength, capabilities[], abilities[] }`. Two orthogonal axes describe a unit:
+  - **`class`** — _what the unit is_, a Civ 6 promotion class: `civilian · recon · melee · ranged · antiCavalry · lightCavalry · heavyCavalry · siege · navalMelee · navalRanged · navalRaider · support`. The `class` also **derives the movement `domain`** (`land` / `naval`) that gates which hexes it may enter (see Map) — the naval classes are the only `naval`-domain units, so domain is computed from class, not stored twice.
+  - **`capabilities[]`** — _what the unit can do_: `move · meleeAttack · rangedAttack · bombard · settle · siegeSupport · heal`. Effective capabilities are the union of three layers: a **universal** set every unit shares (`move`, `heal` — all units may move and all units may heal), the **class** set (e.g. `melee → [meleeAttack]`, `ranged → [rangedAttack]`, `siege → [bombard]`), and any **extra** capabilities a `UnitType` lists to specialise it (e.g. a settler is `class: civilian` + `[settle]`; a siege-tower is `class: support` + `[siegeSupport]`). The server turns a unit's effective capabilities into the **legal intents** (§6) it surfaces — capabilities map to intent kinds (`move → moveUnit`, `meleeAttack/rangedAttack/bombard → attack`, `settle → settle`), while passive capabilities (`siegeSupport`, `heal`) authorise no active intent. `heal` is **passive recovery** (resolved by the turn / Supply & morale pass, §5), not an order; whether healing is gated on friendly/supplied territory or ever becomes an active "rest" intent is deferred to the supply/morale slice.
+  - **`abilities[]`** stays distinct: it holds combat/effect **modifiers** (`phalanx`, flanking, instant-kill — §13) resolved behind the effect registry, _not_ actions. "Can act" (capabilities) and "gets a bonus" (abilities) are kept separate.
 - A `Unit` instance: `{ id, typeId, owner, hex, facing, hp, morale, supplied, hasMovedThisTurn }`. `facing` (a hex direction) drives the front / flank / rear combat arcs used by flanking (§13); `morale` and `supplied` feed the Supply & morale system below.
 
 ### Turn structure
@@ -163,7 +166,7 @@ A `Faction` is authored data — `{ id, leader, objective, abilities[], uniqueUn
 
 ### Loyalty & defection (peaceful expansion)
 
-Cities are won two ways: **conquest** (combat) or **loyal defection** (no battle). Each city carries a **loyalty** meter pulled between the two factions, updated each turn by a pure engine pass from:
+Cities are won **three** ways: **conquest** (combat), **loyal defection** (no battle), or **founding** a new city with a settler (the `settle` intent, §6). Founding is a **Macedon-flavored** acquisition path — historically grounded in the ~20 cities Alexander founded across the campaign (Alexandria-in-Egypt, 331 BC; Alexandria Eschate on the Jaxartes — Arrian, _Anabasis_ III.1, IV.4). A founded city enters owned by its founder with loyalty seeded toward that faction and a low starting `value` that grows as it is held; Persia does not settle, expanding only by holding and scorching. (Founding sits within §10's "accurate start, divergent play": the authored 334 BC map is fixed, but a divergent run may plant new Alexandrias.) Each city carries a **loyalty** meter pulled between the two factions, updated each turn by a pure engine pass from:
 
 - **proximity** to each side's held cities and units,
 - **legitimacy / momentum** — recent captures, holding a faction's anchor cities, and leader presence (a routed king craters his side's legitimacy — ties to the Issus/Gaugamela flight nodes, §12),
@@ -190,6 +193,7 @@ When net pressure crosses a threshold the city **defects bloodlessly** — a pla
 type Intent =
   | { kind: "moveUnit"; unitId: string; to: Hex }
   | { kind: "attack"; unitId: string; target: Hex }
+  | { kind: "settle"; unitId: string } // found a city with a settler (§5, Macedon)
   | { kind: "incite"; cityId: string } // apply loyalty pressure / negotiate (§5)
   | { kind: "scorch"; hex: Hex } // Persia scorched earth (§13)
   | { kind: "endTurn" };
@@ -326,6 +330,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
   - _Mutator — "Improper Siege Support" (§5):_ the opt-in mutator **inverts** this, letting ranged, cavalry, and bombard units leech ram/tower bonuses (the actual Civ 6 bug). Mutator-lane only; countered by Heated Sand below.
 - Hoplite **adjacency** (phalanx) bonuses apply: **+10% combat strength per adjacent friendly hoplite, cap +30%** (provisional, §14).
 - **Flanking** mirrors Humankind and uses **unit facing**: each unit has an orientation, and an attack lands in the defender's **front / flank / rear** arc (rear > flank); the bonus _also_ scales with the **number** of flanking units.
+- **Sarissa wall** (phalangite front-arc defense): a phalangite (a unit with the `phalanx` ability) presents a hedge of sarissas to its **front** arc — a strong **defensive** bonus when attacked head-on, but it is **negated** when the attack lands in the phalangite's **flank or rear** arc (the formation can't face the threat), and it is **reduced on rough terrain** (any hex with `moveCost > 1`), where the line loses cohesion. This is distinct from the hoplite **adjacency** bonus above (formation density) — it is about **facing** and **ground**, and it reuses the same front/flank/rear arc the flanking system already computes. The historical strength-and-weakness of the Macedonian phalanx: irresistible from the front, fatally exposed once flanked or broken up on uneven ground (the gap at Gaugamela; Arrian, _Anabasis_ III.13–14). Provisional values in §14; resolved as a pure modifier behind the combat/effect registry (§5).
 - **Hypaspists**: no bonus when sieging a city.
 - **Hetairoi**: +1 movement while benefiting from a great general.
 - **To the World's End**: immune to **war-weariness** morale decay from overextension/distance (§5 Supply & morale) — the systemic counter to the Hyphasis mutiny.
@@ -365,6 +370,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 - **Flanking (facing-based arcs): rear +100%, flank +50%**, plus **+15% per additional adjacent flanking unit, capped at +60%**. Encirclement and cavalry envelopment are decisive.
 - **Persian heavy-cavalry instant-kill: 10% per attack**, offset by the −2 attack strength (§13).
 - **Hoplite phalanx adjacency: +10% combat strength per adjacent friendly hoplite, cap +30%** (§13).
+- **Sarissa wall (phalangite front-arc): +50% defensive strength when attacked in the front arc; bonus negated in flank/rear; −25% defensive strength when the phalangite defends on rough terrain (`moveCost > 1`)** (§13). Stacks multiplicatively with the flanking arc the attacker earns — a flank hit both denies the wall _and_ takes the flank bonus.
 - **Immortal cap: 15** (confirms §13).
 
 ### Supply & morale
