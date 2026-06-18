@@ -10,7 +10,7 @@ The authoritative design lives in [`docs/design.md`](docs/design.md). Read it be
 - When implementing historical or Civ-derived features, match **authentic history and authentic Civ 6 effects** — do not invent placeholder mechanics. Reference `docs/design.md` (and its citations), the Civ 6 wiki, or ask the user if unsure.
 - **Accurate start, divergent play** (design §10): the authored baseline — the **334 BC opening at the Granicus**, map, geography, and content — must be historically exact; emergent play may then diverge. Geography is enforced; dates are surfaced for flavor, not hard gates.
 
-# Design & UX questions
+## Design & UX questions
 
 The author is still learning frontend and relies on Claude to surface design decisions early. Front-load discovery before writing UI code.
 
@@ -20,7 +20,7 @@ The author is still learning frontend and relies on Claude to surface design dec
 - Prefer a single batched round of questions (up to 4 per `AskUserQuestion` call) over a slow back-and-forth, but never skip the round entirely to "just start coding."
 - This raises the baseline permanently: err toward asking when in doubt rather than guessing on the author's behalf.
 
-# Hard requirements
+## Hard requirements
 
 - Squash all PRs into a single commit instead of merging/rebasing. Exception: follow-up commits based on feedback.
 - When creating a follow-up commit, record the feedback as an issue comment.
@@ -34,7 +34,7 @@ The author is still learning frontend and relies on Claude to surface design dec
 - Always use the issue template at `.github/ISSUE_TEMPLATE/issue.yml` when creating issues.
 - Use yarn for all package management and script execution (e.g. `yarn install`, `yarn test`, `yarn build`). Do not use npm.
 
-# Testing
+## Testing
 
 - Unit tests should only have one assertion per test unless they're testing a multistep flow. The pure engine gets exhaustive unit tests; randomness is server-seeded, so the same seed + action log reproduces the same outcome.
 - Full-app / full-flow integration tests that mount a match and exercise a sequence of intents SHOULD use multiple assertions per test when those assertions all describe the same end-state. The mount + interaction setup is the expensive part; sharing one mount across related assertions cuts wall-clock cost without losing intent. The test name should describe the scenario (e.g. "Macedon deadline score for two captured cities with a flank bonus"), not each individual assertion.
@@ -43,23 +43,23 @@ The author is still learning frontend and relies on Claude to surface design dec
 - Always seek to extract shared helpers/constants rather than re-implementing things.
 - Whenever possible, visually verify your changes in a headless browser.
 
-# Style
+## Style
 
 - Do not add comments to code, especially CSS.
 - Break things up into logical subdirectories, but don't overdo it.
 - Never reference issue numbers anywhere in source code — comments, test/describe names, file names, etc. Tying source to an issue number is an anti-pattern: describe the behavior instead (e.g. `test("Royal Road redeploy", ...)`, not `test("Royal Road redeploy (#42)", ...)`).
 
-# Semantic commits
+## Semantic commits
 
 Use semantic (or Conventional) Commits to provide a standardized framework for naming git commits. Automatically apply a label of the matching name and create one if it does not already exist.
 
-# Git & Worktrees
+## Git & Worktrees
 
 - One worktree per branch/PR, created at `~/.cache/browcivvi-worktrees/<branch>` (outside the project tree, so test workers don't hit a parent config). Run `yarn install` in every fresh worktree before anything else. Report whether or not this was nearly instant (slower executions indicate a project setup issue).
 - When a session juggles multiple issues, never reuse another issue's worktree; each issue gets its own.
 - Use pnpm for lightnight quick worktree setup.
 
-# Work with feature branches
+## Work with feature branches
 
 - When creating a new issue, in addition to using semantic naming, set GitHub's native issue type (one of: `Bug`, `Feature`, `Task`, `Refactor`, `Chore`) and add a label for the feature space (e.g. `map`, `combat`, `ai`, `leaderboard`, `content`). Do not use labels for the issue type.
 - When asked to complete a task, first create a new worktree/branch based on the issue number and title. Do not commit directly to main. Create a pull request when done.
@@ -69,7 +69,7 @@ Use semantic (or Conventional) Commits to provide a standardized framework for n
 - Never merge a PR unless all CI statuses are green.
 - Always leave a comment on the issue to indicate work on an issue has started.
 
-# Documentation
+## Documentation
 
 Consult `docs/design.md` before diving into unfamiliar areas — it is the single source of truth and is cross-referenced by section number throughout the code and issues. Key sections:
 
@@ -89,10 +89,11 @@ Onboarding docs:
 
 - [`docs/onboarding/dev-setup.md`](docs/onboarding/dev-setup.md) — local setup.
 - [`docs/onboarding/styling-tokens.md`](docs/onboarding/styling-tokens.md) — the two-tier CSS design-token system (color primitives → semantic aliases, plus radius/spacing/type/motion scales); component CSS must use tokens, enforced in CI.
+- [`docs/onboarding/linting.md`](docs/onboarding/linting.md) — the ESLint / Prettier / Stylelint / markdownlint stack, the few justified config deviations, and the pre-commit hook.
 
 ## Project Environment
 
 - This project uses **Yarn** (Berry0 and pnpm), not npm. Use `yarn` commands. Run `yarn install` in every fresh clone or worktree before anything else.
 - TypeScript is the primary language — all new code should be `.ts`/`.tsx`.
-- Run `yarn typecheck` and `yarn test` before opening PRs.
+- Run `yarn typecheck`, `yarn lint`, `yarn lint:css`, `yarn lint:md`, `yarn format:check`, and `yarn test` before opening PRs (all enforced in CI; a husky pre-commit hook runs lint-staged on changed files).
 - Use `import`, not `require()` — this is an ESM project.

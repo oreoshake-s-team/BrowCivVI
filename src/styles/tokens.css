@@ -14,8 +14,7 @@
   --blue-800: #1f4d77;
   --gold-400: #d4af37;
   --gold-700: #9a7d1e;
-  --gold-400-a38: rgba(212, 175, 55, 0.38);
-
+  --gold-400-a38: rgb(212 175 55 / 38%);
   --color-surface-board: var(--parchment);
   --color-surface-raised: var(--parchment-light);
   --color-text-halo: var(--parchment);
@@ -33,10 +32,8 @@
   --color-water-sea: var(--blue-800);
   --color-reach-fill: var(--gold-400-a38);
   --color-reach-stroke: var(--gold-700);
-
   --radius-sm: 3px;
   --radius-md: 8px;
-
   --space-3xs: 0.25rem;
   --space-2xs: 0.35rem;
   --space-xs: 0.4rem;
@@ -45,7 +42,6 @@
   --space-lg: 1rem;
   --space-xl: 1.25rem;
   --space-2xl: 1.5rem;
-
   --font-size-label-sm: 9px;
   --font-size-label-md: 11px;
   --font-size-label-lg: 12px;
@@ -54,11 +50,9 @@
   --font-size-ui-md: 0.9rem;
   --font-size-ui-lg: 1rem;
   --letter-spacing-wide: 0.08em;
-
   --ease-standard: ease;
   --motion-fast: 120ms;
   --motion-base: 200ms;
-
   --color-terrain-plains: #cfe3a3;
   --color-terrain-hills: #c4ad74;
   --color-terrain-forest: #6b8f57;
@@ -67,14 +61,13 @@
   --color-terrain-mountain: #8a8a8a;
   --color-terrain-coast: #9fc6e0;
   --color-terrain-deep-sea: #4a7fb0;
-
   --faction-macedon-fill: #d4af37;
   --faction-macedon-stroke: #7a5c00;
   --faction-macedon-text: #3a2c00;
   --faction-persia-fill: #a01f2e;
   --faction-persia-stroke: #5e0f18;
-  --faction-persia-text: #ffffff;
+  --faction-persia-text: #fff;
   --faction-neutral-fill: #9aa0a6;
   --faction-neutral-stroke: #5f6368;
-  --faction-neutral-text: #ffffff;
+  --faction-neutral-text: #fff;
 }

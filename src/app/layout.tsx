@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
-import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import type { Viewport } from "next";
+import type { ReactNode } from "react";
 import "../styles/tokens.css";
 
 export const metadata = {

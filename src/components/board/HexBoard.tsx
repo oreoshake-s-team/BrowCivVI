@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { GameMap } from "@/engine/map/types";
-import type { Hex } from "@/engine/hex";
-import type { Unit } from "@/engine/unit/types";
 import type { NamedRegion } from "@/engine/content/region";
-import { hexKey } from "@/engine/map/types";
+import type { Hex } from "@/engine/hex";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
+import { hexKey } from "@/engine/map/types";
+import type { GameMap } from "@/engine/map/types";
 import { unitTypeById } from "@/engine/unit/catalog";
-import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
+import type { Unit } from "@/engine/unit/types";
 import { riverSegmentPoints } from "./geometry";
-import { fitView, panView, zoomView, viewBoxString } from "./viewport";
+import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
-import styles from "./HexBoard.module.css";
+import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
+import { fitView, panView, zoomView, viewBoxString } from "./viewport";
 
 const SIZE = 36;
 const PAD = SIZE;
@@ -30,7 +30,14 @@ export interface HexBoardProps {
   readonly onMove?: (unitId: string, to: Hex) => void;
 }
 
-export function HexBoard({ map, units, regions = [], reachable = [], onSelect, onMove }: HexBoardProps) {
+export function HexBoard({
+  map,
+  units,
+  regions = [],
+  reachable = [],
+  onSelect,
+  onMove,
+}: HexBoardProps) {
   const bounds = mapPixelBounds(map, SIZE);
   const fitW = bounds.maxX - bounds.minX + PAD * 2;
 
@@ -53,7 +60,8 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
   };
 
   const tryMove = (target: Hex) => {
-    if (selectedId !== null && onMove && reachableKeys.has(hexKey(target))) onMove(selectedId, target);
+    if (selectedId !== null && onMove && reachableKeys.has(hexKey(target)))
+      onMove(selectedId, target);
   };
 
   const tapHex = (hex: Hex) => {
@@ -65,7 +73,12 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     pointerType.current = event.pointerType;
     moved.current = false;
-    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, sx: event.clientX, sy: event.clientY });
+    pointers.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+      sx: event.clientX,
+      sy: event.clientY,
+    });
     const [a, b] = [...pointers.current.values()];
     if (a && b) pinchDist.current = Math.hypot(a.x - b.x, a.y - b.y);
   };
@@ -73,7 +86,12 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
   const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
     const prev = pointers.current.get(event.pointerId);
     if (prev === undefined) return;
-    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY, sx: prev.sx, sy: prev.sy });
+    pointers.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+      sx: prev.sx,
+      sy: prev.sy,
+    });
     const rect = svgRef.current?.getBoundingClientRect();
     if (rect === undefined || rect.width === 0) return;
     const [a, b] = [...pointers.current.values()];
@@ -84,16 +102,25 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
         const midX = (a.x + b.x) / 2;
         const midY = (a.y + b.y) / 2;
         setView((v) =>
-          zoomView(v, factor, v.x + ((midX - rect.left) / rect.width) * v.w, v.y + ((midY - rect.top) / rect.height) * v.h, fitW),
+          zoomView(
+            v,
+            factor,
+            v.x + ((midX - rect.left) / rect.width) * v.w,
+            v.y + ((midY - rect.top) / rect.height) * v.h,
+            fitW,
+          ),
         );
         pinchDist.current = dist;
         moved.current = true;
       }
       return;
     }
-    if (Math.hypot(event.clientX - prev.sx, event.clientY - prev.sy) > PAN_THRESHOLD && !moved.current) {
+    if (
+      Math.hypot(event.clientX - prev.sx, event.clientY - prev.sy) > PAN_THRESHOLD &&
+      !moved.current
+    ) {
       moved.current = true;
-      event.currentTarget.setPointerCapture?.(event.pointerId);
+      event.currentTarget.setPointerCapture(event.pointerId);
     }
     const dx = event.clientX - prev.x;
     const dy = event.clientY - prev.y;
@@ -109,17 +136,25 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
       if (rect.width === 0) return;
       const factor = event.deltaY > 0 ? 1.1 : 0.9;
       setView((v) =>
-        zoomView(v, factor, v.x + ((event.clientX - rect.left) / rect.width) * v.w, v.y + ((event.clientY - rect.top) / rect.height) * v.h, fitW),
+        zoomView(
+          v,
+          factor,
+          v.x + ((event.clientX - rect.left) / rect.width) * v.w,
+          v.y + ((event.clientY - rect.top) / rect.height) * v.h,
+          fitW,
+        ),
       );
     };
     svg.addEventListener("wheel", onWheel, { passive: false });
-    return () => svg.removeEventListener("wheel", onWheel);
+    return () => {
+      svg.removeEventListener("wheel", onWheel);
+    };
   }, [fitW]);
 
   const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
     pointers.current.delete(event.pointerId);
     if (pointers.current.size < 2) pinchDist.current = null;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
   return (
@@ -143,12 +178,20 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
             <g key={key}>
               <polygon
                 data-hex={key}
-                className={`hex ${styles.hex} ${hovered === key ? styles.hexHover : ""}`}
+                className={["hex", styles.hex, hovered === key ? styles.hexHover : undefined]
+                  .filter(Boolean)
+                  .join(" ")}
                 points={hexPolygonPoints(center, SIZE)}
                 style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
-                onMouseEnter={() => setHovered(key)}
-                onMouseLeave={() => setHovered((current) => (current === key ? null : current))}
-                onClick={() => tapHex(mapHex.hex)}
+                onMouseEnter={() => {
+                  setHovered(key);
+                }}
+                onMouseLeave={() => {
+                  setHovered((current) => (current === key ? null : current));
+                }}
+                onClick={() => {
+                  tapHex(mapHex.hex);
+                }}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   if (!moved.current) tryMove(mapHex.hex);
@@ -169,7 +212,7 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
         {reachable.map((hex) => (
           <polygon
             key={`reach-${hexKey(hex)}`}
-            className={`reach ${styles.reach}`}
+            className={["reach", styles.reach].filter(Boolean).join(" ")}
             points={hexPolygonPoints(hexToPixel(hex, SIZE), SIZE)}
           />
         ))}
@@ -177,7 +220,14 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
         {map.rivers.map((river, index) => {
           const [p1, p2] = riverSegmentPoints(river.a, river.b, SIZE);
           return (
-            <line key={`river-${index}`} className={styles.river} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} />
+            <line
+              key={`river-${index}`}
+              className={styles.river}
+              x1={p1.x}
+              y1={p1.y}
+              x2={p2.x}
+              y2={p2.y}
+            />
           );
         })}
 
@@ -216,7 +266,9 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
                 event.stopPropagation();
                 toggle();
               }}
-              onContextMenu={(event) => event.preventDefault()}
+              onContextMenu={(event) => {
+                event.preventDefault();
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
@@ -224,7 +276,9 @@ export function HexBoard({ map, units, regions = [], reachable = [], onSelect, o
                 }
               }}
             >
-              {selected ? <circle className={styles.selectedRing} cx={0} cy={0} r={SIZE * 0.62} /> : null}
+              {selected ? (
+                <circle className={styles.selectedRing} cx={0} cy={0} r={SIZE * 0.62} />
+              ) : null}
               <circle
                 cx={0}
                 cy={0}

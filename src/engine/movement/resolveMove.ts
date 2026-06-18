@@ -1,7 +1,7 @@
 import type { Hex } from "../hex";
 import type { GameMap } from "../map/types";
-import type { MovementDomain } from "../unit/classes";
 import { hexKey, parseHexKey } from "../map/types";
+import type { MovementDomain } from "../unit/classes";
 import { reachableHexes } from "./reachable";
 
 export interface MoveQuery {

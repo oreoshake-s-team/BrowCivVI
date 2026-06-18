@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "./sample";
-import { mapHexAt, terrainAt } from "./types";
 import { isImpassable } from "./terrain";
+import { mapHexAt, terrainAt } from "./types";
 
 describe("SAMPLE_MAP", () => {
   it("places Dascylium on the map", () => {

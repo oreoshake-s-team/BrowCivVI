@@ -51,7 +51,7 @@ The player fully controls their browser, DevTools, and network. We do **not** tr
 | City defection / loyalty          | Client claims a city flipped to it                         | Loyalty pressure and defection are computed **server-side** in the pure engine; the client only sends an `incite` intent, never a result.                    |
 
 > With PvP, _both_ players are mutually untrusted adversaries — the server-authoritative model is doing its most important work here, not just guarding a leaderboard.
-
+>
 > JWT's role: authentication of _who_ is acting, plus short expiry to bound replay. It is **not** a place to store trusted game state.
 
 Optional later: persist the full action log so any leaderboard entry can be **re-simulated** server-side for verification.
@@ -60,7 +60,7 @@ Optional later: persist the full action log so any leaderboard entry can be **re
 
 ## 4. Architecture
 
-```
+```text
 Browser (RSC + minimal client islands)
   │  user clicks a hex / unit / "End Turn"
   ▼
@@ -298,9 +298,9 @@ Two battles get accurate, hand-authored representation. **Approach: hybrid** —
 - **Surfacing: contextual unlocks.** A game/data event — capturing a notable city, the clock reaching a historical date, or a battle at a significant site — surfaces a dismissible **media card** relevant to what just happened.
 - **Media: link out, optional (per decision).** The card links to the official Tides of History episode or a curated video (opens externally, `rel="noopener noreferrer"`); it **never gates progress**. No third-party embeds — the client stays thin, privacy is preserved, CSP surface stays minimal (consistent with §3).
 - **Curated starting set (Tides of History).** Verified episodes seeding the media data and §10 citations (exact trigger mapping pending editorial review):
-  - _Alexander the Great Invades Persia_ (the 334 BC invasion under Darius III) → the **Granicus** opening — https://open.spotify.com/episode/0ZWSBCirAa9gajYNw9hdQ8
-  - _Issus, Gaugamela, and Alexander's Conquest of Persia_ → the **Issus** and **Gaugamela** nodes — https://open.spotify.com/episode/1hyzYmdIsEVOI72nNUZwOM
-  - _Alexander the Great: Soldier, Priest, and God_ (with Fred Naiden) and _Alexander the Great with Patrick Wyman_ → general background — https://podcasts.apple.com/us/podcast/alexander-the-great-soldier-priest-and-god/id1257202425?i=1000673355560 , https://podcasts.apple.com/us/podcast/alexander-the-great-with-patrick-wyman/id1800530353?i=1000718829309
+  - _Alexander the Great Invades Persia_ (the 334 BC invasion under Darius III) → the **Granicus** opening — <https://open.spotify.com/episode/0ZWSBCirAa9gajYNw9hdQ8>
+  - _Issus, Gaugamela, and Alexander's Conquest of Persia_ → the **Issus** and **Gaugamela** nodes — <https://open.spotify.com/episode/1hyzYmdIsEVOI72nNUZwOM>
+  - _Alexander the Great: Soldier, Priest, and God_ (with Fred Naiden) and _Alexander the Great with Patrick Wyman_ → general background — <https://podcasts.apple.com/us/podcast/alexander-the-great-soldier-priest-and-god/id1257202425?i=1000673355560> , <https://podcasts.apple.com/us/podcast/alexander-the-great-with-patrick-wyman/id1800530353?i=1000718829309>
   - _Still needed for balance (§10): an Achaemenid/Persian-perspective source (e.g. the History of Persia podcast) — to be verified before inclusion._
 - **Data model.** Media entries are authored data — `{ id, title, source, url, citation, triggers[], entityRefs[] }` — and double as the §10 accuracy citations. Curation (which media maps to which entity) is authored + editorially reviewed.
 - **a11y / i18n.** Card copy localized; external-link semantics announced to screen readers; respects reduced-motion.
@@ -324,7 +324,7 @@ Per §10 (accurate start, divergent play): each node is grounded in a real momen
 
 Authored as faction/unit/effect data behind the registry (§5). **Most depend on systems beyond the MVP** (siege equipment, wonders, great generals, unit maintenance/economy, unit purchasing) and land in Phase 2+. All randomness is **server-seeded** (§3), so luck-based effects below are _not_ save-scummable.
 
-**Macedon / Alexander**
+### Macedon / Alexander
 
 - Catapults, archers, and cavalry gain **no** benefit from siege towers / battering rams (those aid melee siege infantry only).
   - _Mutator — "Improper Siege Support" (§5):_ the opt-in mutator **inverts** this, letting ranged, cavalry, and bombard units leech ram/tower bonuses (the actual Civ 6 bug). Mutator-lane only; countered by Heated Sand below.
@@ -336,7 +336,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
 - **To the World's End**: immune to **war-weariness** morale decay from overextension/distance (§5 Supply & morale) — the systemic counter to the Hyphasis mutiny.
 - Capturing a **wonder-city** with **Alexander adjacent** grants **that city's own unique unit** (Hellenistic Fusion); further copies are purchasable thereafter at **+50% cost**.
 
-**Persia / Darius**
+### Persia / Darius
 
 - **Heavy cavalry**: a **flat per-attack chance** of an **instant kill** (seeded server-side, so not save-scummable), offset by **-2 attack strength**. Provisional probability **10%** (§14).
 - **One** great general only; all units within **2 tiles** have **zero maintenance**.

@@ -15,7 +15,14 @@ const UNIT: Unit = {
 };
 
 const make = () =>
-  createMatch({ id: "m1", seed: 7, mapId: "first-slice", turnLimit: 20, units: [UNIT], movementOf: () => 4 });
+  createMatch({
+    id: "m1",
+    seed: 7,
+    mapId: "first-slice",
+    turnLimit: 20,
+    units: [UNIT],
+    movementOf: () => 4,
+  });
 
 describe("InMemoryMatchStore", () => {
   it("loads a match that was created", async () => {

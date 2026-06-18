@@ -14,7 +14,14 @@ const UNIT: Unit = {
   hasMovedThisTurn: false,
 };
 
-const STATE = createMatch({ id: "m1", seed: 7, mapId: "first-slice", turnLimit: 20, units: [UNIT], movementOf: () => 4 });
+const STATE = createMatch({
+  id: "m1",
+  seed: 7,
+  mapId: "first-slice",
+  turnLimit: 20,
+  units: [UNIT],
+  movementOf: () => 4,
+});
 
 describe("upcastMatchState", () => {
   it("returns the state at the current schema version", () => {

@@ -1,0 +1,10 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": { "siblings_only": true },
+    "MD029": false,
+  },
+  "globs": ["docs/**/*.md", "*.md"],
+  "ignores": ["node_modules", ".next", "coverage", ".yarn", ".claude", ".github"],
+}

@@ -16,21 +16,22 @@ export interface MatchStore {
 export class InMemoryMatchStore implements MatchStore {
   private readonly matches = new Map<string, MatchState>();
 
-  async create(state: MatchState): Promise<void> {
+  create(state: MatchState): Promise<void> {
     this.matches.set(state.id, state);
+    return Promise.resolve();
   }
 
-  async load(id: string): Promise<MatchState | null> {
-    return this.matches.get(id) ?? null;
+  load(id: string): Promise<MatchState | null> {
+    return Promise.resolve(this.matches.get(id) ?? null);
   }
 
-  async save(state: MatchState): Promise<MatchState> {
+  save(state: MatchState): Promise<MatchState> {
     const current = this.matches.get(state.id);
-    if (current === undefined || current.version !== state.version) {
-      throw new StaleMatchError(state.id);
+    if (current?.version !== state.version) {
+      return Promise.reject(new StaleMatchError(state.id));
     }
     const next: MatchState = { ...state, version: state.version + 1 };
     this.matches.set(state.id, next);
-    return next;
+    return Promise.resolve(next);
   }
 }

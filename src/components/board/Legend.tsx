@@ -1,6 +1,6 @@
 import type { TerrainType } from "@/engine/map/terrain";
-import { TERRAIN_COLORS, TERRAIN_LABELS } from "./palette";
 import styles from "./HexBoard.module.css";
+import { TERRAIN_COLORS, TERRAIN_LABELS } from "./palette";
 
 const TERRAIN_ORDER: readonly TerrainType[] = [
   "plains",

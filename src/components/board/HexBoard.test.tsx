@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import type { NamedRegion } from "@/engine/content/region";
-import { HexBoard } from "./HexBoard";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
+import { HexBoard } from "./HexBoard";
 
 afterEach(cleanup);
+
+Element.prototype.setPointerCapture = () => undefined;
+Element.prototype.releasePointerCapture = () => undefined;
+Element.prototype.hasPointerCapture = () => false;
 
 const MACEDON = "Pezhetairos (macedon)";
 
@@ -14,7 +18,11 @@ const SEA_REGION: NamedRegion = {
   name: "Aegean Sea",
   kind: "sea",
   labelHex: { q: 0, r: 0 },
-  citation: { claim: "x", source: { title: "t", url: "https://example.test", type: "reference" }, confidence: "high" },
+  citation: {
+    claim: "x",
+    source: { title: "t", url: "https://example.test", type: "reference" },
+    confidence: "high",
+  },
 };
 
 describe("HexBoard", () => {
@@ -53,7 +61,14 @@ describe("HexBoard", () => {
 describe("HexBoard interaction", () => {
   it("renders a tint overlay for each reachable hex", () => {
     const { container } = render(
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }, { q: 0, r: 0 }]} />,
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        reachable={[
+          { q: 1, r: 0 },
+          { q: 0, r: 0 },
+        ]}
+      />,
     );
     expect(container.querySelectorAll("polygon.reach")).toHaveLength(2);
   });
@@ -67,39 +82,56 @@ describe("HexBoard interaction", () => {
 
   it("deselects when an empty hex is left-clicked", () => {
     const onSelect = vi.fn();
-    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} onSelect={onSelect} />);
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} onSelect={onSelect} />,
+    );
     fireEvent.click(screen.getByLabelText(MACEDON));
-    fireEvent.click(container.querySelector('[data-hex="0,0"]') as Element);
+    fireEvent.click(container.querySelector('[data-hex="0,0"]')!);
     expect(onSelect).toHaveBeenLastCalledWith(null);
   });
 
   it("moves the selected unit when a reachable hex is right-clicked", () => {
     const onMove = vi.fn();
     const { container } = render(
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onMove={onMove} />,
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        reachable={[{ q: 1, r: 0 }]}
+        onMove={onMove}
+      />,
     );
     fireEvent.click(screen.getByLabelText(MACEDON));
-    fireEvent.contextMenu(container.querySelector('[data-hex="1,0"]') as Element);
+    fireEvent.contextMenu(container.querySelector('[data-hex="1,0"]')!);
     expect(onMove).toHaveBeenCalledWith("macedon-phalanx-1", { q: 1, r: 0 });
   });
 
   it("ignores a right-click on an unreachable hex", () => {
     const onMove = vi.fn();
     const { container } = render(
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onMove={onMove} />,
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        reachable={[{ q: 1, r: 0 }]}
+        onMove={onMove}
+      />,
     );
     fireEvent.click(screen.getByLabelText(MACEDON));
-    fireEvent.contextMenu(container.querySelector('[data-hex="2,2"]') as Element);
+    fireEvent.contextMenu(container.querySelector('[data-hex="2,2"]')!);
     expect(onMove).not.toHaveBeenCalled();
   });
 
   it("moves on a tap of a reachable hex (touch)", () => {
     const onMove = vi.fn();
     const { container } = render(
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onMove={onMove} />,
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        reachable={[{ q: 1, r: 0 }]}
+        onMove={onMove}
+      />,
     );
     fireEvent.click(screen.getByLabelText(MACEDON));
-    const hex = container.querySelector('[data-hex="1,0"]') as Element;
+    const hex = container.querySelector('[data-hex="1,0"]')!;
     fireEvent.pointerDown(hex, { pointerType: "touch", pointerId: 1 });
     fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
     fireEvent.click(hex);
@@ -108,9 +140,18 @@ describe("HexBoard interaction", () => {
 
   it("zooms the viewBox on a mouse wheel", () => {
     const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
-    const svg = container.querySelector("svg") as SVGSVGElement;
-    svg.getBoundingClientRect = () =>
-      ({ x: 0, y: 0, top: 0, left: 0, right: 600, bottom: 600, width: 600, height: 600, toJSON() {} }) as DOMRect;
+    const svg = container.querySelector("svg")!;
+    svg.getBoundingClientRect = () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 600,
+      bottom: 600,
+      width: 600,
+      height: 600,
+      toJSON: () => ({}),
+    });
     const before = svg.getAttribute("viewBox");
     fireEvent.wheel(svg, { deltaY: -120, clientX: 300, clientY: 300 });
     expect(svg.getAttribute("viewBox")).not.toBe(before);
@@ -120,10 +161,16 @@ describe("HexBoard interaction", () => {
     const onSelect = vi.fn();
     const onMove = vi.fn();
     const { container } = render(
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} reachable={[{ q: 1, r: 0 }]} onSelect={onSelect} onMove={onMove} />,
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        reachable={[{ q: 1, r: 0 }]}
+        onSelect={onSelect}
+        onMove={onMove}
+      />,
     );
     fireEvent.click(screen.getByLabelText(MACEDON));
-    const hex = container.querySelector('[data-hex="2,2"]') as Element;
+    const hex = container.querySelector('[data-hex="2,2"]')!;
     fireEvent.pointerDown(hex, { pointerType: "touch", pointerId: 1 });
     fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
     fireEvent.click(hex);

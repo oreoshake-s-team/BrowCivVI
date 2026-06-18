@@ -1,12 +1,12 @@
 "use server";
 
-import type { Hex } from "@/engine/hex";
-import type { MovementDomain } from "@/engine/unit/classes";
-import type { MoveResult } from "@/engine/movement/resolveMove";
 import { FIRST_SLICE_MAP } from "@/content/firstSlice";
-import { unitTypeById } from "@/engine/unit/catalog";
-import { domainForClass } from "@/engine/unit/classes";
+import type { Hex } from "@/engine/hex";
+import type { MoveResult } from "@/engine/movement/resolveMove";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
+import { unitTypeById } from "@/engine/unit/catalog";
+import type { MovementDomain } from "@/engine/unit/classes";
+import { domainForClass } from "@/engine/unit/classes";
 
 export interface MoveIntent {
   readonly typeId: string;

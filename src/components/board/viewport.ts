@@ -22,7 +22,13 @@ export function panView(view: ViewBox, dx: number, dy: number): ViewBox {
   return { ...view, x: view.x - dx, y: view.y - dy };
 }
 
-export function zoomView(view: ViewBox, factor: number, cx: number, cy: number, maxW: number): ViewBox {
+export function zoomView(
+  view: ViewBox,
+  factor: number,
+  cx: number,
+  cy: number,
+  maxW: number,
+): ViewBox {
   const targetW = Math.min(Math.max(view.w * factor, MIN_SPAN), maxW);
   const k = targetW / view.w;
   return {

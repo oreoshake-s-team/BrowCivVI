@@ -1,7 +1,7 @@
 import type { Hex } from "../hex";
-import type { UnitClass } from "./classes";
 import type { UnitCapability } from "./capabilities";
 import { UNIVERSAL_CAPABILITIES, CLASS_CAPABILITIES } from "./capabilities";
+import type { UnitClass } from "./classes";
 
 export interface UnitType {
   readonly id: string;

@@ -15,7 +15,14 @@ const HEXES: readonly MapHex[] = [
 ];
 
 const CITIES: readonly City[] = [
-  { id: "dascylium", name: "Dascylium", hex: { q: 3, r: 1 }, owner: "persia", value: 100, defense: 20 },
+  {
+    id: "dascylium",
+    name: "Dascylium",
+    hex: { q: 3, r: 1 },
+    owner: "persia",
+    value: 100,
+    defense: 20,
+  },
 ];
 
 const RIVERS: readonly RiverEdge[] = [{ a: { q: 1, r: 1 }, b: { q: 2, r: 1 } }];
