@@ -157,12 +157,11 @@ interface MatchStore {
   `playerId` or `ai`. Solo = one human + one AI; PvP = two humans.
 - The active slot is authoritative state; **only the active player's intents are
   accepted** (turn ownership, §3).
-- **Per-viewer rendering:** the Server Action builds the response from the
+- **Per-viewer rendering:** the GraphQL resolver builds the response from the
   *requesting* player's visibility, so a human never receives the opponent's
   hidden state. The AI "sees" only inside the engine, server-side.
 - **Turn handoff (PvP):** when a player ends their turn, the waiting player is
-  notified it's their turn. Transport TBD (§10) — turn-based latency tolerance
-  makes simple polling viable; SSE is the nicer upgrade.
+  notified it's their turn via a GraphQL subscription (§4).
 
 ---
 

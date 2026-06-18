@@ -55,7 +55,8 @@ decisions early. Front-load discovery before writing UI code.
 
 # Hard requirements
 
-- Squash all PRs into a single commit instead of merging/rebasing.
+- Squash all PRs into a single commit instead of merging/rebasing. Exception: follow-up commits based on feedback.
+- When creating a follow-up commit, record the feedback as an issue comment.
 - All functionality must have test coverage.
 - If a change requires more than 150 lines of changes to application code
   (excluding CSS, tests, config, etc), split it up into multiple changes and
@@ -86,13 +87,12 @@ decisions early. Front-load discovery before writing UI code.
   wall-clock cost without losing intent. The test name should describe the
   scenario (e.g. "Macedon deadline score for two captured cities with a flank
   bonus"), not each individual assertion.
-- All tests should be run after major changes.
-- Include "negative" test cases whenever possible (illegal intent, acting out of
+- Include the most important "negative" test case whenever possible (illegal intent, acting out of
   turn, stale state version, attacking out of range).
 - Do not add comments to tests.
 - When a single test file approaches 1500 lines or more, create a follow up
   issue to see if it can be split into something smaller.
-- Whenever possible, visually verify your changes in a browser.
+- Whenever possible, visually verify your changes in a headless browser.
 
 # Style
 
@@ -105,19 +105,15 @@ decisions early. Front-load discovery before writing UI code.
 # Semantic commits
 
 Use semantic (or Conventional) Commits to provide a standardized framework for
-naming git commits.
+naming git commits. Automatically apply a label of the matching name and create
+one if it does not already exist.
 
 # Git & Worktrees
 
 - One worktree per branch/PR, created at `~/.cache/browcivvi-worktrees/<branch>`
   (outside the project tree, so test workers don't hit a parent config). Run
-  `yarn install` in every fresh worktree before anything else.
-- Never edit files in a checkout whose current branch is `main`. Create the
-  worktree first, then edit the worktree copy. (A PreToolUse guard hook at
-  `.claude/hooks/worktree-guard.sh` enforces this once the repo skeleton lands.)
-- Before editing, verify you are in the right tree: `git rev-parse
-  --show-toplevel` and `git branch --show-current` must match the issue/branch
-  being worked. Re-verify after switching tasks.
+  `yarn install` in every fresh worktree before anything else. Report whether or
+  not this was nearly instant (slower executions indicate a project setup issu
 - When a session juggles multiple issues, never reuse another issue's worktree;
   each issue gets its own.
 
@@ -130,16 +126,15 @@ naming git commits.
 - When asked to complete a task, first create a new branch based on the issue
   number and title. Do not commit directly to main. Create a pull request when
   done.
-- Don't escape backtick literals (`) in PR descriptions.
+- Don't escape backtick literals (`) in PR descriptions. This includes triple
+  backticks (\```)
 - Always merge/rebase main before pushing new code, including every update to
-  existing branches/PRs.
+  existing branches/PRs. When main has progressed, only allow progress if the
+  new changes are touching core application code (and not config files).
 - After every push, wait for the CI status. If a test fails or a merge conflict
   exists, try to resolve it immediately.
 - Never merge a PR unless all CI statuses are green.
 - Always leave a comment on the issue to indicate work on an issue has started.
-- Drive each issue all the way to a green PR. Do not stop after pushing —
-  confirm CI passes. Only pause if genuinely blocked; state the blocker
-  explicitly.
 
 # Documentation
 
