@@ -9,6 +9,11 @@ export function hexKey(hex: Hex): string {
   return `${hex.q},${hex.r}`;
 }
 
+export function parseHexKey(key: string): Hex {
+  const [q, r] = key.split(",");
+  return { q: Number(q), r: Number(r) };
+}
+
 export interface MapHex {
   readonly hex: Hex;
   readonly terrain: TerrainType;

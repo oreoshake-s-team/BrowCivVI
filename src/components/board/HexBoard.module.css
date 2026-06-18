@@ -75,9 +75,17 @@
   pointer-events: none;
 }
 
+.reach {
+  fill: rgba(212, 175, 55, 0.38);
+  stroke: #9a7d1e;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
 .token {
   cursor: pointer;
   outline: none;
+  transition: transform 200ms ease;
 }
 
 .token:focus-visible circle {

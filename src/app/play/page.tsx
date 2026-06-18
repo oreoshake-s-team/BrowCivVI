@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FIRST_SLICE_MAP, FIRST_SLICE_UNITS, FIRST_SLICE_REGIONS } from "@/content/firstSlice";
-import { HexBoard } from "@/components/board/HexBoard";
+import { PlayBoard } from "@/components/board/PlayBoard";
 
 export const metadata = {
   title: "Play — Conquests of Alexander",
@@ -14,10 +14,11 @@ export default function PlayPage() {
       </p>
       <h1>The Granicus, 334 BC</h1>
       <p>
-        From Sparta in the south Peloponnese, across the Aegean, to the Persian satraps (crimson) mustered at
-        Zeleia: Macedon (gold) crosses the Hellespont to open the campaign. Click a unit to inspect it.
+        Macedon (gold) crosses the Hellespont toward the Persian satraps (crimson) mustered at Zeleia.{" "}
+        <strong>Left-click</strong> a unit to select it and reveal its reachable hexes;{" "}
+        <strong>right-click</strong> a highlighted hex to move there.
       </p>
-      <HexBoard map={FIRST_SLICE_MAP} units={FIRST_SLICE_UNITS} regions={FIRST_SLICE_REGIONS} />
+      <PlayBoard map={FIRST_SLICE_MAP} units={FIRST_SLICE_UNITS} regions={FIRST_SLICE_REGIONS} />
     </main>
   );
 }
