@@ -1,7 +1,11 @@
-import type { Hex } from "../hex";
+import type { Hex, HexDirection } from "../hex";
+import { directionTo, neighbor } from "../hex";
 
-export function oppositeHex(defender: Hex, attacker: Hex): Hex {
-  return { q: 2 * defender.q - attacker.q, r: 2 * defender.r - attacker.r };
+export function oppositeHex(defender: Hex, attacker: Hex): Hex | null {
+  const dir = directionTo(defender, attacker);
+  if (dir === null) return null;
+  const opposite = ((dir + 3) % 6) as HexDirection;
+  return neighbor(defender, opposite);
 }
 
 export function isFlanked(
@@ -9,5 +13,6 @@ export function isFlanked(
   attacker: Hex,
   hasAttackerAlly: (hex: Hex) => boolean,
 ): boolean {
-  return hasAttackerAlly(oppositeHex(defender, attacker));
+  const opposite = oppositeHex(defender, attacker);
+  return opposite !== null && hasAttackerAlly(opposite);
 }

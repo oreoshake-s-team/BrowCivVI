@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { FIRST_SLICE_MAP } from "@/content/firstSlice";
 import { createGameMap } from "../map/types";
 import { reachableHexes } from "./reachable";
 
@@ -68,6 +69,30 @@ describe("reachableHexes (land)", () => {
       blocked: new Set(["1,0"]),
     });
     expect(reachable.has("1,0")).toBe(false);
+  });
+});
+
+describe("reachableHexes (Granicus map)", () => {
+  const companions = { q: 6, r: 1 };
+
+  it("lets the Companions reach the plains immediately south", () => {
+    const reachable = reachableHexes({
+      start: companions,
+      movement: 4,
+      map: FIRST_SLICE_MAP,
+      domain: "land",
+    });
+    expect(reachable.has("6,2")).toBe(true);
+  });
+
+  it("cannot cross the Aegean to Athens with four movement", () => {
+    const reachable = reachableHexes({
+      start: companions,
+      movement: 4,
+      map: FIRST_SLICE_MAP,
+      domain: "land",
+    });
+    expect(reachable.has("2,5")).toBe(false);
   });
 });
 

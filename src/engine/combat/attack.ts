@@ -1,5 +1,5 @@
 import type { Hex, HexDirection } from "../hex";
-import { HEX_DIRECTIONS, neighbor } from "../hex";
+import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import type { Rng } from "../rng";
 import { isFlanked } from "./flanking";
 import { PHALANX_ABILITY } from "./phalanx";
@@ -26,7 +26,7 @@ const sameHex = (a: Hex, b: Hex): boolean => a.q === b.q && a.r === b.r;
 
 function adjacentPhalangites(hex: Hex, owner: string, units: readonly AttackUnit[]): number {
   let count = 0;
-  for (let dir = 0; dir < HEX_DIRECTIONS.length; dir++) {
+  for (let dir = 0; dir < HEX_DIRECTION_COUNT; dir++) {
     const step = neighbor(hex, dir as HexDirection);
     if (
       units.some(

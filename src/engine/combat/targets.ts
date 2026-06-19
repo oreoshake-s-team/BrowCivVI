@@ -1,5 +1,5 @@
 import type { Hex, HexDirection } from "../hex";
-import { HEX_DIRECTIONS, neighbor } from "../hex";
+import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import { hexKey } from "../map/types";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
@@ -16,7 +16,7 @@ export function attackableHexes(units: readonly Unit[], attackerId: string): rea
   const attacker = units.find((unit) => unit.id === attackerId);
   if (attacker === undefined || !canAttack(attacker)) return [];
   const targets: Hex[] = [];
-  for (let dir = 0; dir < HEX_DIRECTIONS.length; dir++) {
+  for (let dir = 0; dir < HEX_DIRECTION_COUNT; dir++) {
     const step = neighbor(attacker.hex, dir as HexDirection);
     const enemy = units.find(
       (unit) => hexKey(unit.hex) === hexKey(step) && unit.owner !== attacker.owner,
