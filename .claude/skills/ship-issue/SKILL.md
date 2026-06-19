@@ -18,7 +18,7 @@ Implement a GitHub issue from start to a merge-ready green PR. Drive the entire 
 - The client is untrusted and near-stateless: it renders authoritative state and sends intents; game logic lives in the pure `/engine` and on the server (design §2–§4).
 - Prioritize accessibility and i18n; keep code and CSS compartmentalized (per-component CSS, no inline styles).
 - Never reference issue numbers in source — comments, test/`describe` names, file names. Describe the behavior instead.
-- Use **yarn** (Berry), not npm, for all package management and scripts.
+- Use **pnpm**, not npm or yarn, for all package management and scripts.
 
 ## Design & UX gate (do this before writing UI code)
 
@@ -38,10 +38,10 @@ Worktree path: `~/.cache/browcivvi-worktrees/<branch-name>` (outside the project
 ```bash
 mkdir -p ~/.cache/browcivvi-worktrees
 git worktree add ~/.cache/browcivvi-worktrees/<branch> -b <branch> main
-cd ~/.cache/browcivvi-worktrees/<branch> && yarn install
+cd ~/.cache/browcivvi-worktrees/<branch> && pnpm install
 ```
 
-Run `yarn install` before anything else and report whether it was nearly instant (slower runs indicate a project setup issue).
+Run `pnpm install` before anything else and report whether it was nearly instant (slower runs indicate a project setup issue).
 
 ### 3. Implement
 
@@ -54,8 +54,8 @@ Run `yarn install` before anything else and report whether it was nearly instant
 ### 4. Test
 
 ```bash
-time yarn typecheck
-time yarn test
+time pnpm typecheck
+time pnpm test
 ```
 
 Fix all type errors and test failures before proceeding. Add tests covering:
@@ -84,7 +84,7 @@ git push -u origin <branch>
 
 After the PR is created, fetch the Vercel preview URL for the branch and add it to the PR body. If a Vercel MCP tool (`mcp__plugin_vercel_vercel__*` / `list_deployments`) is available, poll until the deployment state is `READY` (retry ~10× with a short delay), then append to the PR body:
 
-```
+```markdown
 ## Preview
 [Vercel Preview](<url>)
 ```
