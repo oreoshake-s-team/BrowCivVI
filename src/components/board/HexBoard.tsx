@@ -22,13 +22,23 @@ const PAN_THRESHOLD = 4;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 
+export interface DamageFloater {
+  readonly id: string;
+  readonly hex: Hex;
+  readonly text: string;
+}
+
 export interface HexBoardProps {
   readonly map: GameMap;
   readonly units: readonly Unit[];
   readonly regions?: readonly NamedRegion[];
   readonly reachable?: readonly Hex[];
+  readonly attackable?: readonly Hex[];
+  readonly floaters?: readonly DamageFloater[];
+  readonly fadingUnits?: readonly Unit[];
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
+  readonly onAttack?: (attackerId: string, target: Hex) => void;
 }
 
 export function HexBoard({
@@ -36,8 +46,12 @@ export function HexBoard({
   units,
   regions = [],
   reachable = [],
+  attackable = [],
+  floaters = [],
+  fadingUnits = [],
   onSelect,
   onMove,
+  onAttack,
 }: HexBoardProps) {
   const bounds = mapPixelBounds(map, SIZE);
   const fitW = bounds.maxX - bounds.minX + PAD * 2;
@@ -54,6 +68,7 @@ export function HexBoard({
 
   const selectedUnit = units.find((unit) => unit.id === selectedId) ?? null;
   const reachableKeys = new Set(reachable.map(hexKey));
+  const attackableKeys = new Set(attackable.map(hexKey));
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);
@@ -253,9 +268,14 @@ export function HexBoard({
           const type = unitTypeById(unit.typeId);
           const style = factionStyle(unit.owner);
           const selected = unit.id === selectedId;
+          const isAttackTarget =
+            selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
           const toggle = () => {
             if (moved.current) return;
             select(selected ? null : unit.id);
+          };
+          const doAttack = () => {
+            if (selectedId !== null && onAttack) onAttack(selectedId, unit.hex);
           };
           return (
             <g
@@ -265,19 +285,23 @@ export function HexBoard({
               transform={`translate(${center.x}, ${center.y})`}
               role="button"
               tabIndex={0}
-              aria-label={`${type?.name ?? unit.typeId} (${unit.owner})`}
+              aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}`}
               aria-pressed={selected}
               onClick={(event) => {
                 event.stopPropagation();
-                toggle();
+                if (moved.current) return;
+                if (pointerType.current !== "mouse" && isAttackTarget) doAttack();
+                else toggle();
               }}
               onContextMenu={(event) => {
                 event.preventDefault();
+                if (!moved.current && isAttackTarget) doAttack();
               }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  select(selected ? null : unit.id);
+                  if (isAttackTarget) doAttack();
+                  else select(selected ? null : unit.id);
                 }
               }}
             >
@@ -294,7 +318,52 @@ export function HexBoard({
               <text className={styles.glyph} x={0} y={0} style={{ fill: style.text }}>
                 {type ? CLASS_GLYPHS[type.class] : "?"}
               </text>
+              {isAttackTarget ? (
+                <g className={styles.attackMark} data-attack-target={unit.id}>
+                  <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />
+                  <line x1={-SIZE * 0.18} y1={-SIZE * 0.6} x2={SIZE * 0.18} y2={-SIZE * 0.96} />
+                </g>
+              ) : null}
             </g>
+          );
+        })}
+
+        {fadingUnits.map((unit) => {
+          const center = hexToPixel(unit.hex, SIZE);
+          const type = unitTypeById(unit.typeId);
+          const style = factionStyle(unit.owner);
+          return (
+            <g
+              key={`fade-${unit.id}`}
+              className={styles.fading}
+              data-fading-id={unit.id}
+              transform={`translate(${center.x}, ${center.y})`}
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={SIZE * 0.5}
+                style={{ fill: style.fill, stroke: style.stroke }}
+                strokeWidth={2}
+              />
+              <text className={styles.glyph} x={0} y={0} style={{ fill: style.text }}>
+                {type ? CLASS_GLYPHS[type.class] : "?"}
+              </text>
+            </g>
+          );
+        })}
+
+        {floaters.map((floater) => {
+          const center = hexToPixel(floater.hex, SIZE);
+          return (
+            <text
+              key={floater.id}
+              className={styles.floater}
+              x={center.x}
+              y={center.y - SIZE * 0.2}
+            >
+              {floater.text}
+            </text>
           );
         })}
       </svg>
