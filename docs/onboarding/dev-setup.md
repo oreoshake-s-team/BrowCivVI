@@ -45,7 +45,13 @@ Until the app is scaffolded there is nothing to install — start with the scaff
 - `yarn dev` — run the app locally.
 - `yarn typecheck` — strict TS; must be clean before a PR.
 - `yarn test` — unit + integration; run after every meaningful change.
-- `yarn build` — production build.
+- `yarn build` — production build. Runs `prisma migrate deploy` first **when a database URL is set** (preferring `DATABASE_URL_UNPOOLED`), then `next build`; with no DB URL configured it skips migration and just builds.
+- `yarn db:migrate` — create/apply a migration locally during development (`prisma migrate dev`).
+- `yarn db:deploy` — apply pending migrations to a target database (`prisma migrate deploy`).
+
+### Database migrations on deploy
+
+Preview and production **auto-migrate at build**: `yarn build` applies pending migrations before compiling, so a freshly provisioned database (e.g. a new Neon branch) gets its schema without a manual step. Migrations run against the unpooled connection (`DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler. Vercel's Build Command is pinned to `yarn build` in `vercel.json` so the wrapper runs on every deploy.
 
 ## Windows gotchas
 
