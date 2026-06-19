@@ -1,41 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import PlayMatchPage from "./[id]/page";
 import PlayPage from "./page";
 
-const { redirectMock, isConfiguredMock, getUserIdMock } = vi.hoisted(() => ({
-  redirectMock: vi.fn(),
-  isConfiguredMock: vi.fn(),
-  getUserIdMock: vi.fn(),
-}));
+const { requirePlayAccessMock } = vi.hoisted(() => ({ requirePlayAccessMock: vi.fn() }));
 
-vi.mock("next/navigation", () => ({ redirect: redirectMock }));
-vi.mock("@/lib/auth0", () => ({ isAuthConfigured: isConfiguredMock }));
-vi.mock("@/server/session", () => ({ getUserId: getUserIdMock }));
+vi.mock("./authGate", () => ({ requirePlayAccess: requirePlayAccessMock }));
 vi.mock("@/components/board/PlayScreen", () => ({ PlayScreen: () => null }));
 
 afterEach(() => {
-  redirectMock.mockReset();
-  isConfiguredMock.mockReset();
-  getUserIdMock.mockReset();
+  requirePlayAccessMock.mockReset();
 });
 
-describe("PlayPage auth gate", () => {
-  it("redirects an unauthenticated visitor to Auth0 login", async () => {
-    isConfiguredMock.mockReturnValue(true);
-    getUserIdMock.mockResolvedValue(null);
+describe("play routes auth gate", () => {
+  it("gates /play before rendering the board", async () => {
     await PlayPage();
-    expect(redirectMock).toHaveBeenCalledWith("/auth/login");
+    expect(requirePlayAccessMock).toHaveBeenCalledWith("/play");
   });
 
-  it("does not redirect an authenticated visitor", async () => {
-    isConfiguredMock.mockReturnValue(true);
-    getUserIdMock.mockResolvedValue("auth0|alexander");
-    await PlayPage();
-    expect(redirectMock).not.toHaveBeenCalled();
-  });
-
-  it("does not gate /play when Auth0 is not configured", async () => {
-    isConfiguredMock.mockReturnValue(false);
-    await PlayPage();
-    expect(redirectMock).not.toHaveBeenCalled();
+  it("gates /play/[id] before rendering the board, returning to that match", async () => {
+    await PlayMatchPage({ params: Promise.resolve({ id: "match-7" }) });
+    expect(requirePlayAccessMock).toHaveBeenCalledWith("/play/match-7");
   });
 });
