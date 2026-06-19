@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import type { NamedRegion } from "@/engine/content/region";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
@@ -175,5 +175,21 @@ describe("HexBoard interaction", () => {
     fireEvent.pointerUp(hex, { pointerType: "touch", pointerId: 1 });
     fireEvent.click(hex);
     expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it("shows Q and R coordinates when the debug panel toggle is checked", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    const cell = screen.getByTestId("hex-0,0");
+    expect(within(cell).queryByText("0, 0")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Show Q and R coordinates?"));
+    expect(within(cell).getByText("0, 0")).toBeTruthy();
+  });
+
+  it("hides Q and R coordinates when the debug panel toggle is unchecked", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    const cell = screen.getByTestId("hex-0,0");
+    fireEvent.click(screen.getByLabelText("Show Q and R coordinates?"));
+    fireEvent.click(screen.getByLabelText("Show Q and R coordinates?"));
+    expect(within(cell).queryByText("0, 0")).toBeNull();
   });
 });
