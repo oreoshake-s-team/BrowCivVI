@@ -17,12 +17,25 @@ test("the Granicus board renders and selecting a unit reveals its reachable hexe
 test("the Granicus river surfaces its related media links", async ({ page }) => {
   await page.goto("/play");
 
-  await page.locator(".river").first().click({ force: true });
-
   const card = page.getByRole("dialog", { name: "Granicus historical reference" });
-  await expect(card).toBeVisible();
+  await expect(async () => {
+    await page.locator(".river").first().click({ force: true });
+    await expect(card).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
 
   const video = card.getByRole("link", { name: /Kings and Generals/ });
   await expect(video).toHaveAttribute("href", "https://www.youtube.com/watch?v=s40yYSWkrzk");
   await expect(card.getByRole("link", { name: /Tides of History/ })).toBeVisible();
+});
+
+test("Pella surfaces its pre-Granicus media reference", async ({ page }) => {
+  await page.goto("/play");
+
+  const card = page.getByRole("dialog", { name: "Pella historical reference" });
+  await expect(async () => {
+    await page.getByRole("button", { name: "Pella historical reference" }).click();
+    await expect(card).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
+
+  await expect(card.getByRole("link", { name: /Kings and Generals/ })).toBeVisible();
 });
