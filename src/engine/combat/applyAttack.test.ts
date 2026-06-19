@@ -25,6 +25,7 @@ function input(over: Partial<ApplyAttackInput> = {}): ApplyAttackInput {
     defenderId: "p1",
     defenderTerrainDefense: 0,
     defenderTerrainMoveCost: 1,
+    riverAttack: false,
     rng: createRng(1),
     ...over,
   };
@@ -51,5 +52,11 @@ describe("applyAttack", () => {
 
   it("returns the state unchanged when the attacker is missing", () => {
     expect(applyAttack(input({ attackerId: "ghost" })).movement.m1).toBe(2);
+  });
+
+  it("deals less damage when the attack crosses a river", () => {
+    const open = applyAttack(input({ riverAttack: false })).defenderDamage;
+    const river = applyAttack(input({ riverAttack: true })).defenderDamage;
+    expect(river < open).toBe(true);
   });
 });

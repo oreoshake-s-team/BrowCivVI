@@ -16,6 +16,7 @@ function input(rng: Rng, over: Partial<ResolveAttackInput> = {}): ResolveAttackI
     others: [],
     defenderTerrainDefense: 0,
     defenderTerrainMoveCost: 1,
+    riverAttack: false,
     rng,
     ...over,
   };

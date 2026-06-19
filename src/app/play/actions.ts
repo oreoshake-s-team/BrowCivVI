@@ -8,7 +8,7 @@ import { neighbors } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
-import { entryCost, riverEdgeSet } from "@/engine/movement/cost";
+import { entryCost, riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { createRng } from "@/engine/rng";
 import { unitTypeById } from "@/engine/unit/catalog";
@@ -250,6 +250,7 @@ export async function attack(
     defenderId: targetId,
     defenderTerrainDefense: terrain?.defenseModifier ?? 0,
     defenderTerrainMoveCost: terrain?.moveCost ?? 1,
+    riverAttack: RIVER_EDGES.has(riverEdgeKey(attacker.hex, defender.hex)),
     rng: createRng((match.seed ^ (match.version + 1)) >>> 0),
   });
 

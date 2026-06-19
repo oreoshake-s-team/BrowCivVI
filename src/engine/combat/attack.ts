@@ -19,6 +19,7 @@ export interface ResolveAttackInput {
   readonly others: readonly AttackUnit[];
   readonly defenderTerrainDefense: number;
   readonly defenderTerrainMoveCost: number;
+  readonly riverAttack: boolean;
   readonly rng: Rng;
 }
 
@@ -62,6 +63,7 @@ export function resolveAttack(input: ResolveAttackInput): CombatResult {
     defenderTerrainDefense: input.defenderTerrainDefense,
     defenderTerrainMoveCost: input.defenderTerrainMoveCost,
     flanked,
+    riverAttack: input.riverAttack,
     rng: input.rng,
   });
 }

@@ -16,6 +16,7 @@ function makeInput(rng: Rng, over: Partial<CombatInput> = {}): CombatInput {
     defenderTerrainDefense: 0,
     defenderTerrainMoveCost: 1,
     flanked: false,
+    riverAttack: false,
     rng,
     ...over,
   };
@@ -58,6 +59,12 @@ describe("resolveCombat", () => {
       makeInput(createRng(6), { defender: side(30, 100, ["phalanx"]), flanked: true }),
     );
     expect(flanked.defenderDamage > unflanked.defenderDamage).toBe(true);
+  });
+
+  it("a river attack deals less damage to the defender than an attack on open ground", () => {
+    const open = resolveCombat(makeInput(createRng(8), { riverAttack: false }));
+    const river = resolveCombat(makeInput(createRng(8), { riverAttack: true }));
+    expect(river.defenderDamage < open.defenderDamage).toBe(true);
   });
 
   it("rough terrain weakens the phalanx wall", () => {
