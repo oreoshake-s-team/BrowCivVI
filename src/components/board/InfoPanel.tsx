@@ -7,7 +7,12 @@ const FACTION_NAMES: Readonly<Record<string, string>> = {
   persia: "Persia",
 };
 
-export function InfoPanel({ unit }: { unit: Unit | null }) {
+export interface MovesInfo {
+  readonly remaining: number;
+  readonly max: number;
+}
+
+export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: MovesInfo | null }) {
   if (unit === null) {
     return (
       <section className={styles.info} aria-label="Selected unit">
@@ -28,6 +33,14 @@ export function InfoPanel({ unit }: { unit: Unit | null }) {
         <dd>{unit.hp}</dd>
         <dt>Morale</dt>
         <dd>{unit.morale}</dd>
+        {moves !== null ? (
+          <>
+            <dt>Moves</dt>
+            <dd className={moves.remaining === 0 ? styles.statSpent : undefined}>
+              {moves.remaining} / {moves.max}
+            </dd>
+          </>
+        ) : null}
       </dl>
     </section>
   );

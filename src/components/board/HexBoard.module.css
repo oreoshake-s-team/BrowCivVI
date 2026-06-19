@@ -186,6 +186,29 @@
   stroke-dasharray: 4 3;
 }
 
+.movesBadge {
+  pointer-events: none;
+}
+
+.movesPill {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+
+.movesText {
+  font-size: var(--font-size-label-sm);
+  font-weight: 700;
+  fill: var(--color-ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.statSpent {
+  color: var(--color-ink-subtle);
+}
+
 .sidebar {
   flex: 1 1 220px;
   max-width: 320px;
