@@ -49,9 +49,16 @@ Until the app is scaffolded there is nothing to install — start with the scaff
 - `pnpm db:migrate` — create/apply a migration locally during development (`prisma migrate dev`).
 - `pnpm db:deploy` — apply pending migrations to a target database (`prisma migrate deploy`).
 
+### Database environments
+
+Each Vercel environment maps to a Neon branch in the project's database:
+
+- **Production** and **Development** use the `main` branch.
+- **Preview** uses a single shared `preview` branch (branched from `main`). **Every** preview deployment connects to this one branch — it is *not* re-created per git branch or per deployment — so preview data persists across deployments and is shared between concurrent previews. Treat it as a disposable scratch database: a schema change that lands on one feature branch's preview is visible to every other preview.
+
 ### Database migrations on deploy
 
-Preview and production **auto-migrate at build**: `pnpm build` applies pending migrations before compiling, so a freshly provisioned database (e.g. a new Neon branch) gets its schema without a manual step. Migrations run against the unpooled connection (`DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler. Vercel's Build Command is pinned to `pnpm build` in `vercel.json` so the wrapper runs on every deploy.
+Preview and production **auto-migrate at build**: `pnpm build` applies pending migrations before compiling, so the target database's schema always matches the committed migrations without a manual step. Migrations run against the unpooled connection (`DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler; those same locks serialize concurrent preview builds racing on the shared branch. Vercel's Build Command is pinned to `pnpm build` in `vercel.json` so the wrapper runs on every deploy.
 
 ## Windows gotchas
 
