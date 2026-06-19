@@ -86,6 +86,7 @@ export default tseslint.config(
     rules: {
       ...vitest.configs.recommended.rules,
       "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/unbound-method": "off",
     },
     languageOptions: { globals: { ...globals.node } },
   },
