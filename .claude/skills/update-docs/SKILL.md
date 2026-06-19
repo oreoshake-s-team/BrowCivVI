@@ -64,11 +64,11 @@ Map PR-touched code areas to existing sections by keyword (e.g., scoring → §5
 
 Before writing, show the user a brief list:
 
-```
+```text
 docs/design.md
   - §5 Game model: note loyal-defection now grants the flank bonus on capture
 docs/onboarding/dev-setup.md
-  - add the new yarn script introduced by the PR
+  - add the new pnpm script introduced by the PR
 ```
 
 Wait for approval, then apply via `Edit`. If a doc carries a status/date header (e.g. design.md's `> Status:` line), update it only when the change warrants it; do not invent a date.
@@ -76,7 +76,7 @@ Wait for approval, then apply via `Edit`. If a doc carries a status/date header 
 ### 5. Verify
 
 - Re-read each edited section to confirm it reads naturally end-to-end and its §-cross-references still resolve.
-- Run `yarn build` / `yarn typecheck` only if a code sample was changed and the user requests verification — otherwise docs changes don't need a build.
+- Run `pnpm build` / `pnpm typecheck` only if a code sample was changed and the user requests verification — otherwise docs changes don't need a build.
 
 ### 6. Report
 
@@ -88,4 +88,4 @@ One or two sentences: which files changed, which sections, and the PR number (as
 - The PR is a dependency bump, CI tweak, test-only change, or pure refactor.
 - The PR's behavioral change is already accurately described in `docs/`.
 
-In those cases, report "No `docs/` updates needed for #NNN — <one-line reason>" and exit.
+In those cases, report "No `docs/` updates needed for #NNN — `<one-line reason>`" and exit.
