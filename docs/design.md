@@ -354,7 +354,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 
 ### Platform & API
 
-- **Auth.** Phase 1 (solo vs AI) uses an **anonymous signed-cookie** identity — enough to own a match. Adopt **Auth.js (NextAuth)** when leaderboard identity / PvP accounts need real logins.
+- **Auth.** Phase 1 (solo vs AI) uses an **anonymous signed-cookie** identity — enough to own a match. **Auth0** provides real sign-up / sign-in when leaderboard identity / PvP accounts need durable logins: a short-lived session resolves to a stable `userId` (the Auth0 `sub`), matches are owned by that `userId`, and ownership is checked on every intent (§3). Intent requests are **rate-limited per `userId`** with configurable, authored limits.
 - **Postgres host: Neon** — serverless, Vercel-native, scale-to-zero, with DB branching per preview deploy (pairs with the `JSONB` `MatchStore`, §4). (Vercel Postgres is Neon-backed.)
 - **GraphQL: schema-first SDL + `graphql-codegen`** for both resolver and client types. The explicit SDL is the contract artifact and doubles as the trust-boundary doc for the untrusted-client threat model (§3).
 
