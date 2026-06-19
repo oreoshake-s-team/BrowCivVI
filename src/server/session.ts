@@ -1,4 +1,6 @@
-import { getAuth0 } from "@/lib/auth0";
+import { getAuth0, isAuthConfigured } from "@/lib/auth0";
+
+export const LOCAL_OWNER = "local-dev";
 
 export interface SessionUser {
   readonly sub: string;
@@ -33,4 +35,8 @@ export async function requireUserId(): Promise<string> {
   const userId = await getUserId();
   if (userId === null) throw new UnauthenticatedError();
   return userId;
+}
+
+export async function ownerSubject(): Promise<string> {
+  return isAuthConfigured() ? requireUserId() : LOCAL_OWNER;
 }

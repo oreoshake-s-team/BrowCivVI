@@ -4,20 +4,18 @@ import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
 import { loadBoard, newGame, move, attack, targetsFor } from "./actions";
 
-const { jar } = vi.hoisted(() => ({ jar: new Map<string, string>() }));
+const { getAuth0Mock } = vi.hoisted(() => ({ getAuth0Mock: vi.fn() }));
 
-vi.mock("next/headers", () => ({
-  cookies: () =>
-    Promise.resolve({
-      get: (name: string) => {
-        const value = jar.get(name);
-        return value === undefined ? undefined : { value };
-      },
-      set: (name: string, value: string) => {
-        jar.set(name, value);
-      },
-    }),
+vi.mock("@/lib/auth0", () => ({
+  isAuthConfigured: () => true,
+  getAuth0: getAuth0Mock,
 }));
+
+function signIn(sub: string | null): void {
+  getAuth0Mock.mockReturnValue({
+    getSession: () => Promise.resolve(sub === null ? null : { user: { sub } }),
+  });
+}
 
 const PHALANX = "mac-phalanx";
 const COMPANIONS = "mac-companions";
@@ -38,11 +36,11 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  jar.clear();
+  signIn("auth0|player-one");
 });
 
 afterEach(() => {
-  vi.clearAllMocks();
+  getAuth0Mock.mockReset();
 });
 
 describe("Server Action intent channel against the in-memory store", () => {
@@ -123,10 +121,15 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(outcome.ok).toBe(false);
   });
 
-  it("rejects a move on a match the caller does not own", async () => {
+  it("rejects a move on a match owned by another signed-in user", async () => {
     const board = await newGame();
-    jar.clear();
+    signIn("auth0|intruder");
     const outcome = await move(board.matchId, PHALANX, PHALANX_START);
     expect(outcome.ok).toBe(false);
+  });
+
+  it("rejects an unauthenticated caller", async () => {
+    signIn(null);
+    await expect(newGame()).rejects.toThrow();
   });
 });

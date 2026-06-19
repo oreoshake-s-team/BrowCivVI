@@ -1,10 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getSessionUser, getUserId, requireUserId, UnauthenticatedError } from "./session";
+import {
+  getSessionUser,
+  getUserId,
+  ownerSubject,
+  requireUserId,
+  LOCAL_OWNER,
+  UnauthenticatedError,
+} from "./session";
 
-const { getAuth0Mock } = vi.hoisted(() => ({ getAuth0Mock: vi.fn() }));
+const { getAuth0Mock, isConfiguredMock } = vi.hoisted(() => ({
+  getAuth0Mock: vi.fn(),
+  isConfiguredMock: vi.fn(() => true),
+}));
 
 vi.mock("@/lib/auth0", () => ({
-  isAuthConfigured: () => true,
+  isAuthConfigured: isConfiguredMock,
   getAuth0: getAuth0Mock,
 }));
 
@@ -14,6 +24,7 @@ function withSession(session: unknown): void {
 
 afterEach(() => {
   getAuth0Mock.mockReset();
+  isConfiguredMock.mockReturnValue(true);
 });
 
 describe("getUserId", () => {
@@ -53,5 +64,22 @@ describe("requireUserId", () => {
   it("rejects an unauthenticated request", async () => {
     withSession(null);
     await expect(requireUserId()).rejects.toBeInstanceOf(UnauthenticatedError);
+  });
+});
+
+describe("ownerSubject", () => {
+  it("uses the authenticated userId when auth is configured", async () => {
+    withSession({ user: { sub: "auth0|1" } });
+    expect(await ownerSubject()).toBe("auth0|1");
+  });
+
+  it("rejects an unauthenticated request when auth is configured", async () => {
+    withSession(null);
+    await expect(ownerSubject()).rejects.toBeInstanceOf(UnauthenticatedError);
+  });
+
+  it("falls back to a local owner when auth is not configured", async () => {
+    isConfiguredMock.mockReturnValue(false);
+    expect(await ownerSubject()).toBe(LOCAL_OWNER);
   });
 });
