@@ -3,6 +3,7 @@ import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
 import type { MovementDomain } from "../unit/classes";
+import { RIVER_CROSS_COST, riverEdgeKey } from "./cost";
 
 export interface ReachableInput {
   readonly start: Hex;
@@ -12,11 +13,15 @@ export interface ReachableInput {
   readonly blocked?: ReadonlySet<string>;
   readonly blockedDestinations?: ReadonlySet<string>;
   readonly zoneOfControl?: ReadonlySet<string>;
+  readonly riverEdges?: ReadonlySet<string>;
+  readonly atFullMovement?: boolean;
 }
 
 export function reachableHexes(input: ReachableInput): ReadonlyMap<string, number> {
-  const { start, movement, map, domain, blocked, blockedDestinations, zoneOfControl } = input;
-  const best = new Map<string, number>([[hexKey(start), movement]]);
+  const { start, movement, map, domain, blocked, blockedDestinations, zoneOfControl, riverEdges } =
+    input;
+  const startKey = hexKey(start);
+  const best = new Map<string, number>([[startKey, movement]]);
   let frontier: Hex[] = [start];
 
   while (frontier.length > 0) {
@@ -30,9 +35,13 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
         if (blocked?.has(key)) continue;
         const terrain = terrainAt(map, step);
         if (!terrain?.passableBy.includes(domain)) continue;
-        if (budget - terrain.moveCost < 0) continue;
+        const crossingRiver = riverEdges?.has(riverEdgeKey(hex, step)) ?? false;
+        const cost = terrain.moveCost + (crossingRiver ? RIVER_CROSS_COST : 0);
+        const firstStep = hexKey(hex) === startKey;
+        const alwaysCross = crossingRiver && firstStep && (input.atFullMovement ?? false);
+        if (budget - cost < 0 && !alwaysCross) continue;
+        const remaining = Math.max(0, budget - cost);
         const inZoneOfControl = zoneOfControl?.has(key) ?? false;
-        const remaining = inZoneOfControl ? 0 : budget - terrain.moveCost;
         const prev = best.get(key);
         if (prev === undefined || remaining > prev) {
           best.set(key, remaining);
@@ -43,7 +52,7 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
     frontier = next;
   }
 
-  best.delete(hexKey(start));
+  best.delete(startKey);
   if (blockedDestinations) {
     for (const key of blockedDestinations) best.delete(key);
   }

@@ -20,6 +20,7 @@ function signIn(sub: string | null): void {
 const PHALANX = "mac-phalanx";
 const COMPANIONS = "mac-companions";
 const PER_CAVALRY = "per-cavalry";
+const PER_IMMORTALS = "per-immortals";
 const PHALANX_START: Hex = { q: 5, r: 1 };
 const COMPANIONS_START: Hex = { q: 6, r: 1 };
 const ABYDOS: Hex = { q: 5, r: 0 };
@@ -89,13 +90,24 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(keys).not.toContain(hexKey(BEYOND_ZOC));
   });
 
-  it("spends all movement entering an enemy zone of control and cannot move again", async () => {
+  it("keeps its move points but cannot move again after entering a zone of control", async () => {
     const board = await newGame();
     const entered = await move(board.matchId, PHALANX, ZOC_STOP);
     const again = await move(board.matchId, PHALANX, PHALANX_START);
     expect(entered.ok).toBe(true);
-    expect(entered.movement[PHALANX]).toBe(0);
+    expect(entered.movement[PHALANX]).toBe(1);
     expect(again.ok).toBe(false);
+  });
+
+  it("a melee that crosses the Granicus spends all its moves and cannot attack", async () => {
+    const board = await newGame();
+    const crossed = await move(board.matchId, PER_IMMORTALS, ZOC_STOP);
+    const targets = await targetsFor(board.matchId, PER_IMMORTALS);
+    const blocked = await attack(board.matchId, PER_IMMORTALS, COMPANIONS);
+    expect(crossed.ok).toBe(true);
+    expect(crossed.movement[PER_IMMORTALS]).toBe(0);
+    expect(targets.attackable).toHaveLength(0);
+    expect(blocked.ok).toBe(false);
   });
 
   it("rejects an out-of-range move and leaves the unit where it started", async () => {

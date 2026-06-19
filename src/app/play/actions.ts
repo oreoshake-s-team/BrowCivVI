@@ -8,6 +8,7 @@ import { neighbors } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
+import { entryCost, riverEdgeSet } from "@/engine/movement/cost";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { createRng } from "@/engine/rng";
 import { unitTypeById } from "@/engine/unit/catalog";
@@ -71,13 +72,27 @@ function movementConstraints(match: MatchState, unit: Unit): MovementConstraints
   return { blocked, blockedDestinations, zoneOfControl };
 }
 
+const RIVER_EDGES = riverEdgeSet(FIRST_SLICE_MAP.rivers);
+
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
+  const constraints = movementConstraints(match, unit);
+  if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex))) return [];
   return availableMoves({
     from: unit.hex,
     movement: match.movement[unit.id] ?? 0,
     domain: domainOf(unit.typeId),
     map: FIRST_SLICE_MAP,
-    ...movementConstraints(match, unit),
+    riverEdges: RIVER_EDGES,
+    atFullMovement: !unit.hasMovedThisTurn,
+    ...constraints,
+  });
+}
+
+function attackTargets(match: MatchState, attacker: Unit): readonly Hex[] {
+  const mp = match.movement[attacker.id] ?? 0;
+  return attackableHexes(match.units, attacker.id).filter((hex) => {
+    const cost = entryCost(FIRST_SLICE_MAP, RIVER_EDGES, attacker.hex, hex);
+    return cost !== null && mp >= cost;
   });
 }
 
@@ -124,6 +139,15 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
   if (unit === undefined)
     return { ok: false, units: match.units, reachable: [], movement: match.movement };
 
+  const constraints = movementConstraints(match, unit);
+  if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex)))
+    return {
+      ok: false,
+      units: match.units,
+      reachable: reachableForUnit(match, unit),
+      movement: match.movement,
+    };
+
   const result = resolveMove({
     unitId,
     from: unit.hex,
@@ -131,7 +155,9 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
     movement: match.movement[unitId] ?? 0,
     domain: domainOf(unit.typeId),
     map: FIRST_SLICE_MAP,
-    ...movementConstraints(match, unit),
+    riverEdges: RIVER_EDGES,
+    atFullMovement: !unit.hasMovedThisTurn,
+    ...constraints,
   });
   if (!result.ok)
     return {
@@ -143,7 +169,9 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
 
   const next: MatchState = {
     ...match,
-    units: match.units.map((u) => (u.id === unitId ? { ...u, hex: result.hex } : u)),
+    units: match.units.map((u) =>
+      u.id === unitId ? { ...u, hex: result.hex, hasMovedThisTurn: true } : u,
+    ),
     movement: { ...match.movement, [unitId]: result.remaining },
   };
 
@@ -191,7 +219,7 @@ export async function targetsFor(matchId: string, unitId: string): Promise<Selec
   if (unit === undefined) return { reachable: [], attackable: [] };
   return {
     reachable: reachableForUnit(match, unit),
-    attackable: attackableHexes(match.units, unitId),
+    attackable: attackTargets(match, unit),
   };
 }
 
@@ -210,9 +238,7 @@ export async function attack(
   if (attacker === undefined || defender === undefined || attacker.owner === defender.owner) {
     return { ok: false, units: match.units };
   }
-  if (
-    !attackableHexes(match.units, attackerId).some((hex) => hexKey(hex) === hexKey(defender.hex))
-  ) {
+  if (!attackTargets(match, attacker).some((hex) => hexKey(hex) === hexKey(defender.hex))) {
     return { ok: false, units: match.units };
   }
 
