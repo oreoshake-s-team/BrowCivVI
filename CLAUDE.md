@@ -32,7 +32,7 @@ The author is still learning frontend and relies on Claude to surface design dec
 - The client is untrusted and near-stateless: it renders authoritative state and sends _intents_; it never computes outcomes. Game logic lives in the pure `/engine` module and on the server (design §2–§4). The server will always provide a list of available moves that will be reflected in the UI.
 - When developing new branches, only work in worktrees.
 - Always use the issue template at `.github/ISSUE_TEMPLATE/issue.yml` when creating issues.
-- Use yarn for all package management and script execution (e.g. `yarn install`, `yarn test`, `yarn build`). Do not use npm.
+- Use pnpm for all package management and script execution (e.g. `pnpm install`, `pnpm test`, `pnpm build`). Do not use npm or yarn.
 
 ## Testing
 
@@ -55,9 +55,8 @@ Use semantic (or Conventional) Commits to provide a standardized framework for n
 
 ## Git & Worktrees
 
-- One worktree per branch/PR, created at `~/.cache/browcivvi-worktrees/<branch>` (outside the project tree, so test workers don't hit a parent config). Run `yarn install` in every fresh worktree before anything else. Report whether or not this was nearly instant (slower executions indicate a project setup issue).
+- One worktree per branch/PR, created at `~/.cache/browcivvi-worktrees/<branch>` (outside the project tree, so test workers don't hit a parent config). Run `pnpm install` in every fresh worktree before anything else. Report whether or not this was nearly instant (slower executions indicate a project setup issue).
 - When a session juggles multiple issues, never reuse another issue's worktree; each issue gets its own.
-- Use pnpm for lightnight quick worktree setup.
 
 ## Work with feature branches
 
@@ -91,11 +90,11 @@ Onboarding docs:
 - [`docs/onboarding/styling-tokens.md`](docs/onboarding/styling-tokens.md) — the two-tier CSS design-token system (color primitives → semantic aliases, plus radius/spacing/type/motion scales); component CSS must use tokens, enforced in CI.
 - [`docs/onboarding/linting.md`](docs/onboarding/linting.md) — the ESLint / Prettier / Stylelint / markdownlint stack, the few justified config deviations, and the pre-commit hook.
 - [`docs/onboarding/testing.md`](docs/onboarding/testing.md) — the test pyramid (engine → server-action contract → mocked front-end flow → browser e2e) and the typecheck-as-tripwire guardrail that keeps mocked intents from drifting from the real Server Actions.
-- [`docs/onboarding/screenshots.md`](docs/onboarding/screenshots.md) — the `docs/assets/` per-PR image convention and the `yarn screenshots` helper (GitHub has no image-attachment API, so images are committed and hotlinked).
+- [`docs/onboarding/screenshots.md`](docs/onboarding/screenshots.md) — the `docs/assets/` per-PR image convention and the `pnpm screenshots` helper (GitHub has no image-attachment API, so images are committed and hotlinked).
 
 ## Project Environment
 
-- This project uses **Yarn** (Berry0 and pnpm), not npm. Use `yarn` commands. Run `yarn install` in every fresh clone or worktree before anything else.
+- This project uses **pnpm**, not npm or Yarn. Use `pnpm` commands. Run `pnpm install` in every fresh clone or worktree before anything else.
 - TypeScript is the primary language — all new code should be `.ts`/`.tsx`.
-- Run `yarn typecheck`, `yarn lint`, `yarn lint:css`, `yarn lint:md`, `yarn format:check`, and `yarn test` before opening PRs (all enforced in CI; a husky pre-commit hook runs lint-staged on changed files).
+- Run `pnpm typecheck`, `pnpm lint`, `pnpm lint:css`, `pnpm lint:md`, `pnpm format:check`, and `pnpm test` before opening PRs (all enforced in CI; a husky pre-commit hook runs lint-staged on changed files).
 - Use `import`, not `require()` — this is an ESM project.

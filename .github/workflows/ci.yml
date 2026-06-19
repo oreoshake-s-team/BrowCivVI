@@ -28,23 +28,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-tsbuildinfo-
       - name: Install
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
       - name: Build
-        run: yarn build
+        run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Typecheck
-        run: yarn typecheck
+        run: pnpm typecheck
       - name: Lint (ESLint)
-        run: yarn lint
+        run: pnpm lint
       - name: Lint CSS (Stylelint)
-        run: yarn lint:css
+        run: pnpm lint:css
       - name: Lint Markdown
-        run: yarn lint:md
+        run: pnpm lint:md
       - name: Format check (Prettier)
-        run: yarn format:check
+        run: pnpm format:check
       - name: Test
-        run: yarn test
+        run: pnpm test
 
   e2e:
     runs-on: ubuntu-latest
@@ -57,16 +57,16 @@ jobs:
         run: corepack enable
       - uses: ./.github/actions/ci-cache
       - name: Install
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
       - name: Cache Playwright browser
         id: playwright-cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Playwright browser
-        run: yarn playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Run e2e smoke tests
-        run: yarn e2e
+        run: pnpm e2e
         env:
           NEXT_TELEMETRY_DISABLED: "1"

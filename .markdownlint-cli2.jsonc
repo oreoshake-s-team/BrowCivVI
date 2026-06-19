@@ -6,5 +6,5 @@
     "MD029": false,
   },
   "globs": ["docs/**/*.md", "*.md"],
-  "ignores": ["node_modules", ".next", "coverage", ".yarn", ".claude", ".github"],
+  "ignores": ["node_modules", ".next", "coverage", ".claude", ".github"],
 }
