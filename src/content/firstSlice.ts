@@ -374,7 +374,6 @@ const RIVERS: readonly RiverEdge[] = [
   { a: { q: 6, r: 1 }, b: { q: 7, r: 2 } },
   { a: { q: 6, r: 1 }, b: { q: 7, r: 1 } },
   { a: { q: 6, r: 1 }, b: { q: 7, r: 0 } },
-  { a: { q: 6, r: 0 }, b: { q: 7, r: 0 } },
 ];
 
 function island(
