@@ -147,7 +147,17 @@ async function writeImages(dir: string, files: string[]): Promise<void> {
     used.add(name);
     await writeFile(path.join(dir, name), result.data);
     const delta = result.inputBytes - result.outputBytes;
-    const note = result.resized ? ` (resized to ${String(result.width)}px wide)` : "";
+    const notes: string[] = [];
+    if (result.resized) {
+      notes.push(`resized to ${String(result.width)}px wide`);
+    }
+    if (result.lossy) {
+      notes.push(`lossy ${result.format}`);
+    }
+    if (result.overBudget) {
+      notes.push("still over budget");
+    }
+    const note = notes.length > 0 ? ` (${notes.join(", ")})` : "";
     console.log(
       `  ${file} -> ${name}: ${String(result.inputBytes)} -> ${String(result.outputBytes)} bytes (-${String(delta)})${note}`,
     );

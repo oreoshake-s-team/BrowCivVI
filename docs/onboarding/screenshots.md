@@ -51,12 +51,22 @@ the existing folder.
 
 ## Optimization
 
-Each image is processed with [`sharp`](https://sharp.pixelplumbing.com/):
+Each image is processed with [`sharp`](https://sharp.pixelplumbing.com/) to land under a **40 KB
+budget** while staying as crisp as possible:
 
-- **Lossless, same format** — PNG/JPEG/WebP/GIF are re-encoded at maximum compression with metadata
-  stripped. Pixels are unchanged.
-- **Downscaled to 800px wide** — anything wider is resized down (smaller images are left alone).
+- **Downscaled to 800px wide** — anything wider is resized down first (smaller images are left
+  alone).
+- **Lossless first** — the image is re-encoded in its source format (PNG/JPEG/WebP/GIF) at maximum
+  compression with metadata stripped. If that already fits the budget, it is kept pixel-for-pixel.
+- **Degrade only to fit** — if the lossless version is over 40 KB, the image is re-encoded as
+  **WebP**, lowering quality at 800px before stepping the width down (floor **480px** wide), and the
+  highest-width / highest-quality result that fits the budget is chosen. PNG/JPEG inputs that need
+  this become `.webp`.
+- **Best effort** — if even a 480px-wide WebP can't reach 40 KB, the smallest result is kept and the
+  CLI prints a `still over budget` warning.
 - A re-encoded image is never written larger than the original unless it had to be downscaled.
+
+The defaults (800px wide, 40 KB, 480px floor) live in `scripts/screenshots/optimize.ts`.
 
 ## Referencing an image
 
