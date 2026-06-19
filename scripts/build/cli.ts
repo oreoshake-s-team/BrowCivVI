@@ -10,7 +10,13 @@ function main(): void {
   if (migrateUrl === undefined) {
     console.log("build: no database URL configured — skipping prisma migrate deploy");
   } else {
-    console.log("build: applying database migrations (prisma migrate deploy)");
+    let target = "unknown host";
+    try {
+      target = new URL(migrateUrl).host;
+    } catch {
+      target = "unparseable host";
+    }
+    console.log(`build: applying database migrations (prisma migrate deploy) → ${target}`);
     run(["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: migrateUrl });
   }
   run(["next", "build", "--turbopack"], process.env);
