@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/build/cli.ts",
+    "analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9",
+    "@next/bundle-analyzer": "^16.2.9",
     "@next/eslint-plugin-next": "^16.2.9",
     "@playwright/test": "^1.61.0",
     "@testing-library/dom": "^10.4.0",
@@ -50,6 +52,7 @@
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/eslint-plugin": "^1.6.20",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
