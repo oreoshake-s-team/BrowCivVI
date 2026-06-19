@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Citation } from "@/engine/content/citation";
+import type { MediaLink } from "@/engine/content/media";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
@@ -22,6 +23,7 @@ import { fitView, panView, zoomView, viewBoxString } from "./viewport";
 const SIZE = 36;
 const PAD = SIZE;
 const PAN_THRESHOLD = 4;
+const CITATION_HIDE_MS = 700;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 
@@ -71,6 +73,7 @@ export function HexBoard({
     citation: Citation;
     x: number;
     y: number;
+    media?: readonly MediaLink[] | undefined;
   } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -119,19 +122,30 @@ export function HexBoard({
     }
   };
 
-  const showCitation = (name: string, citation: Citation, target: SVGElement) => {
+  const showCitation = (
+    name: string,
+    citation: Citation,
+    target: SVGElement,
+    media?: readonly MediaLink[],
+  ) => {
     cancelHide();
     const host = containerRef.current?.getBoundingClientRect();
     if (host === undefined) return;
     const rect = target.getBoundingClientRect();
-    setCited({ name, citation, x: rect.left - host.left + rect.width / 2, y: rect.top - host.top });
+    setCited({
+      name,
+      citation,
+      x: rect.left - host.left + rect.width / 2,
+      y: rect.top - host.top,
+      media,
+    });
   };
 
   const scheduleHide = () => {
     cancelHide();
     hideTimer.current = setTimeout(() => {
       setCited(null);
-    }, 160);
+    }, CITATION_HIDE_MS);
   };
 
   useEffect(() => {
@@ -315,7 +329,7 @@ export function HexBoard({
             label={granicus.name}
             className={styles.citeTarget}
             onShow={(target) => {
-              showCitation(granicus.name, granicus.citation, target);
+              showCitation(granicus.name, granicus.citation, target, granicus.media);
             }}
             onHide={() => {
               scheduleHide();
@@ -326,7 +340,7 @@ export function HexBoard({
               return (
                 <line
                   key={`river-${index}`}
-                  className={styles.river}
+                  className={["river", styles.river].filter(Boolean).join(" ")}
                   x1={p1.x}
                   y1={p1.y}
                   x2={p2.x}
@@ -500,6 +514,7 @@ export function HexBoard({
           citation={cited.citation}
           x={cited.x}
           y={cited.y}
+          media={cited.media}
           onClose={() => {
             setCited(null);
           }}

@@ -52,3 +52,35 @@
 .confidence {
   text-transform: capitalize;
 }
+
+.media {
+  margin: var(--space-sm) 0 0;
+  padding: var(--space-sm) 0 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.mediaItem {
+  margin: 0;
+}
+
+.mediaLink {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  color: var(--color-outline-emphasis);
+}
+
+.mediaKind {
+  flex: none;
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-board);
+  color: var(--color-ink-subtle);
+  font-size: var(--font-size-ui-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
