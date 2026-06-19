@@ -3,6 +3,7 @@ node_modules/
 out/
 build/
 !scripts/build/
+.pnpm-store/
 next-env.d.ts
 *.tsbuildinfo
 

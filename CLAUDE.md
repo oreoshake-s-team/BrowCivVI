@@ -55,7 +55,7 @@ Use semantic (or Conventional) Commits to provide a standardized framework for n
 
 ## Git & Worktrees
 
-- One worktree per branch/PR, created at `~/.cache/browcivvi-worktrees/<branch>` (outside the project tree, so test workers don't hit a parent config). Run `pnpm install` in every fresh worktree before anything else. Report whether or not this was nearly instant (slower executions indicate a project setup issue).
+- One worktree per branch/PR, created at `~/.cache/browcivvi-worktrees/<branch>` (outside the project tree, so test workers don't hit a parent config). Run `pnpm install --frozen-lockfile --prefer-offline` in every fresh worktree before anything else (skips the resolution pass and registry round-trips; packages hardlink from the shared global store). Report whether or not this was nearly instant (slower executions indicate a project setup issue).
 - When a session juggles multiple issues, never reuse another issue's worktree; each issue gets its own.
 
 ## Work with feature branches
@@ -94,7 +94,7 @@ Onboarding docs:
 
 ## Project Environment
 
-- This project uses **pnpm**, not npm or Yarn. Use `pnpm` commands. Run `pnpm install` in every fresh clone or worktree before anything else.
+- This project uses **pnpm**, not npm or Yarn. Use `pnpm` commands. Run `pnpm install --frozen-lockfile --prefer-offline` in every fresh clone or worktree before anything else.
 - TypeScript is the primary language — all new code should be `.ts`/`.tsx`.
 - Run `pnpm typecheck`, `pnpm lint`, `pnpm lint:css`, `pnpm lint:md`, `pnpm format:check`, and `pnpm test` before opening PRs (all enforced in CI; a husky pre-commit hook runs lint-staged on changed files).
 - Use `import`, not `require()` — this is an ESM project.
