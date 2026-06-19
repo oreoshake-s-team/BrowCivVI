@@ -22,6 +22,7 @@
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
     "lint:md": "markdownlint-cli2",
+    "screenshots": "node scripts/screenshots/cli.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
@@ -61,6 +62,7 @@
     "lint-staged": "^17.0.7",
     "markdownlint-cli2": "^0.22.1",
     "prettier": "^3.8.4",
+    "sharp": "^0.35.2",
     "stylelint": "^17.13.0",
     "stylelint-config-standard": "^40.0.0",
     "typescript": "^5.8.0",
