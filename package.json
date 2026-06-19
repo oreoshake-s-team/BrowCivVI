@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build --turbopack",
+    "build": "node scripts/build/cli.ts",
     "start": "next start",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
