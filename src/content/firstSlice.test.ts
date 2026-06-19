@@ -41,6 +41,12 @@ describe("FIRST_SLICE_REGIONS", () => {
   });
 });
 
+describe("Granicus river course", () => {
+  it("bridges the two offset segments with a connecting edge", () => {
+    expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 1 }, b: { q: 7, r: 2 } });
+  });
+});
+
 describe("FIRST_SLICE_UNITS", () => {
   it("places Alexander's companions on the approach to the river", () => {
     expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-companions")?.hex).toEqual({
