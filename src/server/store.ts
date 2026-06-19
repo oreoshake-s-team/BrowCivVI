@@ -1,29 +1,20 @@
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaClient } from "@prisma/client";
 import type { MatchStore } from "@/engine/match/store";
 import { InMemoryMatchStore } from "@/engine/match/store";
-import { lazyMigration, type LazyMigration } from "@/persistence/migrate";
-import { neonExecutor } from "@/persistence/neon";
-import { PostgresMatchStore } from "@/persistence/postgresMatchStore";
+import { PrismaMatchStore } from "@/persistence/prismaMatchStore";
 
 let cached: MatchStore | undefined;
-let lazy: LazyMigration | undefined;
-
-function migrationFor(url: string): LazyMigration {
-  lazy ??= lazyMigration(neonExecutor(url));
-  return lazy;
-}
 
 export function getStore(): MatchStore {
   if (cached === undefined) {
     const url = process.env.DATABASE_URL;
-    cached =
-      url === undefined
-        ? new InMemoryMatchStore()
-        : new PostgresMatchStore(migrationFor(url).executor);
+    if (url === undefined) {
+      cached = new InMemoryMatchStore();
+    } else {
+      const adapter = new PrismaNeon({ connectionString: url });
+      cached = new PrismaMatchStore(new PrismaClient({ adapter }));
+    }
   }
   return cached;
-}
-
-export async function ensureMigrated(): Promise<void> {
-  const url = process.env.DATABASE_URL;
-  if (url !== undefined) await migrationFor(url).migrate();
 }
