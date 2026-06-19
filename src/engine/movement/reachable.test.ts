@@ -22,6 +22,15 @@ const SEA_MAP = createGameMap(
   [],
 );
 
+const PASS_MAP = createGameMap(
+  [
+    { hex: { q: 0, r: 0 }, terrain: "plains" },
+    { hex: { q: 1, r: 0 }, terrain: "plains" },
+    { hex: { q: 2, r: 0 }, terrain: "plains" },
+  ],
+  [],
+);
+
 const start = { q: 0, r: 0 };
 
 describe("reachableHexes (land)", () => {
@@ -93,6 +102,41 @@ describe("reachableHexes (Granicus map)", () => {
       domain: "land",
     });
     expect(reachable.has("2,5")).toBe(false);
+  });
+});
+
+describe("reachableHexes (occupied tiles)", () => {
+  it("moves through a friendly-occupied tile to the hex beyond it", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      blockedDestinations: new Set(["1,0"]),
+    });
+    expect(reachable.has("2,0")).toBe(true);
+  });
+
+  it("cannot stop on a friendly-occupied tile", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      blockedDestinations: new Set(["1,0"]),
+    });
+    expect(reachable.has("1,0")).toBe(false);
+  });
+
+  it("cannot move through an enemy-occupied tile", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      blocked: new Set(["1,0"]),
+    });
+    expect(reachable.has("2,0")).toBe(false);
   });
 });
 

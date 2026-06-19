@@ -10,10 +10,11 @@ export interface ReachableInput {
   readonly map: GameMap;
   readonly domain: MovementDomain;
   readonly blocked?: ReadonlySet<string>;
+  readonly blockedDestinations?: ReadonlySet<string>;
 }
 
 export function reachableHexes(input: ReachableInput): ReadonlyMap<string, number> {
-  const { start, movement, map, domain, blocked } = input;
+  const { start, movement, map, domain, blocked, blockedDestinations } = input;
   const best = new Map<string, number>([[hexKey(start), movement]]);
   let frontier: Hex[] = [start];
 
@@ -41,5 +42,8 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
   }
 
   best.delete(hexKey(start));
+  if (blockedDestinations) {
+    for (const key of blockedDestinations) best.delete(key);
+  }
   return best;
 }
