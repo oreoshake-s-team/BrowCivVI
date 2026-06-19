@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import { describe, it, expect, afterEach, vi } from "vitest";
+import type { Citation } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
+import { createGameMap } from "@/engine/map/types";
 import { HexBoard } from "./HexBoard";
 
 afterEach(cleanup);
@@ -268,5 +270,86 @@ describe("HexBoard interaction", () => {
     fireEvent.click(screen.getByLabelText("Show Q and R coordinates?"));
     fireEvent.click(screen.getByLabelText("Show Q and R coordinates?"));
     expect(within(cell).queryByText("0, 0")).toBeNull();
+  });
+});
+
+const LYDIA_CITATION: Citation = {
+  claim: "Lydia, with its capital Sardis, lay inland to the southeast.",
+  source: { title: "Lydia", url: "https://en.wikipedia.org/wiki/Lydia", type: "reference" },
+  confidence: "high",
+};
+
+const LYDIA_REGION: NamedRegion = {
+  id: "lydia",
+  name: "Lydia",
+  kind: "region",
+  labelHex: { q: 1, r: 0 },
+  citation: LYDIA_CITATION,
+};
+
+const GRANICUS_REGION: NamedRegion = {
+  id: "granicus",
+  name: "Granicus",
+  kind: "river",
+  citation: {
+    claim: "Site of the 334 BC battle.",
+    source: { title: "Battle of the Granicus", type: "primary" },
+    confidence: "high",
+  },
+};
+
+const CITED_CITY_MAP = createGameMap(
+  [
+    { hex: { q: 0, r: 0 }, terrain: "plains", cityId: "sardis" },
+    { hex: { q: 1, r: 0 }, terrain: "plains" },
+  ],
+  [
+    {
+      id: "sardis",
+      name: "Sardis",
+      hex: { q: 0, r: 0 },
+      owner: "persia",
+      value: 100,
+      defense: 20,
+      citation: {
+        claim: "Sardis was the Lydian capital.",
+        source: { title: "Sardis", url: "https://en.wikipedia.org/wiki/Sardis", type: "reference" },
+        confidence: "high",
+      },
+    },
+  ],
+);
+
+describe("HexBoard historical references", () => {
+  it("reveals a region's cited claim when its label is focused", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[LYDIA_REGION]} />);
+    fireEvent.focus(screen.getByRole("button", { name: "Lydia historical reference" }));
+    expect(
+      screen.getByText("Lydia, with its capital Sardis, lay inland to the southeast."),
+    ).toBeTruthy();
+  });
+
+  it("anchors the Granicus citation on the river course", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Granicus historical reference" }));
+    expect(screen.getByText("Site of the 334 BC battle.")).toBeTruthy();
+  });
+
+  it("surfaces a city's citation when its name is clicked", () => {
+    render(<HexBoard map={CITED_CITY_MAP} units={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Sardis historical reference" }));
+    expect(screen.getByText("Sardis was the Lydian capital.")).toBeTruthy();
+  });
+
+  it("dismisses the citation card on Escape", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[LYDIA_REGION]} />);
+    fireEvent.focus(screen.getByRole("button", { name: "Lydia historical reference" }));
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("leaves an un-cited city label non-interactive", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(screen.queryByRole("button", { name: "Dascylium historical reference" })).toBeNull();
   });
 });

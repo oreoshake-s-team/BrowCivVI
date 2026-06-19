@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { HEX_DIRECTIONS } from "@/engine/hex";
+import { mapHexAt } from "@/engine/map/types";
 import { FIRST_SLICE_MAP, FIRST_SLICE_REGIONS, FIRST_SLICE_UNITS } from "./firstSlice";
 
 describe("FIRST_SLICE_MAP", () => {
@@ -32,12 +34,41 @@ describe("FIRST_SLICE_REGIONS", () => {
     expect(FIRST_SLICE_REGIONS.find((region) => region.id === "granicus")?.kind).toBe("river");
   });
 
-  it("labels the Aegean Sea", () => {
-    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "aegean")?.labelHex).toBeDefined();
+  it("drops the open-sea labels in favor of the cited land features", () => {
+    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "aegean")?.labelHex).toBeUndefined();
+  });
+
+  it("anchors the inland Lydia label so its citation is reachable", () => {
+    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "lydia")?.labelHex).toEqual({
+      q: 8,
+      r: 5,
+    });
   });
 
   it("keeps only the tile-sized Aegean islands", () => {
     expect(FIRST_SLICE_REGIONS.filter((region) => region.kind === "island")).toHaveLength(2);
+  });
+});
+
+describe("Granicus river course", () => {
+  it("bridges the two offset segments with a connecting edge", () => {
+    expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 1 }, b: { q: 7, r: 2 } });
+  });
+
+  it("runs alongside its Mount Ida mountain source", () => {
+    const riverHexes = FIRST_SLICE_MAP.rivers.flatMap((edge) => [edge.a, edge.b]);
+    const touchesMountain = riverHexes.some((hex) =>
+      HEX_DIRECTIONS.some(
+        (step) =>
+          mapHexAt(FIRST_SLICE_MAP, { q: hex.q + step.q, r: hex.r + step.r })?.terrain ===
+          "mountain",
+      ),
+    );
+    expect(touchesMountain).toBe(true);
+  });
+
+  it("empties into the Propontis at the north coast", () => {
+    expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 0 }, b: { q: 7, r: 0 } });
   });
 });
 
