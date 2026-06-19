@@ -28,6 +28,11 @@ describe("resolveMove", () => {
     const result = resolveMove({ ...base, unitId: "u1", to: { q: 0, r: 1 } });
     expect(result.ok).toBe(false);
   });
+
+  it("rejects any move once movement is spent", () => {
+    const result = resolveMove({ ...base, movement: 0, unitId: "u1", to: { q: 1, r: 0 } });
+    expect(result.ok).toBe(false);
+  });
 });
 
 describe("availableMoves", () => {
@@ -39,5 +44,9 @@ describe("availableMoves", () => {
   it("omits an impassable mountain", () => {
     const moves = availableMoves(base).map(hexKey);
     expect(moves).not.toContain("0,1");
+  });
+
+  it("offers no hexes when movement is spent", () => {
+    expect(availableMoves({ ...base, movement: 0 })).toHaveLength(0);
   });
 });

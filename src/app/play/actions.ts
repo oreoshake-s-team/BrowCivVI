@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { FIRST_SLICE_MAP } from "@/content/firstSlice";
-import { resolveAttack, type AttackUnit } from "@/engine/combat/attack";
+import { applyAttack } from "@/engine/combat/applyAttack";
 import { attackableHexes } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
@@ -142,17 +142,6 @@ export interface AttackOutcome {
   readonly defeated?: readonly string[];
 }
 
-function toAttackUnit(unit: Unit): AttackUnit {
-  const type = unitTypeById(unit.typeId);
-  return {
-    hex: unit.hex,
-    owner: unit.owner,
-    strength: type?.strength ?? 0,
-    hp: unit.hp,
-    abilities: type?.abilities ?? [],
-  };
-}
-
 export async function targetsFor(matchId: string, unitId: string): Promise<SelectionTargets> {
   const match = await resolveMatch(matchId);
   const unit = match.units.find((candidate) => candidate.id === unitId);
@@ -185,34 +174,30 @@ export async function attack(
   }
 
   const terrain = terrainAt(FIRST_SLICE_MAP, defender.hex);
-  const result = resolveAttack({
-    attacker: toAttackUnit(attacker),
-    defender: toAttackUnit(defender),
-    others: match.units.filter((u) => u.id !== attackerId && u.id !== targetId).map(toAttackUnit),
+  const application = applyAttack({
+    units: match.units,
+    movement: match.movement,
+    attackerId,
+    defenderId: targetId,
     defenderTerrainDefense: terrain?.defenseModifier ?? 0,
     defenderTerrainMoveCost: terrain?.moveCost ?? 1,
     rng: createRng((match.seed ^ (match.version + 1)) >>> 0),
   });
 
-  const updated = match.units
-    .map((u) => {
-      if (u.id === attackerId) return { ...u, hp: u.hp - result.attackerDamage };
-      if (u.id === targetId) return { ...u, hp: u.hp - result.defenderDamage };
-      return u;
-    })
-    .filter((u) => u.hp > 0);
-
   try {
-    const saved = await store.save({ ...match, units: updated });
-    const defeated = [attackerId, targetId].filter((id) => !saved.units.some((u) => u.id === id));
+    const saved = await store.save({
+      ...match,
+      units: application.units,
+      movement: application.movement,
+    });
     return {
       ok: true,
       units: saved.units,
       attackerHex: attacker.hex,
       defenderHex: defender.hex,
-      attackerDamage: result.attackerDamage,
-      defenderDamage: result.defenderDamage,
-      defeated,
+      attackerDamage: application.attackerDamage,
+      defenderDamage: application.defenderDamage,
+      defeated: application.defeated,
     };
   } catch (error) {
     if (error instanceof StaleMatchError) return { ok: false, units: match.units };
