@@ -14,10 +14,15 @@ export async function AuthControl() {
     );
   }
 
+  const appBaseUrl = process.env.APP_BASE_URL;
+  const logoutHref = appBaseUrl
+    ? `/auth/logout?returnTo=${encodeURIComponent(appBaseUrl)}`
+    : "/auth/logout";
+
   return (
     <div className={styles.signedIn}>
       <span className={styles.name}>{user.name ?? user.email ?? "Signed in"}</span>
-      <a className={styles.action} href="/auth/logout">
+      <a className={styles.action} href={logoutHref}>
         Sign out
       </a>
     </div>

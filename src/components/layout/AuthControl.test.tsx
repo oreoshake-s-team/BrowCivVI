@@ -13,6 +13,7 @@ vi.mock("@/server/session", () => ({ getSessionUser: getSessionUserMock }));
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
   isConfiguredMock.mockReset();
   getSessionUserMock.mockReset();
 });
@@ -43,6 +44,16 @@ describe("AuthControl", () => {
     render(await AuthControl());
     expect(screen.getByRole("link", { name: "Sign out" }).getAttribute("href")).toBe(
       "/auth/logout",
+    );
+  });
+
+  it("returns to the home page after sign out when APP_BASE_URL is set", async () => {
+    vi.stubEnv("APP_BASE_URL", "https://example.test");
+    isConfiguredMock.mockReturnValue(true);
+    getSessionUserMock.mockResolvedValue({ sub: "auth0|1", name: "Alexander" });
+    render(await AuthControl());
+    expect(screen.getByRole("link", { name: "Sign out" }).getAttribute("href")).toBe(
+      "/auth/logout?returnTo=https%3A%2F%2Fexample.test",
     );
   });
 });
