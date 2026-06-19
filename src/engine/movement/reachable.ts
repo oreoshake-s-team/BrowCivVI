@@ -30,12 +30,13 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
         if (blocked?.has(key)) continue;
         const terrain = terrainAt(map, step);
         if (!terrain?.passableBy.includes(domain)) continue;
-        const remaining = budget - terrain.moveCost;
-        if (remaining < 0) continue;
+        if (budget - terrain.moveCost < 0) continue;
+        const inZoneOfControl = zoneOfControl?.has(key) ?? false;
+        const remaining = inZoneOfControl ? 0 : budget - terrain.moveCost;
         const prev = best.get(key);
         if (prev === undefined || remaining > prev) {
           best.set(key, remaining);
-          if (!zoneOfControl?.has(key)) next.push(step);
+          if (!inZoneOfControl) next.push(step);
         }
       }
     }

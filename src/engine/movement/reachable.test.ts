@@ -167,6 +167,17 @@ describe("reachableHexes (zones of control)", () => {
     const reachable = reachableHexes({ start, movement: 2, map: PASS_MAP, domain: "land" });
     expect(reachable.has("2,0")).toBe(true);
   });
+
+  it("spends all remaining movement on entering a zone of control", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 3,
+      map: PASS_MAP,
+      domain: "land",
+      zoneOfControl: new Set(["1,0"]),
+    });
+    expect(reachable.get("1,0")).toBe(0);
+  });
 });
 
 describe("reachableHexes (naval)", () => {

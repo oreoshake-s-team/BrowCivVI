@@ -91,6 +91,15 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(keys).not.toContain(hexKey(BEYOND_ZOC));
   });
 
+  it("spends all movement entering an enemy zone of control and cannot move again", async () => {
+    const board = await newGame();
+    const entered = await move(board.matchId, PHALANX, ZOC_STOP);
+    const again = await move(board.matchId, PHALANX, PHALANX_START);
+    expect(entered.ok).toBe(true);
+    expect(entered.movement[PHALANX]).toBe(0);
+    expect(again.ok).toBe(false);
+  });
+
   it("rejects an out-of-range move and leaves the unit where it started", async () => {
     const board = await newGame();
     const outcome = await move(board.matchId, PHALANX, OFF_MAP);
