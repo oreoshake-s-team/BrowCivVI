@@ -2,16 +2,23 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { INTENT_RATE_LIMIT, REQUEST_RATE_LIMIT, type RateLimit } from "@/content/rateLimits";
 
+function redisCredentials(): { url: string; token: string } | null {
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  return url !== undefined && token !== undefined ? { url, token } : null;
+}
+
 export function isRateLimitConfigured(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  return redisCredentials() !== null;
 }
 
 let redis: Redis | null = null;
 const limiters = new Map<string, Ratelimit>();
 
 function limiterFor(prefix: string, config: RateLimit): Ratelimit | null {
-  if (!isRateLimitConfigured()) return null;
-  redis ??= Redis.fromEnv();
+  const credentials = redisCredentials();
+  if (credentials === null) return null;
+  redis ??= new Redis(credentials);
   let limiter = limiters.get(prefix);
   if (limiter === undefined) {
     limiter = new Ratelimit({

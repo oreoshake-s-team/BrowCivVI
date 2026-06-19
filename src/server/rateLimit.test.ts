@@ -3,7 +3,7 @@ import { intentAllowed, isRateLimitConfigured, requestAllowed } from "./rateLimi
 
 const { limitMock } = vi.hoisted(() => ({ limitMock: vi.fn() }));
 
-vi.mock("@upstash/redis", () => ({ Redis: { fromEnv: () => ({}) } }));
+vi.mock("@upstash/redis", () => ({ Redis: vi.fn() }));
 
 vi.mock("@upstash/ratelimit", () => ({
   Ratelimit: class {
@@ -13,17 +13,25 @@ vi.mock("@upstash/ratelimit", () => ({
 }));
 
 function configure(): void {
-  process.env.UPSTASH_REDIS_REST_URL = "https://example.upstash.io";
-  process.env.UPSTASH_REDIS_REST_TOKEN = "token";
+  process.env.KV_REST_API_URL = "https://example.upstash.io";
+  process.env.KV_REST_API_TOKEN = "token";
 }
 
 beforeEach(() => {
+  delete process.env.KV_REST_API_URL;
+  delete process.env.KV_REST_API_TOKEN;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
   limitMock.mockReset();
 });
 
 describe("isRateLimitConfigured", () => {
+  it("reads the classic Upstash variable names too", () => {
+    process.env.UPSTASH_REDIS_REST_URL = "https://example.upstash.io";
+    process.env.UPSTASH_REDIS_REST_TOKEN = "token";
+    expect(isRateLimitConfigured()).toBe(true);
+  });
+
   it("is false without the Upstash environment", () => {
     expect(isRateLimitConfigured()).toBe(false);
   });
