@@ -16,6 +16,7 @@ import type { MovementDomain, StackingLayer } from "@/engine/unit/classes";
 import { domainForClass, stackingLayerForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
+import { intentAllowed } from "@/server/rateLimit";
 import { ownerSubject } from "@/server/session";
 import { getStore } from "@/server/store";
 
@@ -31,6 +32,7 @@ export interface MoveOutcome {
   readonly units: readonly Unit[];
   readonly reachable: readonly Hex[];
   readonly movement: Readonly<Record<string, number>>;
+  readonly rateLimited?: boolean;
 }
 
 async function currentOwner(): Promise<string> {
@@ -131,6 +133,8 @@ export async function reachableFor(matchId: string, unitId: string): Promise<rea
 
 export async function move(matchId: string, unitId: string, to: Hex): Promise<MoveOutcome> {
   const owner = await currentOwner();
+  if (!(await intentAllowed(owner)))
+    return { ok: false, units: [], reachable: [], movement: {}, rateLimited: true };
   const store = getStore();
   const match = await loadOwned(store, owner, matchId);
   if (match === null) return { ok: false, units: [], reachable: [], movement: {} };
@@ -211,6 +215,7 @@ export interface AttackOutcome {
   readonly defenderDamage?: number;
   readonly defeated?: readonly string[];
   readonly movement?: Readonly<Record<string, number>>;
+  readonly rateLimited?: boolean;
 }
 
 export async function targetsFor(matchId: string, unitId: string): Promise<SelectionTargets> {
@@ -229,6 +234,7 @@ export async function attack(
   targetId: string,
 ): Promise<AttackOutcome> {
   const owner = await currentOwner();
+  if (!(await intentAllowed(owner))) return { ok: false, units: [], rateLimited: true };
   const store = getStore();
   const match = await loadOwned(store, owner, matchId);
   if (match === null) return { ok: false, units: [] };

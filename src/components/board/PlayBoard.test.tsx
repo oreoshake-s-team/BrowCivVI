@@ -35,6 +35,7 @@ const DEST: Hex = { q: 1, r: 0 };
 const NO_MOVEMENT: Readonly<Record<string, number>> = {};
 const MOVE_REJECTED = "Move rejected — the board changed. Try again.";
 const ATTACK_REJECTED = "Attack rejected — the board changed. Try again.";
+const RATE_LIMITED = "You're acting too fast — give it a moment and try again.";
 
 Element.prototype.setPointerCapture = () => undefined;
 Element.prototype.releasePointerCapture = () => undefined;
@@ -114,6 +115,23 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
 
     expect(await screen.findByText(MOVE_REJECTED)).not.toBeNull();
     expect(tokenTransform(container, MOVER.id)).toBe(transformFor(ORIGIN));
+  });
+
+  it("surfaces a rate-limit toast when a move intent is throttled", async () => {
+    vi.mocked(actions.move).mockResolvedValue({
+      ok: false,
+      units: SAMPLE_UNITS,
+      reachable: [],
+      movement: NO_MOVEMENT,
+      rateLimited: true,
+    } satisfies MoveOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.contextMenu(container.querySelector('[data-hex="1,0"]')!);
+
+    expect(await screen.findByText(RATE_LIMITED)).not.toBeNull();
+    expect(screen.queryByText(MOVE_REJECTED)).toBeNull();
   });
 
   it("sends the attack intent, floats damage, and fades the defeated defender", async () => {
