@@ -1,71 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { fetchReachable, submitMove } from "@/app/play/actions";
+import { useEffect, useState } from "react";
+import { loadBoard, reachableFor, move } from "@/app/play/actions";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import type { GameMap } from "@/engine/map/types";
-import { hexKey } from "@/engine/map/types";
-import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
 import { HexBoard } from "./HexBoard";
 
-function initialRemaining(units: readonly Unit[]): Record<string, number> {
-  const remaining: Record<string, number> = {};
-  for (const unit of units) {
-    remaining[unit.id] = unitTypeById(unit.typeId)?.movement ?? 0;
-  }
-  return remaining;
-}
-
 export interface PlayBoardProps {
   readonly map: GameMap;
-  readonly units: readonly Unit[];
   readonly regions?: readonly NamedRegion[];
 }
 
-export function PlayBoard({ map, units: initialUnits, regions = [] }: PlayBoardProps) {
-  const [units, setUnits] = useState<readonly Unit[]>(initialUnits);
-  const [remaining, setRemaining] = useState<Record<string, number>>(() =>
-    initialRemaining(initialUnits),
-  );
+export function PlayBoard({ map, regions = [] }: PlayBoardProps) {
+  const [units, setUnits] = useState<readonly Unit[]>([]);
   const [reachable, setReachable] = useState<readonly Hex[]>([]);
+  const [ready, setReady] = useState(false);
 
-  const occupiedExcept = (unitId: string): readonly string[] =>
-    units.filter((unit) => unit.id !== unitId).map((unit) => hexKey(unit.hex));
+  useEffect(() => {
+    let active = true;
+    void loadBoard().then((board) => {
+      if (active) {
+        setUnits(board.units);
+        setReady(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSelect = async (unitId: string | null) => {
-    if (unitId === null) {
-      setReachable([]);
-      return;
-    }
-    const unit = units.find((candidate) => candidate.id === unitId);
-    if (unit === undefined) return;
-    const moves = await fetchReachable({
-      typeId: unit.typeId,
-      from: unit.hex,
-      movement: remaining[unit.id] ?? 0,
-      occupied: occupiedExcept(unit.id),
-    });
-    setReachable(moves);
+    setReachable(unitId === null ? [] : await reachableFor(unitId));
   };
 
   const handleMove = async (unitId: string, to: Hex) => {
-    const unit = units.find((candidate) => candidate.id === unitId);
-    if (unit === undefined) return;
-    const { result, reachable: nextReachable } = await submitMove({
-      unitId,
-      typeId: unit.typeId,
-      from: unit.hex,
-      to,
-      movement: remaining[unitId] ?? 0,
-      occupied: occupiedExcept(unitId),
-    });
-    if (!result.ok) return;
-    setUnits((current) => current.map((u) => (u.id === unitId ? { ...u, hex: result.hex } : u)));
-    setRemaining((current) => ({ ...current, [unitId]: result.remaining }));
-    setReachable(nextReachable);
+    const result = await move(unitId, to);
+    setUnits(result.units);
+    setReachable(result.reachable);
   };
+
+  if (!ready) return <p role="status">Loading the campaign…</p>;
 
   return (
     <HexBoard
