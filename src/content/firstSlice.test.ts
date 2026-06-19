@@ -16,8 +16,20 @@ describe("FIRST_SLICE_MAP", () => {
     expect(FIRST_SLICE_MAP.cities.get("ephesus")?.affinity).toBe("macedon");
   });
 
-  it("authors all sixteen named cities", () => {
-    expect(FIRST_SLICE_MAP.cities.size).toBe(16);
+  it("authors all fourteen named cities", () => {
+    expect(FIRST_SLICE_MAP.cities.size).toBe(14);
+  });
+
+  it("drops peripheral Cyzicus from the first slice", () => {
+    expect(FIRST_SLICE_MAP.cities.has("cyzicus")).toBe(false);
+  });
+
+  it("drops minor Elaeus from the first slice", () => {
+    expect(FIRST_SLICE_MAP.cities.has("elaeus")).toBe(false);
+  });
+
+  it("links pre-Granicus media on Pella", () => {
+    expect(FIRST_SLICE_MAP.cities.get("pella")?.media?.length).toBe(3);
   });
 
   it("models Sparta as an independent holdout (no owner)", () => {
