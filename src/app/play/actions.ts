@@ -11,8 +11,8 @@ import { StaleMatchError } from "@/engine/match/store";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { createRng } from "@/engine/rng";
 import { unitTypeById } from "@/engine/unit/catalog";
-import type { MovementDomain } from "@/engine/unit/classes";
-import { domainForClass } from "@/engine/unit/classes";
+import type { MovementDomain, StackingLayer } from "@/engine/unit/classes";
+import { domainForClass, stackingLayerForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { IDENTITY_COOKIE, signIdentity, verifyIdentity, newIdentityId } from "@/server/identity";
 import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
@@ -47,8 +47,27 @@ function domainOf(typeId: string): MovementDomain {
   return type ? domainForClass(type.class) : "land";
 }
 
-function occupiedExcept(match: MatchState, unitId: string): ReadonlySet<string> {
-  return new Set(match.units.filter((unit) => unit.id !== unitId).map((unit) => hexKey(unit.hex)));
+function layerOf(typeId: string): StackingLayer {
+  const type = unitTypeById(typeId);
+  return type ? stackingLayerForClass(type.class) : "military";
+}
+
+interface MovementBlocks {
+  readonly blocked: ReadonlySet<string>;
+  readonly blockedDestinations: ReadonlySet<string>;
+}
+
+function movementBlocks(match: MatchState, unit: Unit): MovementBlocks {
+  const moverLayer = layerOf(unit.typeId);
+  const blocked = new Set<string>();
+  const blockedDestinations = new Set<string>();
+  for (const other of match.units) {
+    if (other.id === unit.id) continue;
+    const key = hexKey(other.hex);
+    if (other.owner !== unit.owner) blocked.add(key);
+    else if (layerOf(other.typeId) === moverLayer) blockedDestinations.add(key);
+  }
+  return { blocked, blockedDestinations };
 }
 
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
@@ -57,7 +76,7 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
     movement: match.movement[unit.id] ?? 0,
     domain: domainOf(unit.typeId),
     map: FIRST_SLICE_MAP,
-    blocked: occupiedExcept(match, unit.id),
+    ...movementBlocks(match, unit),
   });
 }
 
@@ -111,7 +130,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
     movement: match.movement[unitId] ?? 0,
     domain: domainOf(unit.typeId),
     map: FIRST_SLICE_MAP,
-    blocked: occupiedExcept(match, unitId),
+    ...movementBlocks(match, unit),
   });
   if (!result.ok)
     return {

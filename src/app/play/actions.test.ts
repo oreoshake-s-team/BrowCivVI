@@ -23,6 +23,8 @@ const PHALANX = "mac-phalanx";
 const COMPANIONS = "mac-companions";
 const PER_CAVALRY = "per-cavalry";
 const PHALANX_START: Hex = { q: 5, r: 1 };
+const COMPANIONS_START: Hex = { q: 6, r: 1 };
+const ABYDOS: Hex = { q: 5, r: 0 };
 const OFF_MAP: Hex = { q: 99, r: 99 };
 
 function unitHex(units: readonly { id: string; hex: Hex }[], id: string): Hex | undefined {
@@ -59,6 +61,24 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(outcome.ok).toBe(true);
     expect(hexKey(unitHex(outcome.units, PHALANX)!)).toBe(hexKey(dest));
     expect(hexKey(unitHex(reloaded.units, PHALANX)!)).toBe(hexKey(dest));
+  });
+
+  it("moves a unit through a friendly unit to a tile beyond it", async () => {
+    const board = await newGame();
+    const targets = await targetsFor(board.matchId, COMPANIONS);
+    const outcome = await move(board.matchId, COMPANIONS, ABYDOS);
+    const reloaded = await loadBoard(board.matchId);
+    expect(targets.reachable.some((hex) => hexKey(hex) === hexKey(ABYDOS))).toBe(true);
+    expect(outcome.ok).toBe(true);
+    expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(ABYDOS));
+  });
+
+  it("rejects ending a move on a tile held by a friendly unit", async () => {
+    const board = await newGame();
+    const outcome = await move(board.matchId, COMPANIONS, PHALANX_START);
+    const reloaded = await loadBoard(board.matchId);
+    expect(outcome.ok).toBe(false);
+    expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(COMPANIONS_START));
   });
 
   it("rejects an out-of-range move and leaves the unit where it started", async () => {
