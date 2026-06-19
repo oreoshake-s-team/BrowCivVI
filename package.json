@@ -33,7 +33,7 @@
     "@prisma/adapter-neon": "^6",
     "@prisma/client": "^6",
     "@vercel/analytics": "^2.0.1",
-    "next": "^15.3.0",
+    "next": "^16.2.9",
     "prisma": "^6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
