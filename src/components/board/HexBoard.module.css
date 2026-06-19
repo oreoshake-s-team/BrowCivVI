@@ -1,4 +1,5 @@
 .layout {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2xl);
@@ -65,13 +66,30 @@
   paint-order: stroke;
   stroke: var(--color-text-halo);
   stroke-width: 3px;
-  pointer-events: none;
 }
 
 .river {
   stroke: var(--color-water-river);
   stroke-width: 5;
   stroke-linecap: round;
+}
+
+.citeTarget {
+  cursor: help;
+}
+
+.citeTarget:focus-visible {
+  outline: none;
+}
+
+.citeTarget:focus-visible text {
+  stroke: var(--color-outline-emphasis);
+  stroke-width: 4px;
+}
+
+.citeTarget:focus-visible .river {
+  stroke: var(--color-outline-emphasis);
+  stroke-width: 7;
 }
 
 .seaLabel {
@@ -94,7 +112,6 @@
   paint-order: stroke;
   stroke: var(--color-text-halo);
   stroke-width: 2px;
-  pointer-events: none;
 }
 
 .reach {
@@ -167,6 +184,29 @@
   stroke: var(--color-outline-emphasis);
   stroke-width: 2.5;
   stroke-dasharray: 4 3;
+}
+
+.movesBadge {
+  pointer-events: none;
+}
+
+.movesPill {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+
+.movesText {
+  font-size: var(--font-size-label-sm);
+  font-weight: 700;
+  fill: var(--color-ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.statSpent {
+  color: var(--color-ink-subtle);
 }
 
 .sidebar {

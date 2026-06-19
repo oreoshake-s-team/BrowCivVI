@@ -16,7 +16,7 @@ Sync the project's `docs/` folder with the most recently merged pull request on 
 - Keep `docs/design.md` edits **additive** and preserve the existing §-section numbering — other docs, code, and issues reference those numbers. Don't renumber sections.
 - One `docs/` edit per logical doc change; prefer editing existing files over creating new ones. New gameplay surfaces may warrant a new file under `docs/onboarding/`.
 - Match the existing style of `docs/design.md` (Markdown `##`/`###` headings, fenced code blocks, no emojis, no trailing summaries).
-- Adhere to project rules in `CLAUDE.md` (repo root): no comments beyond what the existing doc uses; strict TypeScript in any code samples; GraphQL as the client–server API; server-authoritative / pure-engine framing.
+- Adhere to project rules in `CLAUDE.md` (repo root): no comments beyond what the existing doc uses; strict TypeScript in any code samples; typed Server Actions as the client–server contract; server-authoritative / pure-engine framing.
 
 ## Procedure
 
@@ -46,7 +46,7 @@ Fall back to `mcp__github__pull_request_read` (returns per-file paths and patche
 
 For each non-test, non-CSS, non-config source file in the diff, decide whether it represents:
 
-- **Architecture or data-model change** (engine, persistence, intent contract, GraphQL schema) → may belong in the matching `docs/design.md` section (§2–§6).
+- **Architecture or data-model change** (engine, persistence, intent contract, Server Action signatures) → may belong in the matching `docs/design.md` section (§2–§6).
 - **New gameplay system or content** (a new unit/faction effect, combat rule, scoring path, divergence node, media surface) → may warrant an edit to the relevant section (§5, §10–§13) or a new `docs/onboarding/<topic>.md`.
 - **Bug fix / refactor with no behavioral change** → usually no doc update. Skip.
 

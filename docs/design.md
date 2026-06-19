@@ -64,20 +64,20 @@ Optional later: persist the full action log so any leaderboard entry can be **re
 Browser (RSC + minimal client islands)
   │  user clicks a hex / unit / "End Turn"
   ▼
-GraphQL mutation  submitIntent(matchId, intent, version, idempotencyKey)
+Server Action     submitIntent(matchId, intent, version, idempotencyKey)
   │  1. authenticate (session) → playerId
   │  2. load authoritative MatchState from DB (with version)
   │  3. validate intent against rules engine
   │  4. apply: state' = engine(state, intent)   [pure]
   │  5. run AI turn if End-Turn → state''        [pure, seeded]
   │  6. persist state'' with version+1 (optimistic lock)
-  ▼  7. return the requesting player's authoritative view (GraphQL)
+  ▼  7. return the requesting player's authoritative view
 Browser re-renders authoritative view
 ```
 
 - **Next.js App Router** on **Vercel** (serverless functions).
-- **GraphQL is the required API contract** (hard requirement, §8). The intent channel is a GraphQL **mutation** (`submitIntent`), per-viewer state is a GraphQL **query**, and PvP turn-handoff/live updates use a GraphQL **subscription** (superseding the polling/SSE TBD in §10). A thin route handler (or Server Action) may host the endpoint, but the contract the client speaks is GraphQL — and the client still only _sends intents and reads authoritative state_, never computing outcomes (§2/§3).
-- The **rules engine** is a framework-agnostic pure TS module (`/engine`), trivially unit-testable with no Next.js in scope; GraphQL resolvers call the engine, they never contain rules.
+- **Typed Next.js Server Actions are the client–server contract** (hard requirement, §8). The intent channel is the `submitIntent` Server Action, and per-viewer authoritative state is returned by Server Actions; PvP turn-handoff/live updates use a transport chosen when PvP lands (polling/SSE/websockets TBD, §14). There are **no ad-hoc REST/JSON endpoints** for game state, and the client still only _sends intents and reads authoritative state_, never computing outcomes (§2/§3).
+- The **rules engine** is a framework-agnostic pure TS module (`/engine`), trivially unit-testable with no Next.js in scope; the Server Actions call the engine, they never contain rules.
 
 ### Persistence
 
@@ -101,8 +101,8 @@ interface MatchStore {
 
 - A match has up to **two slots** (`macedon`, `persia`); each slot is a human `playerId` or `ai`. Solo = one human + one AI; PvP = two humans.
 - The active slot is authoritative state; **only the active player's intents are accepted** (turn ownership, §3).
-- **Per-viewer rendering:** the GraphQL resolver builds the response from the _requesting_ player's visibility, so a human never receives the opponent's hidden state. The AI "sees" only inside the engine, server-side.
-- **Turn handoff (PvP):** when a player ends their turn, the waiting player is notified it's their turn via a GraphQL subscription (§4).
+- **Per-viewer rendering:** the Server Action builds the response from the _requesting_ player's visibility, so a human never receives the opponent's hidden state. The AI "sees" only inside the engine, server-side.
+- **Turn handoff (PvP):** when a player ends their turn, the waiting player is notified it's their turn via the live-update transport chosen for PvP (§14).
 
 ---
 
@@ -211,7 +211,7 @@ type SubmitResult =
     };
 ```
 
-The server is the only authority on whether an intent is legal. `incite` is rejected `under-threat` when the target city is being threatened (the §5 freeze); `scorch` is legal only on a controlled, unthreatened hex. This contract is exposed via **GraphQL** (§4): `Intent` as mutation input, `SubmitResult` / `MatchView` as schema types, with `MatchView` resolved **per-viewer** (§3).
+The server is the only authority on whether an intent is legal. `incite` is rejected `under-threat` when the target city is being threatened (the §5 freeze); `scorch` is legal only on a controlled, unthreatened hex. This contract is exposed via the **Server Action** intent channel (§4): `Intent` as input, `SubmitResult` / `MatchView` as the typed result, with `MatchView` resolved **per-viewer** (§3).
 
 ---
 
@@ -225,7 +225,7 @@ The server is the only authority on whether an intent is legal. `incite` is reje
 ## 8. Conventions
 
 - Strict TypeScript, no `any`. ESM. Compartmentalized modules + CSS.
-- **GraphQL is a strict requirement** for the client–server API (§4): intents are mutations, authoritative state is a query, live updates are subscriptions. No ad-hoc REST/JSON endpoints for game state.
+- **Typed Next.js Server Actions are the client–server contract** (§4): intents and authoritative per-viewer state both flow through typed Server Actions. No ad-hoc REST/JSON endpoints for game state.
 - All functionality test-covered; engine gets exhaustive pure unit tests; one full-flow integration test mounts a match and plays a short sequence.
 - i18n-ready strings; accessible hex board (keyboard navigation + ARIA) — design questions to be raised before the board UI PR.
 
@@ -250,7 +250,7 @@ _Phase 2 — Persia + PvP (each its own PR/issue):_
 10. **Loyalty & defection** — per-city loyalty meter and pressure (proximity, momentum, affinity); bloodless defection as the eXpand path; the under-threat freeze; the `incite` intent (§6); sack/scorch value penalties in scoring (§5). Depends on the authored map + cities.
 11. **Supply & morale** — two pure per-turn passes (supply propagation from sources; morale from supply/combat/leadership/war-weariness) feeding attrition and combat (§5). Lands as ≥2 slices (supply first, then morale). Depends on the authored map + cities.
 12. **PvP foundation** — two human slots in a match; turn-ownership enforcement.
-13. **PvP turn handoff & live updates** — GraphQL subscriptions (§4) push the waiting player their turn.
+13. **PvP turn handoff & live updates** — the live-update transport (§14) pushes the waiting player their turn.
 14. **Per-viewer rendering / fog isolation** — each human sees only their own visible state.
 15. **PvP robustness** — turn timers, abandonment/disconnect, per-faction leaderboards.
 
@@ -356,7 +356,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 
 - **Auth.** Phase 1 (solo vs AI) uses an **anonymous signed-cookie** identity — enough to own a match. **Auth0** provides real sign-up / sign-in when leaderboard identity / PvP accounts need durable logins: a short-lived session resolves to a stable `userId` (the Auth0 `sub`), matches are owned by that `userId`, and ownership is checked on every intent (§3). Intent requests are **rate-limited per `userId`** with configurable, authored limits.
 - **Postgres host: Neon** — serverless, Vercel-native, scale-to-zero, with DB branching per preview deploy (pairs with the `JSONB` `MatchStore`, §4). (Vercel Postgres is Neon-backed.)
-- **GraphQL: schema-first SDL + `graphql-codegen`** for both resolver and client types. The explicit SDL is the contract artifact and doubles as the trust-boundary doc for the untrusted-client threat model (§3).
+- **Client–server contract: typed Next.js Server Actions** (no separate API schema layer, no ad-hoc REST). The Server Action signatures and their TypeScript result types _are_ the contract artifact and the trust boundary for the untrusted-client threat model (§3); `tsc` enforces that client and server agree, so there is no separate schema to drift.
 
 ### First slice & map
 
@@ -402,7 +402,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 
 ### Still open
 
-- **PvP turn-handoff transport** (short polling vs. SSE vs. websockets) and whether GraphQL **subscriptions** ship in the PvP slice or earlier — deferred until PvP work begins.
+- **PvP turn-handoff transport** (short polling vs. SSE vs. websockets) — deferred until PvP work begins.
 - **PvP matchmaking** (private invite-link vs. open queue) — deferred until PvP work begins.
 - **PvP turn timer / abandonment** — **Phase 3 v1 ships with no timer**; revisit once real games surface the need.
 - **Scoring tie-breakers** (§5) — TBD.
