@@ -8,6 +8,7 @@ import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
+import DebugPanel from "./DebugPanel";
 import { riverSegmentPoints } from "./geometry";
 import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
@@ -58,6 +59,8 @@ export function HexBoard({
     setSelectedId(unitId);
     onSelect?.(unitId);
   };
+
+  const [showQandR, setShowQandR] = useState(false);
 
   const tryMove = (target: Hex) => {
     if (selectedId !== null && onMove && reachableKeys.has(hexKey(target)))
@@ -175,7 +178,7 @@ export function HexBoard({
           const center = hexToPixel(mapHex.hex, SIZE);
           const city = mapHex.cityId ? map.cities.get(mapHex.cityId) : undefined;
           return (
-            <g key={key}>
+            <g key={key} data-testid={`hex-${key}`}>
               <polygon
                 data-hex={key}
                 className={["hex", styles.hex, hovered === key ? styles.hexHover : undefined]
@@ -197,9 +200,11 @@ export function HexBoard({
                   if (!moved.current) tryMove(mapHex.hex);
                 }}
               />
-              <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
-                {mapHex.hex.q},{mapHex.hex.r}
-              </text>
+              {showQandR && (
+                <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
+                  {mapHex.hex.q}, {mapHex.hex.r}
+                </text>
+              )}
               {city ? (
                 <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
                   {city.name}
@@ -297,6 +302,7 @@ export function HexBoard({
       <aside className={styles.sidebar}>
         <Legend />
         <InfoPanel unit={selectedUnit} />
+        <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
       </aside>
     </div>
   );
