@@ -376,16 +376,8 @@ const RIVERS: readonly RiverEdge[] = [
   { a: { q: 6, r: 1 }, b: { q: 7, r: 0 } },
 ];
 
-function island(
-  id: string,
-  name: string,
-  q: number,
-  r: number,
-  claim: string,
-  title: string,
-  url: string,
-): NamedRegion {
-  return { id, name, kind: "island", labelHex: { q, r }, citation: ref(claim, title, url) };
+function island(id: string, name: string, claim: string, title: string, url: string): NamedRegion {
+  return { id, name, kind: "island", citation: ref(claim, title, url) };
 }
 
 export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
@@ -403,7 +395,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
       {
         id: "granicus-tides-invades-persia",
         title: "Alexander the Great Invades Persia (Tides of History)",
-        url: "https://podcasts.apple.com/us/podcast/alexander-the-great-invades-persia/id1257202425?i=1000668353388",
+        url: "https://open.spotify.com/episode/0ZWSBCirAa9gajYNw9hdQ8",
         kind: "podcast",
       },
       {
@@ -449,7 +441,6 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "mount-ida",
     name: "Mount Ida",
     kind: "mountain",
-    labelHex: { q: 6, r: 4 },
     citation: ref(
       "Mount Ida in the Troad is the source of the Granicus.",
       "Mount Ida (Turkey)",
@@ -482,7 +473,6 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "ionia",
     name: "Ionia",
     kind: "region",
-    labelHex: { q: 6, r: 7 },
     citation: ref(
       "Ionia is the central Aegean coast of Asia Minor (Ephesus, Miletus).",
       "Ionia",
@@ -492,8 +482,6 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
   island(
     "euboea",
     "Euboea",
-    3,
-    4,
     "Euboea, the long island hugging central Greece, is the second-largest Greek island.",
     "Euboea",
     "https://en.wikipedia.org/wiki/Euboea",
@@ -501,8 +489,6 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
   island(
     "lesbos",
     "Lesbos",
-    4,
-    3,
     "Lesbos, the large island off the Troad, is the third-largest Greek island.",
     "Lesbos",
     "https://en.wikipedia.org/wiki/Lesbos",
