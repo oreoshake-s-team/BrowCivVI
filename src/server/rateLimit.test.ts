@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { INTENT_RATE_LIMIT } from "@/content/rateLimits";
 import { intentAllowed, isRateLimitConfigured, requestAllowed } from "./rateLimit";
 
 const { limitMock } = vi.hoisted(() => ({ limitMock: vi.fn() }));
@@ -57,6 +58,19 @@ describe("intentAllowed", () => {
     configure();
     limitMock.mockResolvedValue({ success: false });
     expect(await intentAllowed("user-1")).toBe(false);
+  });
+
+  it("rate-limits a burst once the configured budget is exceeded", async () => {
+    configure();
+    let used = 0;
+    limitMock.mockImplementation(() =>
+      Promise.resolve({ success: ++used <= INTENT_RATE_LIMIT.requests }),
+    );
+    const verdicts = await Promise.all(
+      Array.from({ length: INTENT_RATE_LIMIT.requests + 1 }, () => intentAllowed("burst-user")),
+    );
+    expect(verdicts.filter(Boolean)).toHaveLength(INTENT_RATE_LIMIT.requests);
+    expect(verdicts.at(-1)).toBe(false);
   });
 });
 
