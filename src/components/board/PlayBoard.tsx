@@ -14,6 +14,7 @@ import { Toast } from "./Toast";
 
 const FLOATER_MS = 1100;
 const FADE_MS = 500;
+const RATE_LIMIT_MSG = "You're acting too fast — give it a moment and try again.";
 
 export interface PlayBoardProps {
   readonly map: GameMap;
@@ -89,7 +90,9 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
       setReachable(outcome.reachable);
     } else {
       setUnits(previous);
-      setToast("Move rejected — the board changed. Try again.");
+      setToast(
+        outcome.rateLimited ? RATE_LIMIT_MSG : "Move rejected — the board changed. Try again.",
+      );
     }
   };
 
@@ -109,7 +112,9 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     clearTargets();
     const outcome = await attack(matchId, attackerId, defender.id);
     if (!outcome.ok) {
-      setToast("Attack rejected — the board changed. Try again.");
+      setToast(
+        outcome.rateLimited ? RATE_LIMIT_MSG : "Attack rejected — the board changed. Try again.",
+      );
       return;
     }
     const previous = units;

@@ -4,12 +4,17 @@ import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
 import { loadBoard, newGame, move, attack, targetsFor } from "./actions";
 
-const { getAuth0Mock } = vi.hoisted(() => ({ getAuth0Mock: vi.fn() }));
+const { getAuth0Mock, intentAllowedMock } = vi.hoisted(() => ({
+  getAuth0Mock: vi.fn(),
+  intentAllowedMock: vi.fn(() => Promise.resolve(true)),
+}));
 
 vi.mock("@/lib/auth0", () => ({
   isAuthConfigured: () => true,
   getAuth0: getAuth0Mock,
 }));
+
+vi.mock("@/server/rateLimit", () => ({ intentAllowed: intentAllowedMock }));
 
 function signIn(sub: string | null): void {
   getAuth0Mock.mockReturnValue({
@@ -38,6 +43,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   signIn("auth0|player-one");
+  intentAllowedMock.mockResolvedValue(true);
 });
 
 afterEach(() => {
@@ -143,5 +149,12 @@ describe("Server Action intent channel against the in-memory store", () => {
   it("rejects an unauthenticated caller", async () => {
     signIn(null);
     await expect(newGame()).rejects.toThrow();
+  });
+
+  it("rejects an intent that exceeds the per-user rate limit", async () => {
+    const board = await newGame();
+    intentAllowedMock.mockResolvedValueOnce(false);
+    const outcome = await move(board.matchId, PHALANX, PHALANX_START);
+    expect(outcome.rateLimited).toBe(true);
   });
 });

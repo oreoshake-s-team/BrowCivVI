@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAuth0 } from "@/lib/auth0";
 import { isPublicPath } from "@/server/publicPaths";
+import { requestAllowed } from "@/server/rateLimit";
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const auth0 = getAuth0();
@@ -16,6 +17,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const loginUrl = new URL("/auth/login", request.nextUrl.origin);
     loginUrl.searchParams.set("returnTo", `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (!(await requestAllowed(session.user.sub))) {
+    return new NextResponse("Too many requests", { status: 429 });
   }
 
   return authRes;
