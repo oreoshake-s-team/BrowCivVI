@@ -1,0 +1,26 @@
+.toast {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 50;
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  max-width: 22rem;
+  padding: 0.7rem var(--space-lg);
+  font-size: var(--font-size-ui-md);
+  color: var(--color-on-danger);
+  background: var(--color-danger-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+}
+
+.dismiss {
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+}

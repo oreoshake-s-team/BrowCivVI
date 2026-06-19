@@ -5,14 +5,26 @@ import { FIRST_SLICE_MAP } from "@/content/firstSlice";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
+import { StaleMatchError } from "@/engine/match/store";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { MovementDomain } from "@/engine/unit/classes";
 import { domainForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { IDENTITY_COOKIE, signIdentity, verifyIdentity, newIdentityId } from "@/server/identity";
-import { getOrCreateMatch } from "@/server/matchService";
+import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
 import { getStore } from "@/server/store";
+
+export interface BoardView {
+  readonly matchId: string;
+  readonly units: readonly Unit[];
+}
+
+export interface MoveOutcome {
+  readonly ok: boolean;
+  readonly units: readonly Unit[];
+  readonly reachable: readonly Hex[];
+}
 
 async function currentOwner(): Promise<string> {
   const jar = await cookies();
@@ -43,28 +55,40 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
   });
 }
 
-async function currentMatch(): Promise<MatchState> {
-  return getOrCreateMatch(getStore(), await currentOwner());
+async function resolveMatch(matchId?: string): Promise<MatchState> {
+  const owner = await currentOwner();
+  const store = getStore();
+  if (matchId !== undefined) {
+    const owned = await loadOwned(store, owner, matchId);
+    if (owned !== null) return owned;
+  }
+  return getOrCreateDefault(store, owner);
 }
 
-export async function loadBoard(): Promise<{ readonly units: readonly Unit[] }> {
-  return { units: (await currentMatch()).units };
+export async function loadBoard(matchId?: string): Promise<BoardView> {
+  const match = await resolveMatch(matchId);
+  return { matchId: match.id, units: match.units };
 }
 
-export async function reachableFor(unitId: string): Promise<readonly Hex[]> {
-  const match = await currentMatch();
+export async function newGame(): Promise<BoardView> {
+  const match = await createNewMatch(getStore(), await currentOwner());
+  return { matchId: match.id, units: match.units };
+}
+
+export async function reachableFor(matchId: string, unitId: string): Promise<readonly Hex[]> {
+  const match = await resolveMatch(matchId);
   const unit = match.units.find((candidate) => candidate.id === unitId);
   return unit === undefined ? [] : reachableForUnit(match, unit);
 }
 
-export async function move(
-  unitId: string,
-  to: Hex,
-): Promise<{ readonly units: readonly Unit[]; readonly reachable: readonly Hex[] }> {
+export async function move(matchId: string, unitId: string, to: Hex): Promise<MoveOutcome> {
+  const owner = await currentOwner();
   const store = getStore();
-  const match = await getOrCreateMatch(store, await currentOwner());
+  const match = await loadOwned(store, owner, matchId);
+  if (match === null) return { ok: false, units: [], reachable: [] };
+
   const unit = match.units.find((candidate) => candidate.id === unitId);
-  if (unit === undefined) return { units: match.units, reachable: [] };
+  if (unit === undefined) return { ok: false, units: match.units, reachable: [] };
 
   const result = resolveMove({
     unitId,
@@ -75,17 +99,27 @@ export async function move(
     map: FIRST_SLICE_MAP,
     blocked: occupiedExcept(match, unitId),
   });
-  if (!result.ok) return { units: match.units, reachable: reachableForUnit(match, unit) };
+  if (!result.ok)
+    return { ok: false, units: match.units, reachable: reachableForUnit(match, unit) };
 
   const next: MatchState = {
     ...match,
     units: match.units.map((u) => (u.id === unitId ? { ...u, hex: result.hex } : u)),
     movement: { ...match.movement, [unitId]: result.remaining },
   };
-  const saved = await store.save(next);
-  const movedUnit = saved.units.find((candidate) => candidate.id === unitId);
-  return {
-    units: saved.units,
-    reachable: movedUnit === undefined ? [] : reachableForUnit(saved, movedUnit),
-  };
+
+  try {
+    const saved = await store.save(next);
+    const movedUnit = saved.units.find((candidate) => candidate.id === unitId);
+    return {
+      ok: true,
+      units: saved.units,
+      reachable: movedUnit === undefined ? [] : reachableForUnit(saved, movedUnit),
+    };
+  } catch (error) {
+    if (error instanceof StaleMatchError) {
+      return { ok: false, units: match.units, reachable: reachableForUnit(match, unit) };
+    }
+    throw error;
+  }
 }

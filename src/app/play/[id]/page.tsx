@@ -6,6 +6,7 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function PlayPage() {
-  return <PlayScreen />;
+export default async function PlayMatchPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <PlayScreen initialMatchId={id} />;
 }
