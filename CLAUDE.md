@@ -90,6 +90,7 @@ Onboarding docs:
 - [`docs/onboarding/dev-setup.md`](docs/onboarding/dev-setup.md) — local setup.
 - [`docs/onboarding/styling-tokens.md`](docs/onboarding/styling-tokens.md) — the two-tier CSS design-token system (color primitives → semantic aliases, plus radius/spacing/type/motion scales); component CSS must use tokens, enforced in CI.
 - [`docs/onboarding/linting.md`](docs/onboarding/linting.md) — the ESLint / Prettier / Stylelint / markdownlint stack, the few justified config deviations, and the pre-commit hook.
+- [`docs/onboarding/screenshots.md`](docs/onboarding/screenshots.md) — the `docs/assets/` per-PR image convention and the `yarn screenshots` helper (GitHub has no image-attachment API, so images are committed and hotlinked).
 
 ## Project Environment
 

@@ -16,6 +16,7 @@
     "noEmit": true,
     "incremental": true,
     "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "plugins": [{ "name": "next" }],
