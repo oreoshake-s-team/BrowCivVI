@@ -179,6 +179,83 @@ describe("HexBoard interaction", () => {
     expect(onMove).not.toHaveBeenCalled();
   });
 
+  it("marks an adjacent enemy as an attack target after selecting an attacker", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} attackable={[{ q: 2, r: 1 }]} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(container.querySelector('[data-attack-target="persia-cavalry-1"]')).toBeTruthy();
+  });
+
+  it("hides the attack marker until an attacker is selected", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} attackable={[{ q: 2, r: 1 }]} />,
+    );
+    expect(container.querySelector("[data-attack-target]")).toBeNull();
+  });
+
+  it("attacks an enemy token on a right-click", () => {
+    const onAttack = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        attackable={[{ q: 2, r: 1 }]}
+        onAttack={onAttack}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.contextMenu(container.querySelector('[data-unit-id="persia-cavalry-1"]')!);
+    expect(onAttack).toHaveBeenCalledWith("macedon-phalanx-1", { q: 2, r: 1 });
+  });
+
+  it("attacks an enemy token on a tap (touch)", () => {
+    const onAttack = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        attackable={[{ q: 2, r: 1 }]}
+        onAttack={onAttack}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    const enemy = container.querySelector('[data-unit-id="persia-cavalry-1"]')!;
+    fireEvent.pointerDown(enemy, { pointerType: "touch", pointerId: 1 });
+    fireEvent.pointerUp(enemy, { pointerType: "touch", pointerId: 1 });
+    fireEvent.click(enemy);
+    expect(onAttack).toHaveBeenCalledWith("macedon-phalanx-1", { q: 2, r: 1 });
+  });
+
+  it("does not attack an enemy that is not an attack target", () => {
+    const onAttack = vi.fn();
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} attackable={[]} onAttack={onAttack} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.contextMenu(container.querySelector('[data-unit-id="persia-cavalry-1"]')!);
+    expect(onAttack).not.toHaveBeenCalled();
+  });
+
+  it("renders a floating damage number", () => {
+    const { container } = render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        floaters={[{ id: "f1", hex: { q: 2, r: 1 }, text: "-24" }]}
+      />,
+    );
+    expect(within(container).getByText("-24")).toBeTruthy();
+  });
+
+  it("renders a fading token for a defeated unit", () => {
+    const defeated = SAMPLE_UNITS[1]!;
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={[SAMPLE_UNITS[0]!]} fadingUnits={[defeated]} />,
+    );
+    expect(container.querySelector('[data-fading-id="persia-cavalry-1"]')).toBeTruthy();
+  });
+
   it("shows Q and R coordinates when the debug panel toggle is checked", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     const cell = screen.getByTestId("hex-0,0");

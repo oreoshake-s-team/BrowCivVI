@@ -121,6 +121,45 @@
   pointer-events: none;
 }
 
+.attackMark line {
+  stroke: var(--color-danger-surface);
+  stroke-width: 4;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.fading {
+  pointer-events: none;
+  animation: fade-out 500ms var(--ease-standard) forwards;
+}
+
+.floater {
+  font-size: var(--font-size-glyph);
+  font-weight: 700;
+  fill: var(--color-danger-surface);
+  text-anchor: middle;
+  pointer-events: none;
+  animation: float-up 1100ms ease-out forwards;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes float-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
+
 .token {
   cursor: pointer;
   outline: none;
