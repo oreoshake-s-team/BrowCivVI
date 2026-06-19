@@ -52,6 +52,19 @@ describe("Granicus river course", () => {
   it("bridges the two offset segments with a connecting edge", () => {
     expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 1 }, b: { q: 7, r: 2 } });
   });
+
+  it("rises at its Mount Ida source tile", () => {
+    const ida = FIRST_SLICE_REGIONS.find((region) => region.id === "mount-ida")?.labelHex;
+    const touchesIda = FIRST_SLICE_MAP.rivers.some(
+      (edge) =>
+        (edge.a.q === ida?.q && edge.a.r === ida.r) || (edge.b.q === ida?.q && edge.b.r === ida.r),
+    );
+    expect(touchesIda).toBe(true);
+  });
+
+  it("empties into the Propontis at the north coast", () => {
+    expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 0 }, b: { q: 7, r: 0 } });
+  });
 });
 
 describe("FIRST_SLICE_UNITS", () => {

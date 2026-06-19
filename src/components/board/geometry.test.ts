@@ -24,7 +24,17 @@ describe("Granicus river rendering", () => {
     );
     const touches = (s: readonly Point[], t: readonly Point[]) =>
       s.some((p) => t.some((q) => distance(p, q) < SIZE * 0.3));
-    const connected = segments.every((s, i) => segments.some((t, j) => i !== j && touches(s, t)));
-    expect(connected).toBe(true);
+    const seen = new Set<number>([0]);
+    const queue = [0];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      segments.forEach((other, index) => {
+        if (!seen.has(index) && touches(segments[current]!, other)) {
+          seen.add(index);
+          queue.push(index);
+        }
+      });
+    }
+    expect(seen.size).toBe(segments.length);
   });
 });
