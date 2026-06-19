@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Viewport } from "next";
 import type { ReactNode } from "react";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import "../styles/tokens.css";
 
 export const metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
+        <SiteHeader />
         {children}
         <Analytics />
       </body>

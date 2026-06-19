@@ -18,6 +18,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@auth0/nextjs-auth0@npm:^4.22.0":
+  version: 4.22.0
+  resolution: "@auth0/nextjs-auth0@npm:4.22.0"
+  dependencies:
+    "@edge-runtime/cookies": "npm:^5.0.1"
+    "@panva/hkdf": "npm:^1.2.1"
+    jose: "npm:^6.0.11"
+    oauth4webapi: "npm:^3.8.2"
+    openid-client: "npm:^6.8.0"
+    swr: "npm:^2.2.5"
+  peerDependencies:
+    next: ^14.2.35 || ~15.0.7 || ~15.1.11 || ~15.2.8 || ~15.3.8 || ~15.4.10 || ~15.5.9 || ^16.0.10
+    react: ^18.0.0 || ~19.0.1 ||  ~19.1.2 || ^19.2.1
+    react-dom: ^18.0.0 || ~19.0.1 || ~19.1.2 || ^19.2.1
+  checksum: 10c0/6f7c23fb8417a077b6cce95c907f7f1fbfcc8d065f5c9dd67b16acd4b78c432b1c76641fbf21b3dd1080316842069f35f6104191308f4e977d40ddee07d643fa
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.10.4, @babel/code-frame@npm:^7.29.7":
   version: 7.29.7
   resolution: "@babel/code-frame@npm:7.29.7"
@@ -360,6 +378,13 @@ __metadata:
   peerDependencies:
     postcss-selector-parser: ^7.1.1
   checksum: 10c0/7a93973f9054f2e1f03c8543cde68e0b0c65e5e72da6e4e959974d28fe809e11bd2afa1ff2ca11a1690a4c9a2f2bbe00d00e2b07fb2108bf89c5e48fe441c432
+  languageName: node
+  linkType: hard
+
+"@edge-runtime/cookies@npm:^5.0.1":
+  version: 5.0.2
+  resolution: "@edge-runtime/cookies@npm:5.0.2"
+  checksum: 10c0/4db80e80403c7086f1d269afdf8956c035d88b173c70ca9e912d58683b58c300a1df922dee74bb44f964f1fab7e446f8ed8d32fc9715a7c322671e03405a682a
   languageName: node
   linkType: hard
 
@@ -1370,6 +1395,13 @@ __metadata:
   version: 0.0.12
   resolution: "@package-json/types@npm:0.0.12"
   checksum: 10c0/d9bba086efe7b9901f02f1cff7a68ab23269aeddfb7ee92a16930e219f705bfc188b9fec2dd47265033dbda45ed1514d8a46f46363f38f1ad56bc993754126da
+  languageName: node
+  linkType: hard
+
+"@panva/hkdf@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@panva/hkdf@npm:1.2.1"
+  checksum: 10c0/1fabdec9bd2c19b8e88a3fa6fd0c25e25823c5000d9efdf4b6dfe32e9f370f8b9603cf776d120d160bec15fba17e079974cc34f0f52cebb24602cd832dfde19c
   languageName: node
   linkType: hard
 
@@ -2656,6 +2688,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browcivvi@workspace:."
   dependencies:
+    "@auth0/nextjs-auth0": "npm:^4.22.0"
     "@eslint/js": "npm:^9"
     "@neondatabase/serverless": "npm:^1.1.0"
     "@next/eslint-plugin-next": "npm:^16.2.9"
@@ -4917,6 +4950,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.0.11, jose@npm:^6.2.2":
+  version: 6.2.3
+  resolution: "jose@npm:6.2.3"
+  checksum: 10c0/aa91bccba22cc84d86308f833749bcb0b00441e35c24e0ac79abeac5f76dc62d47bdef9c1da6a0c609f5da6478595f52b252085888b89dbdb163861e40ea4188
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -5903,6 +5943,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"oauth4webapi@npm:^3.8.2, oauth4webapi@npm:^3.8.5":
+  version: 3.8.6
+  resolution: "oauth4webapi@npm:3.8.6"
+  checksum: 10c0/479810716702c5616e4a0eb80d4f1c264a6a2b63b04061a62a59375e195d2726e947507ede98e41ee3f9ca800f159621ea371c36f5c4346d015b6ec03e477440
+  languageName: node
+  linkType: hard
+
 "object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
@@ -5987,6 +6034,16 @@ __metadata:
   dependencies:
     mimic-function: "npm:^5.0.0"
   checksum: 10c0/5cb9179d74b63f52a196a2e7037ba2b9a893245a5532d3f44360012005c9cadb60851d56716ebff18a6f47129dab7168022445df47c2aff3b276d92585ed1221
+  languageName: node
+  linkType: hard
+
+"openid-client@npm:^6.8.0":
+  version: 6.8.4
+  resolution: "openid-client@npm:6.8.4"
+  dependencies:
+    jose: "npm:^6.2.2"
+    oauth4webapi: "npm:^3.8.5"
+  checksum: 10c0/bb062df77d48368f99f776f26d94e11053da80b89d2baeea9f069b7a2b359ef5dc10e0c9b0f9a90fb361eded7ff02dba3f5419b8909ec3f0c379d09807824c49
   languageName: node
   linkType: hard
 
@@ -7342,6 +7399,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"swr@npm:^2.2.5":
+  version: 2.4.1
+  resolution: "swr@npm:2.4.1"
+  dependencies:
+    dequal: "npm:^2.0.3"
+    use-sync-external-store: "npm:^1.6.0"
+  peerDependencies:
+    react: ^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/34d61fb4653ac8875ad24e7c6da37e210b0e90fce0815dc59f013b7554a0bd267e79aac0f8ae5fbf04992e2a1815ee3da581b0dab3ed6ac4c2ce0e82b351320f
+  languageName: node
+  linkType: hard
+
 "symbol-tree@npm:^3.2.4":
   version: 3.2.4
   resolution: "symbol-tree@npm:3.2.4"
@@ -7733,6 +7802,15 @@ __metadata:
   dependencies:
     punycode: "npm:^2.1.0"
   checksum: 10c0/4ef57b45aa820d7ac6496e9208559986c665e49447cb072744c13b66925a362d96dd5a46c4530a6b8e203e5db5fe849369444440cb22ecfc26c679359e5dfa3c
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "use-sync-external-store@npm:1.6.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/35e1179f872a53227bdf8a827f7911da4c37c0f4091c29b76b1e32473d1670ebe7bcd880b808b7549ba9a5605c233350f800ffab963ee4a4ee346ee983b6019b
   languageName: node
   linkType: hard
 
