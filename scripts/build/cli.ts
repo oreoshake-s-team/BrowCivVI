@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { selectMigrateUrl } from "./migrateUrl.ts";
 
 function run(args: string[], env: NodeJS.ProcessEnv): void {
-  execFileSync("yarn", args, { stdio: "inherit", env });
+  execFileSync("pnpm", ["exec", ...args], { stdio: "inherit", env });
 }
 
 function main(): void {

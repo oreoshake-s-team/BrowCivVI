@@ -10,7 +10,7 @@ The repo currently contains **documentation only** (this guide, the design doc, 
 
 - **Git for Windows** (includes Git Bash) — <https://git-scm.com/download/win>
 - **Node.js LTS (>= 20)** — <https://nodejs.org>
-- **Yarn Berry via Corepack** (do *not* `npm i -g yarn`). Corepack ships with Node; enable it once: `corepack enable`. The project pins Yarn in `package.json` (`packageManager`) once scaffolded, so Corepack picks the right version automatically.
+- **pnpm via Corepack** (do *not* `npm i -g pnpm`). Corepack ships with Node; enable it once: `corepack enable`. The project pins pnpm in `package.json` (`packageManager`), so Corepack picks the right version automatically.
 - A terminal: **PowerShell**, **Git Bash**, or (recommended) a **WSL2** shell.
 
 ## Recommended: develop inside WSL2
@@ -32,26 +32,26 @@ git clone <repo-url> BrowCivVI
 cd BrowCivVI
 corepack enable
 # once the app is scaffolded:
-yarn install
-yarn typecheck
-yarn test
-yarn dev        # http://localhost:3000
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm dev        # http://localhost:3000
 ```
 
 Until the app is scaffolded there is nothing to install — start with the scaffold PR (below).
 
 ## Day-to-day (after scaffold)
 
-- `yarn dev` — run the app locally.
-- `yarn typecheck` — strict TS; must be clean before a PR.
-- `yarn test` — unit + integration; run after every meaningful change.
-- `yarn build` — production build. Runs `prisma migrate deploy` first **when a database URL is set** (preferring `DATABASE_URL_UNPOOLED`), then `next build`; with no DB URL configured it skips migration and just builds.
-- `yarn db:migrate` — create/apply a migration locally during development (`prisma migrate dev`).
-- `yarn db:deploy` — apply pending migrations to a target database (`prisma migrate deploy`).
+- `pnpm dev` — run the app locally.
+- `pnpm typecheck` — strict TS; must be clean before a PR.
+- `pnpm test` — unit + integration; run after every meaningful change.
+- `pnpm build` — production build. Runs `prisma migrate deploy` first **when a database URL is set** (preferring `DATABASE_URL_UNPOOLED`), then `next build`; with no DB URL configured it skips migration and just builds.
+- `pnpm db:migrate` — create/apply a migration locally during development (`prisma migrate dev`).
+- `pnpm db:deploy` — apply pending migrations to a target database (`prisma migrate deploy`).
 
 ### Database migrations on deploy
 
-Preview and production **auto-migrate at build**: `yarn build` applies pending migrations before compiling, so a freshly provisioned database (e.g. a new Neon branch) gets its schema without a manual step. Migrations run against the unpooled connection (`DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler. Vercel's Build Command is pinned to `yarn build` in `vercel.json` so the wrapper runs on every deploy.
+Preview and production **auto-migrate at build**: `pnpm build` applies pending migrations before compiling, so a freshly provisioned database (e.g. a new Neon branch) gets its schema without a manual step. Migrations run against the unpooled connection (`DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler. Vercel's Build Command is pinned to `pnpm build` in `vercel.json` so the wrapper runs on every deploy.
 
 ## Windows gotchas
 
@@ -88,7 +88,7 @@ From `CLAUDE.md` and design §9:
 - **Typed Next.js Server Actions are the client-server contract** (design §4/§8).
 - Keep app-code diffs **<= 150 lines** per PR; split bigger work into follow-ups.
 - All functionality test-covered (happy path + at least one negative case).
-- `yarn typecheck` and `yarn test` green before opening a PR.
+- `pnpm typecheck` and `pnpm test` green before opening a PR.
 
 ## Start here when you wake up
 

@@ -1,8 +1,6 @@
 .next
 coverage
-.yarn
-yarn.lock
-.pnp.*
+pnpm-lock.yaml
 next-env.d.ts
 *.md
 docs/assets

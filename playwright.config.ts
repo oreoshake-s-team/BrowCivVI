@@ -16,7 +16,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `yarn build && yarn start --port ${PORT.toString()}`,
+    command: `pnpm build && pnpm start --port ${PORT.toString()}`,
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: 180_000,
