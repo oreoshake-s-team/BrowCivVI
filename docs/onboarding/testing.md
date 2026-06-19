@@ -39,8 +39,8 @@ server. The risk is **mock drift**: a mock that lies about an action's shape
 would let UI tests pass against a contract that can't exist.
 
 Because the intent channel is **typed TypeScript Server Actions** (not a separate
-GraphQL/REST schema), the guardrail is free and automatic: `yarn typecheck` is
-the drift tripwire. Two rules make it bite:
+schema), the guardrail is free and automatic: `yarn typecheck` is the drift
+tripwire. Two rules make it bite:
 
 - Mock the module with a factory of bare `vi.fn()`s so the real server-only
   module (cookies, Prisma) never loads:
@@ -73,17 +73,6 @@ the drift tripwire. Two rules make it bite:
 If a Server Action's signature or return interface changes, the typed fixtures
 stop compiling and CI fails before the lying mock can ship. No codegen, no
 schema-contract job, no separately maintained mock types.
-
-## When the GraphQL contract lands
-
-`design.md` (§4, §8) still mandates GraphQL as the eventual client–server
-contract (SDL-first + `graphql-codegen`). It is **not built yet** — the current
-endpoints are Server Actions. When the GraphQL layer is introduced, this section
-activates: codegen'd operation/result types become the single source of truth
-for flow-test mocks (the same "typecheck is the tripwire" principle, applied to
-generated types), and a CI check should diff the committed SDL against the schema
-the server actually builds. Until then, the Server-Action typing above is the
-whole guardrail.
 
 ## Running the tests
 
