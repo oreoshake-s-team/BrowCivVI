@@ -5,6 +5,7 @@ import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlic
 import { applyAttack } from "@/engine/combat/applyAttack";
 import { attackableHexes } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
+import { neighbors } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
@@ -52,22 +53,29 @@ function layerOf(typeId: string): StackingLayer {
   return type ? stackingLayerForClass(type.class) : "military";
 }
 
-interface MovementBlocks {
+interface MovementConstraints {
   readonly blocked: ReadonlySet<string>;
   readonly blockedDestinations: ReadonlySet<string>;
+  readonly zoneOfControl: ReadonlySet<string>;
 }
 
-function movementBlocks(match: MatchState, unit: Unit): MovementBlocks {
+function movementConstraints(match: MatchState, unit: Unit): MovementConstraints {
   const moverLayer = layerOf(unit.typeId);
   const blocked = new Set<string>();
   const blockedDestinations = new Set<string>();
+  const zoneOfControl = new Set<string>();
   for (const other of match.units) {
     if (other.id === unit.id) continue;
-    const key = hexKey(other.hex);
-    if (other.owner !== unit.owner) blocked.add(key);
-    else if (layerOf(other.typeId) === moverLayer) blockedDestinations.add(key);
+    if (other.owner !== unit.owner) {
+      blocked.add(hexKey(other.hex));
+      if (layerOf(other.typeId) === "military") {
+        for (const hex of neighbors(other.hex)) zoneOfControl.add(hexKey(hex));
+      }
+    } else if (layerOf(other.typeId) === moverLayer) {
+      blockedDestinations.add(hexKey(other.hex));
+    }
   }
-  return { blocked, blockedDestinations };
+  return { blocked, blockedDestinations, zoneOfControl };
 }
 
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
@@ -76,7 +84,7 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
     movement: match.movement[unit.id] ?? 0,
     domain: domainOf(unit.typeId),
     map: FIRST_SLICE_MAP,
-    ...movementBlocks(match, unit),
+    ...movementConstraints(match, unit),
   });
 }
 
@@ -130,7 +138,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
     movement: match.movement[unitId] ?? 0,
     domain: domainOf(unit.typeId),
     map: FIRST_SLICE_MAP,
-    ...movementBlocks(match, unit),
+    ...movementConstraints(match, unit),
   });
   if (!result.ok)
     return {

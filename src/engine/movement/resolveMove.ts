@@ -11,6 +11,7 @@ export interface MoveQuery {
   readonly map: GameMap;
   readonly blocked?: ReadonlySet<string>;
   readonly blockedDestinations?: ReadonlySet<string>;
+  readonly zoneOfControl?: ReadonlySet<string>;
 }
 
 export interface MoveRequest extends MoveQuery {
@@ -30,6 +31,7 @@ function reachable(query: MoveQuery): ReadonlyMap<string, number> {
     domain: query.domain,
     ...(query.blocked ? { blocked: query.blocked } : {}),
     ...(query.blockedDestinations ? { blockedDestinations: query.blockedDestinations } : {}),
+    ...(query.zoneOfControl ? { zoneOfControl: query.zoneOfControl } : {}),
   });
 }
 

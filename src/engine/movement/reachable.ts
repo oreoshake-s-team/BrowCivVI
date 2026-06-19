@@ -11,10 +11,11 @@ export interface ReachableInput {
   readonly domain: MovementDomain;
   readonly blocked?: ReadonlySet<string>;
   readonly blockedDestinations?: ReadonlySet<string>;
+  readonly zoneOfControl?: ReadonlySet<string>;
 }
 
 export function reachableHexes(input: ReachableInput): ReadonlyMap<string, number> {
-  const { start, movement, map, domain, blocked, blockedDestinations } = input;
+  const { start, movement, map, domain, blocked, blockedDestinations, zoneOfControl } = input;
   const best = new Map<string, number>([[hexKey(start), movement]]);
   let frontier: Hex[] = [start];
 
@@ -34,7 +35,7 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
         const prev = best.get(key);
         if (prev === undefined || remaining > prev) {
           best.set(key, remaining);
-          next.push(step);
+          if (!zoneOfControl?.has(key)) next.push(step);
         }
       }
     }
