@@ -401,7 +401,6 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "aegean",
     name: "Aegean Sea",
     kind: "sea",
-    labelHex: { q: 3, r: 6 },
     citation: ref(
       "The Aegean separates the Greek mainland from Asia Minor.",
       "Aegean Sea",
@@ -412,7 +411,6 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "propontis",
     name: "Propontis",
     kind: "sea",
-    labelHex: { q: 7, r: 0 },
     citation: ref(
       "The Propontis (Sea of Marmara) lies north of Hellespontine Phrygia.",
       "Sea of Marmara",
@@ -423,6 +421,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "hellespont",
     name: "Hellespont",
     kind: "strait",
+    labelHex: { q: 4, r: 1 },
     citation: ref(
       "The Hellespont strait was crossed Sestos to Abydos.",
       "Dardanelles",
@@ -433,6 +432,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "mount-ida",
     name: "Mount Ida",
     kind: "mountain",
+    labelHex: { q: 6, r: 4 },
     citation: ref(
       "Mount Ida in the Troad is the source of the Granicus.",
       "Mount Ida (Turkey)",
@@ -443,6 +443,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "troad",
     name: "Troad",
     kind: "region",
+    labelHex: { q: 5, r: 3 },
     citation: ref(
       "The Troad is the NW Anatolian peninsula around Ilium.",
       "Troad",
@@ -453,6 +454,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "lydia",
     name: "Lydia",
     kind: "region",
+    labelHex: { q: 8, r: 5 },
     citation: ref(
       "Lydia, with its capital Sardis, lay inland to the southeast.",
       "Lydia",
@@ -463,6 +465,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
     id: "ionia",
     name: "Ionia",
     kind: "region",
+    labelHex: { q: 6, r: 7 },
     citation: ref(
       "Ionia is the central Aegean coast of Asia Minor (Ephesus, Miletus).",
       "Ionia",

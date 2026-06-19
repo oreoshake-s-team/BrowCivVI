@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import type { Citation } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
@@ -8,6 +9,8 @@ import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
+import { CitationCard } from "./CitationCard";
+import { CitationTarget } from "./CitationTarget";
 import DebugPanel from "./DebugPanel";
 import { riverSegmentPoints } from "./geometry";
 import styles from "./HexBoard.module.css";
@@ -45,7 +48,15 @@ export function HexBoard({
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState(() => fitView(bounds, PAD));
+  const [cited, setCited] = useState<{
+    name: string;
+    citation: Citation;
+    x: number;
+    y: number;
+  } | null>(null);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number; sx: number; sy: number }>());
   const pinchDist = useRef<number | null>(null);
@@ -54,6 +65,7 @@ export function HexBoard({
 
   const selectedUnit = units.find((unit) => unit.id === selectedId) ?? null;
   const reachableKeys = new Set(reachable.map(hexKey));
+  const granicus = regions.find((region) => region.kind === "river");
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);
@@ -69,9 +81,43 @@ export function HexBoard({
 
   const tapHex = (hex: Hex) => {
     if (moved.current) return;
+    setCited(null);
     if (pointerType.current !== "mouse" && reachableKeys.has(hexKey(hex))) tryMove(hex);
     else select(null);
   };
+
+  const cancelHide = () => {
+    if (hideTimer.current !== null) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  };
+
+  const showCitation = (name: string, citation: Citation, target: SVGElement) => {
+    cancelHide();
+    const host = containerRef.current?.getBoundingClientRect();
+    if (host === undefined) return;
+    const rect = target.getBoundingClientRect();
+    setCited({ name, citation, x: rect.left - host.left + rect.width / 2, y: rect.top - host.top });
+  };
+
+  const scheduleHide = () => {
+    cancelHide();
+    hideTimer.current = setTimeout(() => {
+      setCited(null);
+    }, 160);
+  };
+
+  useEffect(() => {
+    if (cited === null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCited(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [cited]);
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     pointerType.current = event.pointerType;
@@ -161,7 +207,7 @@ export function HexBoard({
   };
 
   return (
-    <div className={styles.layout}>
+    <div className={styles.layout} ref={containerRef}>
       <svg
         ref={svgRef}
         className={styles.board}
@@ -177,6 +223,7 @@ export function HexBoard({
           const key = hexKey(mapHex.hex);
           const center = hexToPixel(mapHex.hex, SIZE);
           const city = mapHex.cityId ? map.cities.get(mapHex.cityId) : undefined;
+          const cityCitation = city?.citation;
           return (
             <g key={key} data-testid={`hex-${key}`}>
               <polygon
@@ -205,7 +252,22 @@ export function HexBoard({
                   {mapHex.hex.q}, {mapHex.hex.r}
                 </text>
               )}
-              {city ? (
+              {city && cityCitation !== undefined ? (
+                <CitationTarget
+                  label={city.name}
+                  className={styles.citeTarget}
+                  onShow={(target) => {
+                    showCitation(city.name, cityCitation, target);
+                  }}
+                  onHide={() => {
+                    scheduleHide();
+                  }}
+                >
+                  <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
+                    {city.name}
+                  </text>
+                </CitationTarget>
+              ) : city ? (
                 <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
                   {city.name}
                 </text>
@@ -222,19 +284,32 @@ export function HexBoard({
           />
         ))}
 
-        {map.rivers.map((river, index) => {
-          const [p1, p2] = riverSegmentPoints(river.a, river.b, SIZE);
-          return (
-            <line
-              key={`river-${index}`}
-              className={styles.river}
-              x1={p1.x}
-              y1={p1.y}
-              x2={p2.x}
-              y2={p2.y}
-            />
-          );
-        })}
+        {map.rivers.length > 0 && granicus !== undefined ? (
+          <CitationTarget
+            label={granicus.name}
+            className={styles.citeTarget}
+            onShow={(target) => {
+              showCitation(granicus.name, granicus.citation, target);
+            }}
+            onHide={() => {
+              scheduleHide();
+            }}
+          >
+            {map.rivers.map((river, index) => {
+              const [p1, p2] = riverSegmentPoints(river.a, river.b, SIZE);
+              return (
+                <line
+                  key={`river-${index}`}
+                  className={styles.river}
+                  x1={p1.x}
+                  y1={p1.y}
+                  x2={p2.x}
+                  y2={p2.y}
+                />
+              );
+            })}
+          </CitationTarget>
+        ) : null}
 
         {regions.map((region) => {
           const labelHex = region.labelHex;
@@ -242,9 +317,21 @@ export function HexBoard({
           const center = hexToPixel(labelHex, SIZE);
           const className = SEA_KINDS.has(region.kind) ? styles.seaLabel : styles.featureLabel;
           return (
-            <text key={region.id} className={className} x={center.x} y={center.y}>
-              {region.name}
-            </text>
+            <CitationTarget
+              key={region.id}
+              label={region.name}
+              className={styles.citeTarget}
+              onShow={(target) => {
+                showCitation(region.name, region.citation, target);
+              }}
+              onHide={() => {
+                scheduleHide();
+              }}
+            >
+              <text className={className} x={center.x} y={center.y}>
+                {region.name}
+              </text>
+            </CitationTarget>
           );
         })}
 
@@ -255,6 +342,7 @@ export function HexBoard({
           const selected = unit.id === selectedId;
           const toggle = () => {
             if (moved.current) return;
+            setCited(null);
             select(selected ? null : unit.id);
           };
           return (
@@ -304,6 +392,24 @@ export function HexBoard({
         <InfoPanel unit={selectedUnit} />
         <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
       </aside>
+
+      {cited !== null ? (
+        <CitationCard
+          name={cited.name}
+          citation={cited.citation}
+          x={cited.x}
+          y={cited.y}
+          onClose={() => {
+            setCited(null);
+          }}
+          onMouseEnter={() => {
+            cancelHide();
+          }}
+          onMouseLeave={() => {
+            scheduleHide();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

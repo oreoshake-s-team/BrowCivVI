@@ -32,8 +32,15 @@ describe("FIRST_SLICE_REGIONS", () => {
     expect(FIRST_SLICE_REGIONS.find((region) => region.id === "granicus")?.kind).toBe("river");
   });
 
-  it("labels the Aegean Sea", () => {
-    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "aegean")?.labelHex).toBeDefined();
+  it("drops the open-sea labels in favor of the cited land features", () => {
+    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "aegean")?.labelHex).toBeUndefined();
+  });
+
+  it("anchors the inland Lydia label so its citation is reachable", () => {
+    expect(FIRST_SLICE_REGIONS.find((region) => region.id === "lydia")?.labelHex).toEqual({
+      q: 8,
+      r: 5,
+    });
   });
 
   it("keeps only the tile-sized Aegean islands", () => {
