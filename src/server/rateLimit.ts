@@ -1,26 +1,40 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { INTENT_RATE_LIMIT } from "@/content/rateLimits";
+import { INTENT_RATE_LIMIT, REQUEST_RATE_LIMIT, type RateLimit } from "@/content/rateLimits";
 
 export function isRateLimitConfigured(): boolean {
   return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 }
 
-let limiter: Ratelimit | null = null;
+let redis: Redis | null = null;
+const limiters = new Map<string, Ratelimit>();
 
-function intentLimiter(): Ratelimit | null {
+function limiterFor(prefix: string, config: RateLimit): Ratelimit | null {
   if (!isRateLimitConfigured()) return null;
-  limiter ??= new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(INTENT_RATE_LIMIT.requests, INTENT_RATE_LIMIT.window),
-    prefix: "intent",
-  });
+  redis ??= Redis.fromEnv();
+  let limiter = limiters.get(prefix);
+  if (limiter === undefined) {
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(config.requests, config.window),
+      prefix,
+    });
+    limiters.set(prefix, limiter);
+  }
   return limiter;
 }
 
-export async function intentAllowed(userId: string): Promise<boolean> {
-  const rl = intentLimiter();
-  if (rl === null) return true;
-  const { success } = await rl.limit(userId);
+async function allowed(prefix: string, config: RateLimit, key: string): Promise<boolean> {
+  const limiter = limiterFor(prefix, config);
+  if (limiter === null) return true;
+  const { success } = await limiter.limit(key);
   return success;
+}
+
+export function intentAllowed(userId: string): Promise<boolean> {
+  return allowed("intent", INTENT_RATE_LIMIT, userId);
+}
+
+export function requestAllowed(userId: string): Promise<boolean> {
+  return allowed("request", REQUEST_RATE_LIMIT, userId);
 }

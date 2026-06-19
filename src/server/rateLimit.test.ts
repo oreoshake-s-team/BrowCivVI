@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { intentAllowed, isRateLimitConfigured } from "./rateLimit";
+import { intentAllowed, isRateLimitConfigured, requestAllowed } from "./rateLimit";
 
 const { limitMock } = vi.hoisted(() => ({ limitMock: vi.fn() }));
 
@@ -49,5 +49,17 @@ describe("intentAllowed", () => {
     configure();
     limitMock.mockResolvedValue({ success: false });
     expect(await intentAllowed("user-1")).toBe(false);
+  });
+});
+
+describe("requestAllowed", () => {
+  it("allows every request when Upstash is not configured", async () => {
+    expect(await requestAllowed("user-1")).toBe(true);
+  });
+
+  it("denies a request that exceeds the broader limit", async () => {
+    configure();
+    limitMock.mockResolvedValue({ success: false });
+    expect(await requestAllowed("user-1")).toBe(false);
   });
 });

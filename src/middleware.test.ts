@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { middleware } from "./middleware";
 
-const { getAuth0Mock } = vi.hoisted(() => ({ getAuth0Mock: vi.fn() }));
+const { getAuth0Mock, requestAllowedMock } = vi.hoisted(() => ({
+  getAuth0Mock: vi.fn(),
+  requestAllowedMock: vi.fn(() => Promise.resolve(true)),
+}));
 
 vi.mock("@/lib/auth0", () => ({ getAuth0: getAuth0Mock }));
+vi.mock("@/server/rateLimit", () => ({ requestAllowed: requestAllowedMock }));
 
 function client(session: unknown) {
   return {
@@ -16,6 +20,10 @@ function client(session: unknown) {
 function request(path: string): NextRequest {
   return new NextRequest(new URL(`http://localhost${path}`));
 }
+
+beforeEach(() => {
+  requestAllowedMock.mockResolvedValue(true);
+});
 
 afterEach(() => {
   getAuth0Mock.mockReset();
@@ -50,5 +58,19 @@ describe("middleware opt-out auth", () => {
     getAuth0Mock.mockReturnValue(client({ user: { sub: "auth0|alexander" } }));
     const res = await middleware(request("/play"));
     expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("returns 429 when the per-user request limit is exceeded", async () => {
+    getAuth0Mock.mockReturnValue(client({ user: { sub: "auth0|alexander" } }));
+    requestAllowedMock.mockResolvedValue(false);
+    const res = await middleware(request("/play"));
+    expect(res.status).toBe(429);
+  });
+
+  it("does not rate-limit the public home page", async () => {
+    getAuth0Mock.mockReturnValue(client(null));
+    requestAllowedMock.mockResolvedValue(false);
+    const res = await middleware(request("/"));
+    expect(res.status).not.toBe(429);
   });
 });
