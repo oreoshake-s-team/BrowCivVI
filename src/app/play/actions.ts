@@ -12,7 +12,7 @@ import { domainForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { IDENTITY_COOKIE, signIdentity, verifyIdentity, newIdentityId } from "@/server/identity";
 import { getOrCreateMatch } from "@/server/matchService";
-import { getStore, ensureMigrated } from "@/server/store";
+import { getStore } from "@/server/store";
 
 async function currentOwner(): Promise<string> {
   const jar = await cookies();
@@ -44,7 +44,6 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
 }
 
 async function currentMatch(): Promise<MatchState> {
-  await ensureMigrated();
   return getOrCreateMatch(getStore(), await currentOwner());
 }
 
@@ -62,7 +61,6 @@ export async function move(
   unitId: string,
   to: Hex,
 ): Promise<{ readonly units: readonly Unit[]; readonly reachable: readonly Hex[] }> {
-  await ensureMigrated();
   const store = getStore();
   const match = await getOrCreateMatch(store, await currentOwner());
   const unit = match.units.find((candidate) => candidate.id === unitId);
