@@ -6,7 +6,7 @@ import type { MediaLink } from "@/engine/content/media";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
-import type { TerrainType } from "@/engine/map/terrain";
+import { blocksLand, type TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
 import { unitTypeById } from "@/engine/unit/catalog";
@@ -19,6 +19,7 @@ import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
 import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
+import { TerrainMotif } from "./TerrainMotif";
 import { fitView, panView, zoomView, viewBoxString } from "./viewport";
 
 const SIZE = 36;
@@ -110,6 +111,9 @@ export function HexBoard({
   const granicus = regions.find((region) => region.kind === "river");
   const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
+  const labeledHexKeys = new Set(
+    regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
+  );
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);
@@ -281,13 +285,16 @@ export function HexBoard({
           const cityCitation = city?.citation;
           const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
           const isBank = bankRegion !== undefined;
+          const landBlocked = blocksLand(mapHex.terrain);
           return (
             <g key={key} data-testid={`hex-${key}`}>
               <polygon
                 data-hex={key}
+                data-blocked={landBlocked || undefined}
                 className={[
                   "hex",
                   styles.hex,
+                  landBlocked ? styles.hexBlocked : undefined,
                   hovered === key ? styles.hexHover : undefined,
                   isBank ? styles.hexBank : undefined,
                 ]
@@ -341,6 +348,9 @@ export function HexBoard({
                   pointerEvents="none"
                 />
               ) : null}
+              {labeledHexKeys.has(key) ? null : (
+                <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
+              )}
               {showQandR && (
                 <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
                   {mapHex.hex.q}, {mapHex.hex.r}

@@ -465,3 +465,42 @@ describe("HexBoard movement display", () => {
     expect(screen.getByText(`0 / ${MAC_MAX}`)).toBeTruthy();
   });
 });
+
+describe("HexBoard terrain motifs", () => {
+  it("draws a peaks motif on a mountain hex", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector('[data-motif="mountain"]')).toBeTruthy();
+  });
+
+  it("draws a waves motif on a coast hex", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector('[data-motif="coast"]')).toBeTruthy();
+  });
+
+  it("draws a motif on a hills hex", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector('[data-motif="hills"]')).toBeTruthy();
+  });
+
+  it("draws no motif on plains", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector('[data-motif="plains"]')).toBeNull();
+  });
+
+  it("suppresses the motif on a hex that carries a region label", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[SEA_REGION]} />,
+    );
+    expect(container.querySelector('[data-motif="coast"]')).toBeNull();
+  });
+
+  it("marks an impassable tile as blocked", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector('[data-hex="1,2"][data-blocked]')).toBeTruthy();
+  });
+
+  it("leaves a passable tile unblocked", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector('[data-hex="1,0"][data-blocked]')).toBeNull();
+  });
+});
