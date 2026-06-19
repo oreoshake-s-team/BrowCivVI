@@ -67,8 +67,21 @@ describe("Granicus river course", () => {
     expect(touchesMountain).toBe(true);
   });
 
-  it("empties into the Propontis at the north coast", () => {
-    expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 0 }, b: { q: 7, r: 0 } });
+  it("meets the Propontis at a coastal mouth", () => {
+    expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 1 }, b: { q: 7, r: 0 } });
+  });
+
+  it("never runs an edge through open water or into a mountain", () => {
+    const WATER = new Set(["coast", "deepSea"]);
+    const offending = FIRST_SLICE_MAP.rivers.filter((edge) => {
+      const a = mapHexAt(FIRST_SLICE_MAP, edge.a)?.terrain;
+      const b = mapHexAt(FIRST_SLICE_MAP, edge.b)?.terrain;
+      if (a === undefined || b === undefined) return false;
+      const bothWater = WATER.has(a) && WATER.has(b);
+      const bothMountain = a === "mountain" && b === "mountain";
+      return bothWater || bothMountain;
+    });
+    expect(offending).toEqual([]);
   });
 });
 
