@@ -5,6 +5,7 @@ import type { Citation } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
 import { createGameMap } from "@/engine/map/types";
+import { unitTypeById } from "@/engine/unit/catalog";
 import { HexBoard } from "./HexBoard";
 
 afterEach(cleanup);
@@ -14,6 +15,8 @@ Element.prototype.releasePointerCapture = () => undefined;
 Element.prototype.hasPointerCapture = () => false;
 
 const MACEDON = "Pezhetairos (macedon)";
+const MAC_ID = "macedon-phalanx-1";
+const MAC_MAX = unitTypeById("pezhetairos")?.movement ?? 0;
 
 const SEA_REGION: NamedRegion = {
   id: "test-sea",
@@ -351,5 +354,44 @@ describe("HexBoard historical references", () => {
   it("leaves an un-cited city label non-interactive", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(screen.queryByRole("button", { name: "Dascylium historical reference" })).toBeNull();
+  });
+});
+
+describe("HexBoard movement display", () => {
+  const friendly = (over: Partial<Parameters<typeof HexBoard>[0]> = {}) => (
+    <HexBoard
+      map={SAMPLE_MAP}
+      units={SAMPLE_UNITS}
+      playerFaction="macedon"
+      movement={{ [MAC_ID]: 2 }}
+      {...over}
+    />
+  );
+
+  it("shows a movement badge on a friendly unit with movement left", () => {
+    const { container } = render(friendly());
+    expect(container.querySelector(`[data-moves="${MAC_ID}"]`)?.textContent).toBe(`2/${MAC_MAX}`);
+  });
+
+  it("omits the badge on an enemy unit", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 2, "persia-cavalry-1": 4 } }));
+    expect(container.querySelector('[data-moves="persia-cavalry-1"]')).toBeNull();
+  });
+
+  it("omits the badge once a friendly unit's movement is spent", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 0 } }));
+    expect(container.querySelector(`[data-moves="${MAC_ID}"]`)).toBeNull();
+  });
+
+  it("shows the selected unit's remaining movement in the panel", () => {
+    render(friendly());
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(screen.getByText(`2 / ${MAC_MAX}`)).toBeTruthy();
+  });
+
+  it("shows a zero in the panel when the selected unit's movement is spent", () => {
+    render(friendly({ movement: { [MAC_ID]: 0 } }));
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(screen.getByText(`0 / ${MAC_MAX}`)).toBeTruthy();
   });
 });

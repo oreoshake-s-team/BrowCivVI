@@ -25,6 +25,8 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
   const router = useRouter();
   const [matchId, setMatchId] = useState<string | null>(initialMatchId ?? null);
   const [units, setUnits] = useState<readonly Unit[]>([]);
+  const [movement, setMovement] = useState<Readonly<Record<string, number>>>({});
+  const [playerFaction, setPlayerFaction] = useState<string>("");
   const [reachable, setReachable] = useState<readonly Hex[]>([]);
   const [attackable, setAttackable] = useState<readonly Hex[]>([]);
   const [floaters, setFloaters] = useState<readonly DamageFloater[]>([]);
@@ -39,6 +41,8 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     void loadBoard(initialMatchId).then((board) => {
       if (!active) return;
       setUnits(board.units);
+      setMovement(board.movement);
+      setPlayerFaction(board.playerFaction);
       setMatchId(board.matchId);
       setReady(true);
       if (board.matchId !== initialMatchId) router.replace(`/play/${board.matchId}`);
@@ -81,6 +85,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     const outcome = await move(matchId, unitId, to);
     if (outcome.ok) {
       setUnits(outcome.units);
+      setMovement(outcome.movement);
       setReachable(outcome.reachable);
     } else {
       setUnits(previous);
@@ -109,6 +114,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     }
     const previous = units;
     setUnits(outcome.units);
+    if (outcome.movement !== undefined) setMovement(outcome.movement);
     if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
       pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);
     }
@@ -129,6 +135,8 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     setConfirming(false);
     const board = await newGame();
     setUnits(board.units);
+    setMovement(board.movement);
+    setPlayerFaction(board.playerFaction);
     setMatchId(board.matchId);
     clearTargets();
     router.push(`/play/${board.matchId}`);
@@ -169,6 +177,8 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         map={map}
         units={units}
         regions={regions}
+        movement={movement}
+        playerFaction={playerFaction}
         reachable={reachable}
         attackable={attackable}
         floaters={floaters}

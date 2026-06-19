@@ -35,6 +35,8 @@ export interface HexBoardProps {
   readonly map: GameMap;
   readonly units: readonly Unit[];
   readonly regions?: readonly NamedRegion[];
+  readonly movement?: Readonly<Record<string, number>>;
+  readonly playerFaction?: string;
   readonly reachable?: readonly Hex[];
   readonly attackable?: readonly Hex[];
   readonly floaters?: readonly DamageFloater[];
@@ -48,6 +50,8 @@ export function HexBoard({
   map,
   units,
   regions = [],
+  movement = {},
+  playerFaction = "",
   reachable = [],
   attackable = [],
   floaters = [],
@@ -78,6 +82,13 @@ export function HexBoard({
   const pointerType = useRef<string>("mouse");
 
   const selectedUnit = units.find((unit) => unit.id === selectedId) ?? null;
+  const selectedMoves =
+    selectedUnit !== null && selectedUnit.owner === playerFaction
+      ? {
+          remaining: movement[selectedUnit.id] ?? 0,
+          max: unitTypeById(selectedUnit.typeId)?.movement ?? 0,
+        }
+      : null;
   const reachableKeys = new Set(reachable.map(hexKey));
   const granicus = regions.find((region) => region.kind === "river");
   const attackableKeys = new Set(attackable.map(hexKey));
@@ -357,6 +368,8 @@ export function HexBoard({
           const selected = unit.id === selectedId;
           const isAttackTarget =
             selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
+          const moves = movement[unit.id];
+          const showMoves = unit.owner === playerFaction && moves !== undefined && moves > 0;
           const toggle = () => {
             if (moved.current) return;
             setCited(null);
@@ -412,6 +425,25 @@ export function HexBoard({
                   <line x1={-SIZE * 0.18} y1={-SIZE * 0.6} x2={SIZE * 0.18} y2={-SIZE * 0.96} />
                 </g>
               ) : null}
+              {showMoves ? (
+                <g
+                  className={styles.movesBadge}
+                  data-moves={unit.id}
+                  transform={`translate(0, ${SIZE * 0.84})`}
+                >
+                  <rect
+                    className={styles.movesPill}
+                    x={-SIZE * 0.42}
+                    y={-SIZE * 0.28}
+                    width={SIZE * 0.84}
+                    height={SIZE * 0.52}
+                    rx={SIZE * 0.26}
+                  />
+                  <text className={styles.movesText} x={0} y={0}>
+                    {moves}/{type?.movement ?? 0}
+                  </text>
+                </g>
+              ) : null}
             </g>
           );
         })}
@@ -458,7 +490,7 @@ export function HexBoard({
 
       <aside className={styles.sidebar}>
         <Legend />
-        <InfoPanel unit={selectedUnit} />
+        <InfoPanel unit={selectedUnit} moves={selectedMoves} />
         <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
       </aside>
 

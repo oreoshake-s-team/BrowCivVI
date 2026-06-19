@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { FIRST_SLICE_MAP } from "@/content/firstSlice";
+import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlice";
 import { applyAttack } from "@/engine/combat/applyAttack";
 import { attackableHexes } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
@@ -21,12 +21,15 @@ import { getStore } from "@/server/store";
 export interface BoardView {
   readonly matchId: string;
   readonly units: readonly Unit[];
+  readonly movement: Readonly<Record<string, number>>;
+  readonly playerFaction: string;
 }
 
 export interface MoveOutcome {
   readonly ok: boolean;
   readonly units: readonly Unit[];
   readonly reachable: readonly Hex[];
+  readonly movement: Readonly<Record<string, number>>;
 }
 
 async function currentOwner(): Promise<string> {
@@ -68,14 +71,21 @@ async function resolveMatch(matchId?: string): Promise<MatchState> {
   return getOrCreateDefault(store, owner);
 }
 
+function boardView(match: MatchState): BoardView {
+  return {
+    matchId: match.id,
+    units: match.units,
+    movement: match.movement,
+    playerFaction: FIRST_SLICE_PLAYER_FACTION,
+  };
+}
+
 export async function loadBoard(matchId?: string): Promise<BoardView> {
-  const match = await resolveMatch(matchId);
-  return { matchId: match.id, units: match.units };
+  return boardView(await resolveMatch(matchId));
 }
 
 export async function newGame(): Promise<BoardView> {
-  const match = await createNewMatch(getStore(), await currentOwner());
-  return { matchId: match.id, units: match.units };
+  return boardView(await createNewMatch(getStore(), await currentOwner()));
 }
 
 export async function reachableFor(matchId: string, unitId: string): Promise<readonly Hex[]> {
@@ -88,10 +98,11 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
   const owner = await currentOwner();
   const store = getStore();
   const match = await loadOwned(store, owner, matchId);
-  if (match === null) return { ok: false, units: [], reachable: [] };
+  if (match === null) return { ok: false, units: [], reachable: [], movement: {} };
 
   const unit = match.units.find((candidate) => candidate.id === unitId);
-  if (unit === undefined) return { ok: false, units: match.units, reachable: [] };
+  if (unit === undefined)
+    return { ok: false, units: match.units, reachable: [], movement: match.movement };
 
   const result = resolveMove({
     unitId,
@@ -103,7 +114,12 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
     blocked: occupiedExcept(match, unitId),
   });
   if (!result.ok)
-    return { ok: false, units: match.units, reachable: reachableForUnit(match, unit) };
+    return {
+      ok: false,
+      units: match.units,
+      reachable: reachableForUnit(match, unit),
+      movement: match.movement,
+    };
 
   const next: MatchState = {
     ...match,
@@ -118,10 +134,16 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
       ok: true,
       units: saved.units,
       reachable: movedUnit === undefined ? [] : reachableForUnit(saved, movedUnit),
+      movement: saved.movement,
     };
   } catch (error) {
     if (error instanceof StaleMatchError) {
-      return { ok: false, units: match.units, reachable: reachableForUnit(match, unit) };
+      return {
+        ok: false,
+        units: match.units,
+        reachable: reachableForUnit(match, unit),
+        movement: match.movement,
+      };
     }
     throw error;
   }
@@ -140,6 +162,7 @@ export interface AttackOutcome {
   readonly attackerDamage?: number;
   readonly defenderDamage?: number;
   readonly defeated?: readonly string[];
+  readonly movement?: Readonly<Record<string, number>>;
 }
 
 export async function targetsFor(matchId: string, unitId: string): Promise<SelectionTargets> {
@@ -198,6 +221,7 @@ export async function attack(
       attackerDamage: application.attackerDamage,
       defenderDamage: application.defenderDamage,
       defeated: application.defeated,
+      movement: saved.movement,
     };
   } catch (error) {
     if (error instanceof StaleMatchError) return { ok: false, units: match.units };
