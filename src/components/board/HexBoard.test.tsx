@@ -290,6 +290,18 @@ const LYDIA_REGION: NamedRegion = {
   citation: LYDIA_CITATION,
 };
 
+const MEDIA_REGION: NamedRegion = {
+  ...LYDIA_REGION,
+  media: [
+    {
+      id: "lydia-pod",
+      title: "Lydia (Tides of History)",
+      url: "https://example.test/lydia",
+      kind: "podcast",
+    },
+  ],
+};
+
 const GRANICUS_REGION: NamedRegion = {
   id: "granicus",
   name: "Granicus",
@@ -309,6 +321,12 @@ const GRANICUS_REGION: NamedRegion = {
   ],
 };
 
+const SARDIS_CITATION: Citation = {
+  claim: "Sardis was the Lydian capital.",
+  source: { title: "Sardis", url: "https://en.wikipedia.org/wiki/Sardis", type: "reference" },
+  confidence: "high",
+};
+
 const CITED_CITY_MAP = createGameMap(
   [
     { hex: { q: 0, r: 0 }, terrain: "plains", cityId: "sardis" },
@@ -322,22 +340,54 @@ const CITED_CITY_MAP = createGameMap(
       owner: "persia",
       value: 100,
       defense: 20,
-      citation: {
-        claim: "Sardis was the Lydian capital.",
-        source: { title: "Sardis", url: "https://en.wikipedia.org/wiki/Sardis", type: "reference" },
-        confidence: "high",
-      },
+      citation: SARDIS_CITATION,
+    },
+  ],
+);
+
+const MEDIA_CITY_MAP = createGameMap(
+  [
+    { hex: { q: 0, r: 0 }, terrain: "plains", cityId: "sardis" },
+    { hex: { q: 1, r: 0 }, terrain: "plains" },
+  ],
+  [
+    {
+      id: "sardis",
+      name: "Sardis",
+      hex: { q: 0, r: 0 },
+      owner: "persia",
+      value: 100,
+      defense: 20,
+      citation: SARDIS_CITATION,
+      media: [
+        {
+          id: "sardis-pod",
+          title: "Sardis (Tides of History)",
+          url: "https://example.test/sardis",
+          kind: "podcast",
+        },
+      ],
     },
   ],
 );
 
 describe("HexBoard historical references", () => {
-  it("reveals a region's cited claim when its label is focused", () => {
-    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[LYDIA_REGION]} />);
+  it("reveals a region's reference when it has linked media", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[MEDIA_REGION]} />);
     fireEvent.focus(screen.getByRole("button", { name: "Lydia historical reference" }));
     expect(
       screen.getByText("Lydia, with its capital Sardis, lay inland to the southeast."),
     ).toBeTruthy();
+  });
+
+  it("leaves a media-less region label non-interactive", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[LYDIA_REGION]} />);
+    expect(screen.queryByRole("button", { name: "Lydia historical reference" })).toBeNull();
+  });
+
+  it("still renders a media-less region's label text", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[LYDIA_REGION]} />);
+    expect(screen.getByText("Lydia")).toBeTruthy();
   });
 
   it("anchors the Granicus citation on the river course", () => {
@@ -408,15 +458,20 @@ describe("HexBoard historical references", () => {
     expect(container.querySelectorAll("polygon.bank")).toHaveLength(1);
   });
 
-  it("surfaces a city's citation when its name is clicked", () => {
-    render(<HexBoard map={CITED_CITY_MAP} units={[]} />);
+  it("surfaces a city's reference when it has linked media", () => {
+    render(<HexBoard map={MEDIA_CITY_MAP} units={[]} />);
     fireEvent.click(screen.getByRole("button", { name: "Sardis historical reference" }));
     expect(screen.getByText("Sardis was the Lydian capital.")).toBeTruthy();
   });
 
+  it("leaves a media-less cited city label non-interactive", () => {
+    render(<HexBoard map={CITED_CITY_MAP} units={[]} />);
+    expect(screen.queryByRole("button", { name: "Sardis historical reference" })).toBeNull();
+  });
+
   it("dismisses the citation card on Escape", () => {
-    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[LYDIA_REGION]} />);
-    fireEvent.focus(screen.getByRole("button", { name: "Lydia historical reference" }));
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />);
+    fireEvent.focus(screen.getByRole("button", { name: "Granicus historical reference" }));
     fireEvent.keyDown(document.body, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
   });

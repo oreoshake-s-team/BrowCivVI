@@ -30,6 +30,10 @@ const CITATION_HIDE_MS = 700;
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 const WATER_TERRAINS: ReadonlySet<TerrainType> = new Set(["coast", "deepSea"]);
 
+function hasPlayableMedia(media: readonly MediaLink[] | undefined): boolean {
+  return media?.some((item) => item.kind === "podcast" || item.kind === "video") ?? false;
+}
+
 function riverBankKeys(map: GameMap): ReadonlySet<string> {
   const keys = new Set<string>();
   for (const river of map.rivers) {
@@ -108,7 +112,8 @@ export function HexBoard({
         }
       : null;
   const reachableKeys = new Set(reachable.map(hexKey));
-  const granicus = regions.find((region) => region.kind === "river");
+  const river = regions.find((region) => region.kind === "river");
+  const granicus = river !== undefined && hasPlayableMedia(river.media) ? river : undefined;
   const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
   const labeledHexKeys = new Set(
@@ -356,12 +361,12 @@ export function HexBoard({
                   {mapHex.hex.q}, {mapHex.hex.r}
                 </text>
               )}
-              {city && cityCitation !== undefined ? (
+              {city && cityCitation !== undefined && hasPlayableMedia(city.media) ? (
                 <CitationTarget
                   label={city.name}
                   className={styles.citeTarget}
                   onShow={(target) => {
-                    showCitation(city.name, cityCitation, target);
+                    showCitation(city.name, cityCitation, target, city.media);
                   }}
                   onHide={() => {
                     scheduleHide();
@@ -420,13 +425,20 @@ export function HexBoard({
           if (labelHex === undefined) return null;
           const center = hexToPixel(labelHex, SIZE);
           const className = SEA_KINDS.has(region.kind) ? styles.seaLabel : styles.featureLabel;
+          if (!hasPlayableMedia(region.media)) {
+            return (
+              <text key={region.id} className={className} x={center.x} y={center.y}>
+                {region.name}
+              </text>
+            );
+          }
           return (
             <CitationTarget
               key={region.id}
               label={region.name}
               className={styles.citeTarget}
               onShow={(target) => {
-                showCitation(region.name, region.citation, target);
+                showCitation(region.name, region.citation, target, region.media);
               }}
               onHide={() => {
                 scheduleHide();

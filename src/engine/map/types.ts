@@ -1,4 +1,5 @@
 import type { Citation } from "../content/citation";
+import type { MediaLink } from "../content/media";
 import type { Hex } from "../hex";
 import type { Terrain, TerrainType } from "./terrain";
 import { TERRAIN_CATALOG } from "./terrain";
@@ -29,6 +30,7 @@ export interface City {
   readonly defense: number;
   readonly affinity?: Affinity;
   readonly citation?: Citation;
+  readonly media?: readonly MediaLink[];
   readonly firstAttestedBce?: number;
 }
 
