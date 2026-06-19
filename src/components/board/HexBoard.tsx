@@ -116,6 +116,7 @@ export function HexBoard({
   const granicus = river !== undefined && hasPlayableMedia(river.media) ? river : undefined;
   const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
+  const occupiedKeys = new Set(units.map((unit) => hexKey(unit.hex)));
   const labeledHexKeys = new Set(
     regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
   );
@@ -314,7 +315,7 @@ export function HexBoard({
                 }
                 onMouseEnter={(event) => {
                   setHovered(key);
-                  if (bankRegion !== undefined)
+                  if (bankRegion !== undefined && selectedId === null && !occupiedKeys.has(key))
                     showCitation(
                       bankRegion.name,
                       bankRegion.citation,

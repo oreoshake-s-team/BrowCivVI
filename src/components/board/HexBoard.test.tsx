@@ -406,9 +406,9 @@ describe("HexBoard historical references", () => {
     ).toBe("https://www.youtube.com/watch?v=s40yYSWkrzk");
   });
 
-  it("reveals the Granicus reference when a bordering land tile is hovered", () => {
+  it("reveals the Granicus reference when an unoccupied bordering tile is hovered", () => {
     const { container } = render(
-      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+      <HexBoard map={SAMPLE_MAP} units={[]} regions={[GRANICUS_REGION]} />,
     );
     const bank = container.querySelector<SVGPolygonElement>('polygon[data-hex="1,1"]');
     if (bank === null) throw new Error("bank tile not rendered");
@@ -416,7 +416,43 @@ describe("HexBoard historical references", () => {
     expect(screen.getByText("Site of the 334 BC battle.")).toBeTruthy();
   });
 
-  it("reveals the Granicus reference when a bordering land tile is focused", () => {
+  it("hides the riverbank reference on hover when a unit occupies the tile", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+    );
+    const bank = container.querySelector<SVGPolygonElement>('polygon[data-hex="1,1"]');
+    if (bank === null) throw new Error("bank tile not rendered");
+    fireEvent.mouseEnter(bank);
+    expect(screen.queryByText("Site of the 334 BC battle.")).toBeNull();
+  });
+
+  it("hides the riverbank reference on hover while a unit is selected", () => {
+    const { container } = render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={[
+          {
+            id: "macedon-phalanx-1",
+            typeId: "pezhetairos",
+            owner: "macedon",
+            hex: { q: 2, r: 2 },
+            hp: 100,
+            morale: 80,
+            supplied: true,
+            hasMovedThisTurn: false,
+          },
+        ]}
+        regions={[GRANICUS_REGION]}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    const bank = container.querySelector<SVGPolygonElement>('polygon[data-hex="1,1"]');
+    if (bank === null) throw new Error("bank tile not rendered");
+    fireEvent.mouseEnter(bank);
+    expect(screen.queryByText("Site of the 334 BC battle.")).toBeNull();
+  });
+
+  it("still reveals the Granicus reference on keyboard focus of an occupied tile", () => {
     const { container } = render(
       <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
     );
