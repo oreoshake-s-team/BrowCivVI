@@ -66,7 +66,7 @@ Secrets live only in a local, git-ignored `.env.local` (the `.env*` glob is igno
 
 ### Auth0 (optional locally)
 
-Authentication is **additive**: with none of these set, the app runs in anonymous signed-cookie mode (design §3/§14) and `/play` is open. Set all four required vars to turn on real sign-in; once configured, `/play` redirects unauthenticated visitors to Auth0 Universal Login and the session resolves to a stable `userId` (the Auth0 `sub`).
+Authentication is **additive**: with none of these set, the app runs in anonymous signed-cookie mode (design §3/§14) and every route is open. Set all four required vars to turn on real sign-in. Once configured, access is **opt-out** — every route except the public home page (`/`) and the `/auth/*` routes requires sign-in (enforced in middleware); unauthenticated visitors are redirected to Auth0 Universal Login (with a `returnTo`), and the session resolves to a stable `userId` (the Auth0 `sub`).
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
