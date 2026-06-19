@@ -145,7 +145,7 @@ The post-game seed is shown for sharing and feeds the §3 replay-verification id
 
 ### Combat (stripped-down, modular)
 
-- Resolve via a **pure `resolveCombat(attacker, defender, terrain, rng)`** where `rng` is the seeded stream. v0 formula: deterministic strength differential + small seeded variance → HP damage. The defender's `defenseModifier`, any river-crossing penalty against the attacker (see Map), and each side's **morale** feed the formula (low morale weakens a unit and can trigger a **rout**; see Supply & morale). The _formula is a swappable module_ so we can tune toward / away from Civ 6's combat math freely.
+- Resolve via a **pure, seeded `resolveCombat`** (`rng` is the match's seeded stream). v0 formula follows Civ 6: HP damage scales **exponentially with the combat-strength difference** — `damage = round(30 · e^(0.04·(atkStr − defStr)) · variance)`, clamped to `[1, defender.hp]`, with `variance` a seeded `±25%` factor. The attacker's effective strength gains the **pincer flank bonus** when the defender is flanked (§13); the defender's effective strength is multiplied by its **terrain `defenseModifier`** and its ability modifiers behind the registry (the **phalanx wall**, negated when flanked, reduced on rough ground — §13). Melee is bidirectional (the attacker takes a seeded counter); `attackerDamage`/`defenderDamage` and the `defeated` flags are returned for the server to apply. Morale and the river-crossing penalty feed in later. The _formula is a swappable module_ so we can tune toward / away from Civ 6's combat math freely.
 
 ### Supply & morale
 
@@ -367,6 +367,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 
 ### Combat balance (provisional)
 
+- **Damage formula (Civ 6-style):** `round(30 · e^(0.04·Δstrength) · variance)`, clamped to `[1, defender.hp]`; `variance` ∈ `[0.75, 1.25)` seeded. Melee is bidirectional (attacker takes a seeded counter). Base 30, scale 0.04, and the ±25% variance are tunable (swappable module, §5).
 - **Flanking (positional pincer): +50%** attacker bonus (and it negates the phalanx wall) when an attacker-allied unit holds the hex directly opposite it across the defender. With no facing, flank and rear are one condition; encirclement and cavalry envelopment are decisive.
 - **Persian heavy-cavalry instant-kill: 10% per attack**, offset by the −2 attack strength (§13).
 - **Hoplite phalanx adjacency: +10% combat strength per adjacent friendly hoplite, cap +30%** (§13).
