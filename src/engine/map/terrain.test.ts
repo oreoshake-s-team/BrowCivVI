@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TERRAIN_CATALOG, isImpassable, isRough, passableBy } from "./terrain";
+import { TERRAIN_CATALOG, blocksLand, isImpassable, isRough, passableBy } from "./terrain";
 
 describe("isImpassable", () => {
   it("flags mountains as impassable", () => {
@@ -40,5 +40,19 @@ describe("passableBy", () => {
 
   it("lets naval units use the coast", () => {
     expect(passableBy(TERRAIN_CATALOG.coast, "naval")).toBe(true);
+  });
+});
+
+describe("blocksLand", () => {
+  it("blocks land units from mountains", () => {
+    expect(blocksLand("mountain")).toBe(true);
+  });
+
+  it("blocks land units from water (coast and deep sea)", () => {
+    expect(blocksLand("coast") && blocksLand("deepSea")).toBe(true);
+  });
+
+  it("does not block land units from plains", () => {
+    expect(blocksLand("plains")).toBe(false);
   });
 });

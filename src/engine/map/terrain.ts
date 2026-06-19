@@ -39,3 +39,7 @@ export function isRough(terrain: Terrain): boolean {
 export function passableBy(terrain: Terrain, domain: MovementDomain): boolean {
   return terrain.passableBy.includes(domain);
 }
+
+export function blocksLand(type: TerrainType): boolean {
+  return !TERRAIN_CATALOG[type].passableBy.includes("land");
+}

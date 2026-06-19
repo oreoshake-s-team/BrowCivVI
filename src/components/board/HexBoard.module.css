@@ -43,6 +43,11 @@
     stroke-width var(--motion-fast) var(--ease-standard);
 }
 
+.hexBlocked {
+  stroke: var(--color-ink-muted);
+  stroke-width: 2;
+}
+
 .hexHover {
   stroke: var(--color-outline-emphasis);
   stroke-width: 3;

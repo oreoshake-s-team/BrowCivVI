@@ -1,0 +1,29 @@
+.motif {
+  pointer-events: none;
+}
+
+.rock {
+  fill: var(--color-ink-feature);
+}
+
+.snow {
+  fill: var(--color-text-halo);
+}
+
+.wave {
+  fill: none;
+  stroke: var(--color-text-halo);
+  stroke-width: 0.06;
+  stroke-linecap: round;
+}
+
+.foliage {
+  fill: var(--color-ink-feature);
+}
+
+.hill {
+  fill: none;
+  stroke: var(--color-ink-muted);
+  stroke-width: 0.06;
+  stroke-linecap: round;
+}
