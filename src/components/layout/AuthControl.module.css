@@ -1,0 +1,23 @@
+.signedIn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.name {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-ui-sm);
+}
+
+.action {
+  color: var(--color-ink);
+  font-size: var(--font-size-ui-md);
+  text-decoration: none;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.action:hover {
+  background: var(--color-surface-board);
+}

@@ -60,6 +60,24 @@ Preview and production **auto-migrate at build**: `yarn build` applies pending m
 - **Path length / case.** Prefer a short repo path (`C:\src\BrowCivVI`, or `~/code/BrowCivVI` in WSL2). Treat paths as case-sensitive (CI is Linux).
 - **Hooks are bash.** `.claude/hooks/*.sh` need a bash shell (Git Bash or WSL2).
 
+## Environment variables
+
+Secrets live only in a local, git-ignored `.env.local` (the `.env*` glob is ignored) and in the Vercel project settings — never commit them.
+
+### Auth0 (optional locally)
+
+Authentication is **additive**: with none of these set, the app runs in anonymous signed-cookie mode (design §3/§14) and every route is open. Set all four required vars to turn on real sign-in. Once configured, access is **opt-out** — every route except the public home page (`/`) and the `/auth/*` routes requires sign-in (enforced in middleware); unauthenticated visitors are redirected to Auth0 Universal Login (with a `returnTo`), and the session resolves to a stable `userId` (the Auth0 `sub`).
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `AUTH0_DOMAIN` | yes | Tenant domain, e.g. `your-tenant.us.auth0.com`. |
+| `AUTH0_CLIENT_ID` | yes | Application client id. |
+| `AUTH0_CLIENT_SECRET` | yes | Application client secret. |
+| `AUTH0_SECRET` | yes | 32-byte random string for cookie encryption (`openssl rand -hex 32`). |
+| `APP_BASE_URL` | for callbacks | App origin, e.g. `http://localhost:3000`. |
+
+In the Auth0 dashboard, add `${APP_BASE_URL}/auth/callback` to **Allowed Callback URLs** and `${APP_BASE_URL}` to **Allowed Logout URLs**. The login / logout / callback routes are mounted automatically by the Auth0 middleware at `/auth/*`.
+
 ## Workflow rules (don't skip)
 
 From `CLAUDE.md` and design §9:
