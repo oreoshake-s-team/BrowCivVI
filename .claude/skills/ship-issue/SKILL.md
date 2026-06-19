@@ -14,7 +14,7 @@ Implement a GitHub issue from start to a merge-ready green PR. Drive the entire 
 - Before acting on any ambiguous term (e.g. **Royal Road**, **Immortals**, **Hetairoi**, **phalangites / sarissa**, **satrapy**, **flanking**, **great general**, **divergence node**, **hex**), restate in one line what the issue covers and flag terms that could be a game/historical concept vs. a GitHub/tooling concept.
 - Keep app-code changes under ~150 lines (excl. tests/CSS/config). If it would exceed that, split into sub-issues and create follow-up tasks **before** proceeding (design §9).
 - Strict TypeScript — no `any`. Use `import`, not `require()` (this is an ESM project).
-- Client→server is **GraphQL only** (intents = mutations, state = query, live updates = subscriptions). No ad-hoc REST for game state (design §4).
+- Client→server is **typed Server Actions only** (intents and authoritative per-viewer state both flow through Server Actions). No ad-hoc REST for game state (design §4).
 - The client is untrusted and near-stateless: it renders authoritative state and sends intents; game logic lives in the pure `/engine` and on the server (design §2–§4).
 - Prioritize accessibility and i18n; keep code and CSS compartmentalized (per-component CSS, no inline styles).
 - Never reference issue numbers in source — comments, test/`describe` names, file names. Describe the behavior instead.
@@ -46,7 +46,7 @@ Run `yarn install` before anything else and report whether it was nearly instant
 ### 3. Implement
 
 - Read the relevant source files (and `docs/design.md` for the area) before editing.
-- Write strict TypeScript — no `any`, no `require()`. Keep game logic in the pure `/engine` / server; the client only renders authoritative state and sends GraphQL intents.
+- Write strict TypeScript — no `any`, no `require()`. Keep game logic in the pure `/engine` / server; the client only renders authoritative state and sends intents.
 - Keep each changed file under ~150 lines of app code.
 - Add or update CSS in the component's own CSS file; do not add inline styles.
 - Build for accessibility and i18n (keyboard board navigation, screen-reader labels, contrast, no hard-coded user-facing strings).

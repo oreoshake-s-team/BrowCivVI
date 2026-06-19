@@ -61,13 +61,13 @@ From `CLAUDE.md` and design §9:
 - Branch per issue; never commit to `main`. One worktree per branch.
 - Conventional commits; squash-merge each PR to a single commit.
 - Strict TypeScript, no `any`; ESM (`import`, not `require`).
-- **GraphQL is the required client-server API** (design §4/§8).
+- **Typed Next.js Server Actions are the client-server contract** (design §4/§8).
 - Keep app-code diffs **<= 150 lines** per PR; split bigger work into follow-ups.
 - All functionality test-covered (happy path + at least one negative case).
 - `yarn typecheck` and `yarn test` green before opening a PR.
 
 ## Start here when you wake up
 
-1. Open **PR #1** and skim the latest `docs/design.md` — today's decisions (Granicus start, supply & morale, GraphQL, loyalty/defection, Darius framing, Tides citations) are captured there.
+1. Open **PR #1** and skim the latest `docs/design.md` — today's decisions (Granicus start, supply & morale, loyalty/defection, Darius framing, Tides citations) are captured there.
 2. Decide the still-open items in `docs/design.md` §14 and from chat: the **roguelite** meta-progression scope, **Roxana** integration, and the **unique-unit roster** (sarissa phalanx in, Hypaspists out?).
-3. File the first code issue with the template: **"Repo + skeleton"** (design §9.1) — Next.js App Router + strict TS + test runner + CI + a GraphQL endpoint stub. Then branch, scaffold, and open the PR.
+3. File the first code issue with the template: **"Repo + skeleton"** (design §9.1) — Next.js App Router + strict TS + test runner + CI. Then branch, scaffold, and open the PR.

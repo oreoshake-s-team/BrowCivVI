@@ -28,7 +28,7 @@ The author is still learning frontend and relies on Claude to surface design dec
 - If a change requires more than 150 lines of changes to application code (excluding CSS, tests, config, etc), split it up into multiple changes and create followup tasks.
 - Code should be as compartmentalized as possible, including CSS.
 - Code should be written in strict typescript, no use of any types.
-- GraphQL is the required client–server API (intents = mutations, state = query, live updates = subscriptions); no ad-hoc REST endpoints for game state (design §4).
+- Typed Next.js Server Actions are the required client–server contract (intents and authoritative per-viewer state both flow through Server Actions); no ad-hoc REST endpoints for game state (design §4).
 - The client is untrusted and near-stateless: it renders authoritative state and sends _intents_; it never computes outcomes. Game logic lives in the pure `/engine` module and on the server (design §2–§4). The server will always provide a list of available moves that will be reflected in the UI.
 - When developing new branches, only work in worktrees.
 - Always use the issue template at `.github/ISSUE_TEMPLATE/issue.yml` when creating issues.
@@ -90,6 +90,7 @@ Onboarding docs:
 - [`docs/onboarding/dev-setup.md`](docs/onboarding/dev-setup.md) — local setup.
 - [`docs/onboarding/styling-tokens.md`](docs/onboarding/styling-tokens.md) — the two-tier CSS design-token system (color primitives → semantic aliases, plus radius/spacing/type/motion scales); component CSS must use tokens, enforced in CI.
 - [`docs/onboarding/linting.md`](docs/onboarding/linting.md) — the ESLint / Prettier / Stylelint / markdownlint stack, the few justified config deviations, and the pre-commit hook.
+- [`docs/onboarding/testing.md`](docs/onboarding/testing.md) — the test pyramid (engine → server-action contract → mocked front-end flow → browser e2e) and the typecheck-as-tripwire guardrail that keeps mocked intents from drifting from the real Server Actions.
 
 ## Project Environment
 
