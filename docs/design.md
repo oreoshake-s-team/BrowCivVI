@@ -145,7 +145,7 @@ The post-game seed is shown for sharing and feeds the §3 replay-verification id
 
 ### Combat (stripped-down, modular)
 
-- Resolve via a **pure `resolveCombat(attacker, defender, terrain, rng)`** where `rng` is the seeded stream. v0 formula: deterministic strength differential + small seeded variance → HP damage. The defender's `defenseModifier`, any river-crossing penalty against the attacker (see Map), and each side's **morale** feed the formula (low morale weakens a unit and can trigger a **rout**; see Supply & morale). The _formula is a swappable module_ so we can tune toward / away from Civ 6's combat math freely.
+- Resolve via a **pure, seeded `resolveCombat`** (`rng` is the match's seeded stream). v0 formula follows Civ 6: HP damage scales **exponentially with the combat-strength difference** — `damage = round(30 · e^(0.04·(atkStr − defStr)) · variance)`, clamped to `[1, defender.hp]`, with `variance` a seeded `±25%` factor. The attacker's effective strength gains the **pincer flank bonus** when the defender is flanked (§13); the defender's effective strength is multiplied by its **terrain `defenseModifier`** and its ability modifiers behind the registry (the **phalanx wall**, negated when flanked, reduced on rough ground — §13). Both sides' phalanx units also gain the **formation-adjacency** bonus (+10%/adjacent same-formation ally, cap +30%, §13). Melee is bidirectional (the attacker takes a seeded counter); `attackerDamage`/`defenderDamage` and the `defeated` flags are returned for the server to apply. Morale and the river-crossing penalty feed in later. The _formula is a swappable module_ so we can tune toward / away from Civ 6's combat math freely.
 
 ### Supply & morale
 
@@ -328,7 +328,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
 
 - Catapults, archers, and cavalry gain **no** benefit from siege towers / battering rams (those aid melee siege infantry only).
   - _Mutator — "Improper Siege Support" (§5):_ the opt-in mutator **inverts** this, letting ranged, cavalry, and bombard units leech ram/tower bonuses (the actual Civ 6 bug). Mutator-lane only; countered by Heated Sand below.
-- Hoplite **adjacency** (phalanx) bonuses apply: **+10% combat strength per adjacent friendly hoplite, cap +30%** (provisional, §14).
+- **Formation adjacency**: a phalanx-formation unit — a **phalangite** (the `phalanx` ability), or a hoplite — gains **+10% combat strength per adjacent friendly same-formation unit, cap +30%** (provisional, §14): the massed sarissa hedge / shield wall reinforced by its neighbours. Applies on **both attack and defence** (distinct from the defensive **sarissa wall** below, which is defender-only).
 - **Flanking** is **positional (a pincer)** — there is no unit facing. An attack counts as a flank/rear attack when a unit **allied to the attacker** occupies the hex **directly opposite** the attacker across the defender (`oppositeHex = 2·defender − attacker`): the defender is pinned between two enemies. Flank and rear collapse into a single **flanked** condition. (A later refinement may scale the bonus with the number of such pincers.)
 - **Sarissa wall** (phalangite defense): a phalangite (a unit with the `phalanx` ability) presents a hedge of sarissas to its attacker — a strong **defensive** bonus that holds **unless the phalangite is flanked** (pincered, per the rule above), in which case it is **negated** (the formation is taken from two sides). It is also **reduced on rough terrain** (any hex with `moveCost > 1`), where the line loses cohesion. Distinct from the hoplite **adjacency** bonus above (formation density) — the wall is about **encirclement** and **ground**. The historical strength-and-weakness of the Macedonian phalanx: near-unbreakable head-on, fatally exposed once caught from two sides or broken up on uneven ground (the gap at Gaugamela; Arrian, _Anabasis_ III.13–14). Provisional values in §14; a pure modifier behind the combat/effect registry (§5).
 - **Hypaspists**: no bonus when sieging a city.
@@ -367,9 +367,10 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 
 ### Combat balance (provisional)
 
+- **Damage formula (Civ 6-style):** `round(30 · e^(0.04·Δstrength) · variance)`, clamped to `[1, defender.hp]`; `variance` ∈ `[0.75, 1.25)` seeded. Melee is bidirectional (attacker takes a seeded counter). Base 30, scale 0.04, and the ±25% variance are tunable (swappable module, §5).
 - **Flanking (positional pincer): +50%** attacker bonus (and it negates the phalanx wall) when an attacker-allied unit holds the hex directly opposite it across the defender. With no facing, flank and rear are one condition; encirclement and cavalry envelopment are decisive.
 - **Persian heavy-cavalry instant-kill: 10% per attack**, offset by the −2 attack strength (§13).
-- **Hoplite phalanx adjacency: +10% combat strength per adjacent friendly hoplite, cap +30%** (§13).
+- **Formation adjacency: +10% combat strength per adjacent friendly phalanx-formation unit (phalangite or hoplite), cap +30%** (§13), applied on both attack and defence.
 - **Sarissa wall (phalangite): +50% defensive strength while unflanked; bonus negated when flanked (pincered); −25% defensive strength on rough terrain (`moveCost > 1`)** (§13). A pincer both denies the wall _and_ earns the attacker's flank bonus.
 - **Immortal cap: 15** (confirms §13).
 
