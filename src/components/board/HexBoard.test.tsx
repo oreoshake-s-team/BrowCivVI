@@ -356,6 +356,58 @@ describe("HexBoard historical references", () => {
     ).toBe("https://www.youtube.com/watch?v=s40yYSWkrzk");
   });
 
+  it("reveals the Granicus reference when a bordering land tile is hovered", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+    );
+    const bank = container.querySelector<SVGPolygonElement>('polygon[data-hex="1,1"]');
+    if (bank === null) throw new Error("bank tile not rendered");
+    fireEvent.mouseEnter(bank);
+    expect(screen.getByText("Site of the 334 BC battle.")).toBeTruthy();
+  });
+
+  it("reveals the Granicus reference when a bordering land tile is focused", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+    );
+    const bank = container.querySelector<SVGPolygonElement>('polygon[data-hex="1,1"]');
+    if (bank === null) throw new Error("bank tile not rendered");
+    fireEvent.focus(bank);
+    expect(screen.getByText("Site of the 334 BC battle.")).toBeTruthy();
+  });
+
+  it("does not surface the reference when a bordering tile is clicked", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+    );
+    const bank = container.querySelector<SVGPolygonElement>('polygon[data-hex="1,1"]');
+    if (bank === null) throw new Error("bank tile not rendered");
+    fireEvent.click(bank);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("marks every bordering land tile on the bank", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+    );
+    expect(container.querySelectorAll("polygon.bank")).toHaveLength(2);
+  });
+
+  it("excludes water tiles from the river bank", () => {
+    const coastBankMap = createGameMap(
+      [
+        { hex: { q: 0, r: 0 }, terrain: "coast" },
+        { hex: { q: 1, r: 0 }, terrain: "plains" },
+      ],
+      [],
+      [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 } }],
+    );
+    const { container } = render(
+      <HexBoard map={coastBankMap} units={[]} regions={[GRANICUS_REGION]} />,
+    );
+    expect(container.querySelectorAll("polygon.bank")).toHaveLength(1);
+  });
+
   it("surfaces a city's citation when its name is clicked", () => {
     render(<HexBoard map={CITED_CITY_MAP} units={[]} />);
     fireEvent.click(screen.getByRole("button", { name: "Sardis historical reference" }));

@@ -48,6 +48,22 @@
   stroke-width: 3;
 }
 
+.hexBank {
+  cursor: help;
+}
+
+.hexBank:focus-visible {
+  outline: none;
+  stroke: var(--color-outline-emphasis);
+  stroke-width: 3;
+}
+
+.bank {
+  fill: var(--color-water-river);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
 .coord {
   font-size: var(--font-size-label-sm);
   fill: var(--color-ink-coord);

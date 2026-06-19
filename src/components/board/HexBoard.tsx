@@ -6,6 +6,7 @@ import type { MediaLink } from "@/engine/content/media";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
+import type { TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
 import { unitTypeById } from "@/engine/unit/catalog";
@@ -26,6 +27,19 @@ const PAN_THRESHOLD = 4;
 const CITATION_HIDE_MS = 700;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
+const WATER_TERRAINS: ReadonlySet<TerrainType> = new Set(["coast", "deepSea"]);
+
+function riverBankKeys(map: GameMap): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const river of map.rivers) {
+    for (const endpoint of [river.a, river.b]) {
+      const key = hexKey(endpoint);
+      const tile = map.hexes.get(key);
+      if (tile !== undefined && !WATER_TERRAINS.has(tile.terrain)) keys.add(key);
+    }
+  }
+  return keys;
+}
 
 export interface DamageFloater {
   readonly id: string;
@@ -94,6 +108,7 @@ export function HexBoard({
       : null;
   const reachableKeys = new Set(reachable.map(hexKey));
   const granicus = regions.find((region) => region.kind === "river");
+  const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
 
   const select = (unitId: string | null) => {
@@ -264,20 +279,52 @@ export function HexBoard({
           const center = hexToPixel(mapHex.hex, SIZE);
           const city = mapHex.cityId ? map.cities.get(mapHex.cityId) : undefined;
           const cityCitation = city?.citation;
+          const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
+          const isBank = bankRegion !== undefined;
           return (
             <g key={key} data-testid={`hex-${key}`}>
               <polygon
                 data-hex={key}
-                className={["hex", styles.hex, hovered === key ? styles.hexHover : undefined]
+                className={[
+                  "hex",
+                  styles.hex,
+                  hovered === key ? styles.hexHover : undefined,
+                  isBank ? styles.hexBank : undefined,
+                ]
                   .filter(Boolean)
                   .join(" ")}
                 points={hexPolygonPoints(center, SIZE)}
                 style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
-                onMouseEnter={() => {
+                tabIndex={isBank ? 0 : undefined}
+                role={isBank ? "button" : undefined}
+                aria-label={
+                  isBank ? `${bankRegion.name} riverbank historical reference` : undefined
+                }
+                onMouseEnter={(event) => {
                   setHovered(key);
+                  if (bankRegion !== undefined)
+                    showCitation(
+                      bankRegion.name,
+                      bankRegion.citation,
+                      event.currentTarget,
+                      bankRegion.media,
+                    );
                 }}
                 onMouseLeave={() => {
                   setHovered((current) => (current === key ? null : current));
+                  if (bankRegion !== undefined) scheduleHide();
+                }}
+                onFocus={(event) => {
+                  if (bankRegion !== undefined)
+                    showCitation(
+                      bankRegion.name,
+                      bankRegion.citation,
+                      event.currentTarget,
+                      bankRegion.media,
+                    );
+                }}
+                onBlur={() => {
+                  if (bankRegion !== undefined) scheduleHide();
                 }}
                 onClick={() => {
                   tapHex(mapHex.hex);
@@ -287,6 +334,13 @@ export function HexBoard({
                   if (!moved.current) tryMove(mapHex.hex);
                 }}
               />
+              {isBank ? (
+                <polygon
+                  className={["bank", styles.bank].filter(Boolean).join(" ")}
+                  points={hexPolygonPoints(center, SIZE)}
+                  pointerEvents="none"
+                />
+              ) : null}
               {showQandR && (
                 <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
                   {mapHex.hex.q}, {mapHex.hex.r}
