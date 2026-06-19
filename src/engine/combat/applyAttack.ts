@@ -10,6 +10,7 @@ export interface ApplyAttackInput {
   readonly defenderId: string;
   readonly defenderTerrainDefense: number;
   readonly defenderTerrainMoveCost: number;
+  readonly riverAttack: boolean;
   readonly rng: Rng;
 }
 
@@ -53,6 +54,7 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
       .map(toAttackUnit),
     defenderTerrainDefense: input.defenderTerrainDefense,
     defenderTerrainMoveCost: input.defenderTerrainMoveCost,
+    riverAttack: input.riverAttack,
     rng: input.rng,
   });
 

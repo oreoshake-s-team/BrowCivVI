@@ -6,6 +6,7 @@ export const COMBAT_BASE_DAMAGE = 30;
 export const COMBAT_STRENGTH_SCALE = 0.04;
 export const COMBAT_VARIANCE = 0.25;
 export const FLANK_ATTACK_BONUS = 0.5;
+export const RIVER_ATTACK_PENALTY = 5;
 
 export interface CombatSide {
   readonly strength: number;
@@ -20,6 +21,7 @@ export interface CombatInput {
   readonly defenderTerrainDefense: number;
   readonly defenderTerrainMoveCost: number;
   readonly flanked: boolean;
+  readonly riverAttack: boolean;
   readonly rng: Rng;
 }
 
@@ -41,10 +43,13 @@ function damage(attackerStrength: number, defenderStrength: number, rng: Rng): n
 }
 
 export function resolveCombat(input: CombatInput): CombatResult {
-  const attackerStrength =
+  const attackerStrength = Math.max(
+    1,
     input.attacker.strength *
-    phalanxAdjacencyMultiplier(input.attacker.abilities, input.attacker.adjacentAllies) *
-    (1 + (input.flanked ? FLANK_ATTACK_BONUS : 0));
+      phalanxAdjacencyMultiplier(input.attacker.abilities, input.attacker.adjacentAllies) *
+      (1 + (input.flanked ? FLANK_ATTACK_BONUS : 0)) -
+      (input.riverAttack ? RIVER_ATTACK_PENALTY : 0),
+  );
 
   const defenseMultiplier =
     aggregateDefenseMultiplier({
