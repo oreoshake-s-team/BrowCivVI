@@ -149,7 +149,7 @@ const CITIES: readonly City[] = [
       {
         id: "pella-tides-assassination",
         title: "The Assassination of Philip and the Rise of Alexander (Tides of History)",
-        url: "https://podcasts.apple.com/us/podcast/the-assassination-of-philip-and/id1257202425?i=1000666956436",
+        url: "https://open.spotify.com/episode/1js6HFrluKEglnSaohqCrM",
         kind: "podcast",
       },
       {
