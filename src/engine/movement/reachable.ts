@@ -1,5 +1,5 @@
 import type { Hex, HexDirection } from "../hex";
-import { HEX_DIRECTIONS, neighbor } from "../hex";
+import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
 import type { MovementDomain } from "../unit/classes";
@@ -22,7 +22,7 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
     for (const hex of frontier) {
       const budget = best.get(hexKey(hex));
       if (budget === undefined) continue;
-      for (let dir = 0; dir < HEX_DIRECTIONS.length; dir++) {
+      for (let dir = 0; dir < HEX_DIRECTION_COUNT; dir++) {
         const step = neighbor(hex, dir as HexDirection);
         const key = hexKey(step);
         if (blocked?.has(key)) continue;
