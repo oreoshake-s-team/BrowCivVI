@@ -487,6 +487,13 @@ describe("HexBoard terrain motifs", () => {
     expect(container.querySelector('[data-motif="plains"]')).toBeNull();
   });
 
+  it("suppresses the motif on a hex that carries a region label", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[SEA_REGION]} />,
+    );
+    expect(container.querySelector('[data-motif="coast"]')).toBeNull();
+  });
+
   it("marks an impassable tile as blocked", () => {
     const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(container.querySelector('[data-hex="1,2"][data-blocked]')).toBeTruthy();

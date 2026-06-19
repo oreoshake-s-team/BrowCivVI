@@ -111,6 +111,9 @@ export function HexBoard({
   const granicus = regions.find((region) => region.kind === "river");
   const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
+  const labeledHexKeys = new Set(
+    regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
+  );
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);
@@ -345,7 +348,9 @@ export function HexBoard({
                   pointerEvents="none"
                 />
               ) : null}
-              <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
+              {labeledHexKeys.has(key) ? null : (
+                <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
+              )}
               {showQandR && (
                 <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
                   {mapHex.hex.q}, {mapHex.hex.r}
