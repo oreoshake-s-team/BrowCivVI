@@ -399,6 +399,20 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
       GRANICUS,
       "primary",
     ),
+    media: [
+      {
+        id: "granicus-tides-invades-persia",
+        title: "Alexander the Great Invades Persia (Tides of History)",
+        url: "https://podcasts.apple.com/us/podcast/alexander-the-great-invades-persia/id1257202425?i=1000668353388",
+        kind: "podcast",
+      },
+      {
+        id: "granicus-kings-and-generals",
+        title: "Battle of Granicus 334 BC — Alexander's Conquests (Kings and Generals)",
+        url: "https://www.youtube.com/watch?v=s40yYSWkrzk",
+        kind: "video",
+      },
+    ],
   },
   {
     id: "aegean",

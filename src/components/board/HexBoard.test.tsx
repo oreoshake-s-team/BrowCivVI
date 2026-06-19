@@ -299,6 +299,14 @@ const GRANICUS_REGION: NamedRegion = {
     source: { title: "Battle of the Granicus", type: "primary" },
     confidence: "high",
   },
+  media: [
+    {
+      id: "granicus-doc",
+      title: "Battle of Granicus 334 BC (Kings and Generals)",
+      url: "https://www.youtube.com/watch?v=s40yYSWkrzk",
+      kind: "video",
+    },
+  ],
 };
 
 const CITED_CITY_MAP = createGameMap(
@@ -336,6 +344,16 @@ describe("HexBoard historical references", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />);
     fireEvent.click(screen.getByRole("button", { name: "Granicus historical reference" }));
     expect(screen.getByText("Site of the 334 BC battle.")).toBeTruthy();
+  });
+
+  it("surfaces the river's related media links", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Granicus historical reference" }));
+    expect(
+      screen
+        .getByRole("link", { name: "Video Battle of Granicus 334 BC (Kings and Generals)" })
+        .getAttribute("href"),
+    ).toBe("https://www.youtube.com/watch?v=s40yYSWkrzk");
   });
 
   it("surfaces a city's citation when its name is clicked", () => {

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Citation, SourceType } from "@/engine/content/citation";
+import type { MediaKind, MediaLink } from "@/engine/content/media";
 import styles from "./CitationCard.module.css";
 
 export interface CitationCardProps {
@@ -10,12 +11,19 @@ export interface CitationCardProps {
   readonly onClose: () => void;
   readonly onMouseEnter: () => void;
   readonly onMouseLeave: () => void;
+  readonly media?: readonly MediaLink[] | undefined;
 }
 
 const SOURCE_TYPE_LABELS: Readonly<Record<SourceType, string>> = {
   primary: "Primary source",
   secondary: "Secondary source",
   reference: "Reference",
+};
+
+const MEDIA_KIND_LABELS: Readonly<Record<MediaKind, string>> = {
+  podcast: "Podcast",
+  video: "Video",
+  article: "Article",
 };
 
 export function CitationCard({
@@ -26,6 +34,7 @@ export function CitationCard({
   onClose,
   onMouseEnter,
   onMouseLeave,
+  media,
 }: CitationCardProps) {
   const { claim, source, confidence } = citation;
   const position: CSSProperties = { left: x, top: y };
@@ -54,6 +63,23 @@ export function CitationCard({
         {SOURCE_TYPE_LABELS[source.type]} · <span className={styles.confidence}>{confidence}</span>{" "}
         confidence
       </p>
+      {media !== undefined && media.length > 0 ? (
+        <ul className={styles.media}>
+          {media.map((item) => (
+            <li key={item.id} className={styles.mediaItem}>
+              <a
+                className={styles.mediaLink}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className={styles.mediaKind}>{MEDIA_KIND_LABELS[item.kind]}</span>
+                {item.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
