@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FIRST_SLICE_MAP } from "@/content/firstSlice";
 import { createGameMap } from "../map/types";
+import { riverEdgeSet } from "./cost";
 import { reachableHexes } from "./reachable";
 
 const LAND_MAP = createGameMap(
@@ -168,7 +169,7 @@ describe("reachableHexes (zones of control)", () => {
     expect(reachable.has("2,0")).toBe(true);
   });
 
-  it("spends all remaining movement on entering a zone of control", () => {
+  it("keeps its remaining movement on entering a zone of control", () => {
     const reachable = reachableHexes({
       start,
       movement: 3,
@@ -176,7 +177,47 @@ describe("reachableHexes (zones of control)", () => {
       domain: "land",
       zoneOfControl: new Set(["1,0"]),
     });
+    expect(reachable.get("1,0")).toBe(2);
+  });
+});
+
+describe("reachableHexes (river crossings)", () => {
+  const riverEdges = riverEdgeSet([{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 } }]);
+
+  it("lets a full-movement unit cross a river it cannot afford, stopping with zero", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      riverEdges,
+      atFullMovement: true,
+    });
     expect(reachable.get("1,0")).toBe(0);
+  });
+
+  it("blocks a unit that already moved from crossing a river it cannot afford", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      riverEdges,
+      atFullMovement: false,
+    });
+    expect(reachable.has("1,0")).toBe(false);
+  });
+
+  it("charges the river cost when the unit can afford it", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 4,
+      map: PASS_MAP,
+      domain: "land",
+      riverEdges,
+      atFullMovement: true,
+    });
+    expect(reachable.get("1,0")).toBe(1);
   });
 });
 
