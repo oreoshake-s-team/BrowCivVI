@@ -1,6 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlice";
 import { applyAttack } from "@/engine/combat/applyAttack";
 import { attackableHexes } from "@/engine/combat/targets";
@@ -15,8 +14,8 @@ import { unitTypeById } from "@/engine/unit/catalog";
 import type { MovementDomain, StackingLayer } from "@/engine/unit/classes";
 import { domainForClass, stackingLayerForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
-import { IDENTITY_COOKIE, signIdentity, verifyIdentity, newIdentityId } from "@/server/identity";
 import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
+import { ownerSubject } from "@/server/session";
 import { getStore } from "@/server/store";
 
 export interface BoardView {
@@ -34,13 +33,7 @@ export interface MoveOutcome {
 }
 
 async function currentOwner(): Promise<string> {
-  const jar = await cookies();
-  const raw = jar.get(IDENTITY_COOKIE)?.value;
-  const existing = raw === undefined ? null : verifyIdentity(raw);
-  if (existing !== null) return existing;
-  const id = newIdentityId();
-  jar.set(IDENTITY_COOKIE, signIdentity(id), { httpOnly: true, sameSite: "lax", path: "/" });
-  return id;
+  return ownerSubject();
 }
 
 function domainOf(typeId: string): MovementDomain {
