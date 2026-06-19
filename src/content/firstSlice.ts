@@ -368,8 +368,6 @@ const CITIES: readonly City[] = [
 ];
 
 const RIVERS: readonly RiverEdge[] = [
-  { a: { q: 6, r: 4 }, b: { q: 7, r: 4 } },
-  { a: { q: 6, r: 3 }, b: { q: 7, r: 4 } },
   { a: { q: 6, r: 3 }, b: { q: 7, r: 3 } },
   { a: { q: 6, r: 3 }, b: { q: 7, r: 2 } },
   { a: { q: 6, r: 2 }, b: { q: 7, r: 2 } },

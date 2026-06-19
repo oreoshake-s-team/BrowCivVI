@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { HEX_DIRECTIONS } from "@/engine/hex";
+import { mapHexAt } from "@/engine/map/types";
 import { FIRST_SLICE_MAP, FIRST_SLICE_REGIONS, FIRST_SLICE_UNITS } from "./firstSlice";
 
 describe("FIRST_SLICE_MAP", () => {
@@ -53,13 +55,16 @@ describe("Granicus river course", () => {
     expect(FIRST_SLICE_MAP.rivers).toContainEqual({ a: { q: 6, r: 1 }, b: { q: 7, r: 2 } });
   });
 
-  it("rises at its Mount Ida source tile", () => {
-    const ida = FIRST_SLICE_REGIONS.find((region) => region.id === "mount-ida")?.labelHex;
-    const touchesIda = FIRST_SLICE_MAP.rivers.some(
-      (edge) =>
-        (edge.a.q === ida?.q && edge.a.r === ida.r) || (edge.b.q === ida?.q && edge.b.r === ida.r),
+  it("runs alongside its Mount Ida mountain source", () => {
+    const riverHexes = FIRST_SLICE_MAP.rivers.flatMap((edge) => [edge.a, edge.b]);
+    const touchesMountain = riverHexes.some((hex) =>
+      HEX_DIRECTIONS.some(
+        (step) =>
+          mapHexAt(FIRST_SLICE_MAP, { q: hex.q + step.q, r: hex.r + step.r })?.terrain ===
+          "mountain",
+      ),
     );
-    expect(touchesIda).toBe(true);
+    expect(touchesMountain).toBe(true);
   });
 
   it("empties into the Propontis at the north coast", () => {
