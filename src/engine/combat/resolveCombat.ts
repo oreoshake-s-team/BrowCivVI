@@ -1,4 +1,5 @@
 import type { Rng } from "../rng";
+import { phalanxAdjacencyMultiplier } from "./phalanx";
 import { aggregateDefenseMultiplier } from "./registry";
 
 export const COMBAT_BASE_DAMAGE = 30;
@@ -9,12 +10,13 @@ export const FLANK_ATTACK_BONUS = 0.5;
 export interface CombatSide {
   readonly strength: number;
   readonly hp: number;
+  readonly abilities: readonly string[];
+  readonly adjacentAllies: number;
 }
 
 export interface CombatInput {
   readonly attacker: CombatSide;
   readonly defender: CombatSide;
-  readonly defenderAbilities: readonly string[];
   readonly defenderTerrainDefense: number;
   readonly defenderTerrainMoveCost: number;
   readonly flanked: boolean;
@@ -39,13 +41,18 @@ function damage(attackerStrength: number, defenderStrength: number, rng: Rng): n
 }
 
 export function resolveCombat(input: CombatInput): CombatResult {
-  const attackerStrength = input.attacker.strength * (1 + (input.flanked ? FLANK_ATTACK_BONUS : 0));
+  const attackerStrength =
+    input.attacker.strength *
+    phalanxAdjacencyMultiplier(input.attacker.abilities, input.attacker.adjacentAllies) *
+    (1 + (input.flanked ? FLANK_ATTACK_BONUS : 0));
+
   const defenseMultiplier =
     aggregateDefenseMultiplier({
-      defenderAbilities: input.defenderAbilities,
+      defenderAbilities: input.defender.abilities,
       flanked: input.flanked,
       terrainMoveCost: input.defenderTerrainMoveCost,
     }) *
+    phalanxAdjacencyMultiplier(input.defender.abilities, input.defender.adjacentAllies) *
     (1 + input.defenderTerrainDefense);
   const defenderStrength = input.defender.strength * defenseMultiplier;
 

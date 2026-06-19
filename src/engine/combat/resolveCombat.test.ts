@@ -2,13 +2,17 @@ import { describe, it, expect } from "vitest";
 import { createRng, type Rng } from "../rng";
 import { resolveCombat, type CombatInput, type CombatSide } from "./resolveCombat";
 
-const side = (strength: number, hp: number): CombatSide => ({ strength, hp });
+const side = (
+  strength: number,
+  hp: number,
+  abilities: readonly string[] = [],
+  adjacentAllies = 0,
+): CombatSide => ({ strength, hp, abilities, adjacentAllies });
 
 function makeInput(rng: Rng, over: Partial<CombatInput> = {}): CombatInput {
   return {
     attacker: side(40, 100),
     defender: side(30, 100),
-    defenderAbilities: [],
     defenderTerrainDefense: 0,
     defenderTerrainMoveCost: 1,
     flanked: false,
@@ -48,20 +52,20 @@ describe("resolveCombat", () => {
 
   it("a flanked phalangite takes more damage than an unflanked one", () => {
     const unflanked = resolveCombat(
-      makeInput(createRng(6), { defenderAbilities: ["phalanx"], flanked: false }),
+      makeInput(createRng(6), { defender: side(30, 100, ["phalanx"]), flanked: false }),
     );
     const flanked = resolveCombat(
-      makeInput(createRng(6), { defenderAbilities: ["phalanx"], flanked: true }),
+      makeInput(createRng(6), { defender: side(30, 100, ["phalanx"]), flanked: true }),
     );
     expect(flanked.defenderDamage > unflanked.defenderDamage).toBe(true);
   });
 
   it("rough terrain weakens the phalanx wall", () => {
     const open = resolveCombat(
-      makeInput(createRng(7), { defenderAbilities: ["phalanx"], defenderTerrainMoveCost: 1 }),
+      makeInput(createRng(7), { defender: side(30, 100, ["phalanx"]), defenderTerrainMoveCost: 1 }),
     );
     const rough = resolveCombat(
-      makeInput(createRng(7), { defenderAbilities: ["phalanx"], defenderTerrainMoveCost: 2 }),
+      makeInput(createRng(7), { defender: side(30, 100, ["phalanx"]), defenderTerrainMoveCost: 2 }),
     );
     expect(rough.defenderDamage > open.defenderDamage).toBe(true);
   });
@@ -70,5 +74,25 @@ describe("resolveCombat", () => {
     const flat = resolveCombat(makeInput(createRng(8), { defenderTerrainDefense: 0 }));
     const defended = resolveCombat(makeInput(createRng(8), { defenderTerrainDefense: 0.5 }));
     expect(defended.defenderDamage < flat.defenderDamage).toBe(true);
+  });
+
+  it("adjacent phalangites shield a phalangite defender", () => {
+    const alone = resolveCombat(
+      makeInput(createRng(9), { defender: side(30, 100, ["phalanx"], 0) }),
+    );
+    const massed = resolveCombat(
+      makeInput(createRng(9), { defender: side(30, 100, ["phalanx"], 3) }),
+    );
+    expect(massed.defenderDamage < alone.defenderDamage).toBe(true);
+  });
+
+  it("adjacent phalangites strengthen a phalangite attacker", () => {
+    const alone = resolveCombat(
+      makeInput(createRng(10), { attacker: side(40, 100, ["phalanx"], 0) }),
+    );
+    const massed = resolveCombat(
+      makeInput(createRng(10), { attacker: side(40, 100, ["phalanx"], 3) }),
+    );
+    expect(massed.defenderDamage > alone.defenderDamage).toBe(true);
   });
 });
