@@ -53,12 +53,14 @@ Until the app is scaffolded there is nothing to install — start with the scaff
 
 Each Vercel environment maps to a Neon branch in the project's database:
 
-- **Production** and **Development** use the `main` branch.
-- **Preview** uses a single shared `preview` branch (branched from `main`). **Every** preview deployment connects to this one branch — it is *not* re-created per git branch or per deployment — so preview data persists across deployments and is shared between concurrent previews. Treat it as a disposable scratch database: a schema change that lands on one feature branch's preview is visible to every other preview.
+- **Production** and **Development** use the `main` branch (via the integration-managed `DATABASE_URL`).
+- **Preview** uses a single shared `preview` branch (branched from `main`). **Every** preview deployment connects to this one branch, so preview data persists across deployments and is shared between concurrent previews. Treat it as a disposable scratch database: a schema change that lands on one feature branch's preview is visible to every other preview.
+
+The Vercel-managed Neon integration still provisions a throwaway Neon branch per preview deployment and injects its `DATABASE_URL` — there is no setting to turn that off. We bypass it: when `VERCEL_ENV === "preview"`, both the runtime store (`src/server/store.ts`) and the build-time migrator (`scripts/build/migrateUrl.ts`) prefer `SHARED_PREVIEW_DATABASE_URL` / `SHARED_PREVIEW_DATABASE_URL_UNPOOLED` (pinned to the shared `preview` branch, in the Preview environment only) over the injected per-deployment URL. The integration's per-deployment branches are therefore created but never connected to; prune them from the Neon dashboard periodically.
 
 ### Database migrations on deploy
 
-Preview and production **auto-migrate at build**: `pnpm build` applies pending migrations before compiling, so the target database's schema always matches the committed migrations without a manual step. Migrations run against the unpooled connection (`DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler; those same locks serialize concurrent preview builds racing on the shared branch. Vercel's Build Command is pinned to `pnpm build` in `vercel.json` so the wrapper runs on every deploy.
+Preview and production **auto-migrate at build**: `pnpm build` applies pending migrations before compiling, so the target database's schema always matches the committed migrations without a manual step. Migrations run against the unpooled connection (preferring `SHARED_PREVIEW_DATABASE_URL_UNPOOLED` in preview, otherwise `DATABASE_URL_UNPOOLED`) because Prisma's advisory locks don't work over the PgBouncer pooler; those same locks serialize concurrent preview builds racing on the shared branch. Vercel's Build Command is pinned to `pnpm build` in `vercel.json` so the wrapper runs on every deploy.
 
 ## Windows gotchas
 

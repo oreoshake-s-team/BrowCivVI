@@ -1,5 +1,14 @@
 export function selectMigrateUrl(env: Record<string, string | undefined>): string | undefined {
-  for (const key of ["DATABASE_URL_UNPOOLED", "DATABASE_URL"]) {
+  const keys =
+    env.VERCEL_ENV === "preview"
+      ? [
+          "SHARED_PREVIEW_DATABASE_URL_UNPOOLED",
+          "SHARED_PREVIEW_DATABASE_URL",
+          "DATABASE_URL_UNPOOLED",
+          "DATABASE_URL",
+        ]
+      : ["DATABASE_URL_UNPOOLED", "DATABASE_URL"];
+  for (const key of keys) {
     const value = env[key]?.trim();
     if (value !== undefined && value.length > 0) return value;
   }
