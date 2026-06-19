@@ -140,6 +140,46 @@ describe("reachableHexes (occupied tiles)", () => {
   });
 });
 
+describe("reachableHexes (zones of control)", () => {
+  it("can still reach a hex inside an enemy zone of control", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      zoneOfControl: new Set(["1,0"]),
+    });
+    expect(reachable.has("1,0")).toBe(true);
+  });
+
+  it("stops on entering a zone of control and cannot continue past it", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 2,
+      map: PASS_MAP,
+      domain: "land",
+      zoneOfControl: new Set(["1,0"]),
+    });
+    expect(reachable.has("2,0")).toBe(false);
+  });
+
+  it("reaches the far tile when no zone of control intervenes", () => {
+    const reachable = reachableHexes({ start, movement: 2, map: PASS_MAP, domain: "land" });
+    expect(reachable.has("2,0")).toBe(true);
+  });
+
+  it("spends all remaining movement on entering a zone of control", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 3,
+      map: PASS_MAP,
+      domain: "land",
+      zoneOfControl: new Set(["1,0"]),
+    });
+    expect(reachable.get("1,0")).toBe(0);
+  });
+});
+
 describe("reachableHexes (naval)", () => {
   it("lets naval units travel along the coast", () => {
     const reachable = reachableHexes({ start, movement: 2, map: SEA_MAP, domain: "naval" });

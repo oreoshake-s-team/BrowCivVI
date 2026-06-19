@@ -25,6 +25,8 @@ const PER_CAVALRY = "per-cavalry";
 const PHALANX_START: Hex = { q: 5, r: 1 };
 const COMPANIONS_START: Hex = { q: 6, r: 1 };
 const ABYDOS: Hex = { q: 5, r: 0 };
+const ZOC_STOP: Hex = { q: 6, r: 2 };
+const BEYOND_ZOC: Hex = { q: 6, r: 3 };
 const OFF_MAP: Hex = { q: 99, r: 99 };
 
 function unitHex(units: readonly { id: string; hex: Hex }[], id: string): Hex | undefined {
@@ -79,6 +81,23 @@ describe("Server Action intent channel against the in-memory store", () => {
     const reloaded = await loadBoard(board.matchId);
     expect(outcome.ok).toBe(false);
     expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(COMPANIONS_START));
+  });
+
+  it("halts movement on entering an enemy zone of control", async () => {
+    const board = await newGame();
+    const targets = await targetsFor(board.matchId, COMPANIONS);
+    const keys = targets.reachable.map((hex) => hexKey(hex));
+    expect(keys).toContain(hexKey(ZOC_STOP));
+    expect(keys).not.toContain(hexKey(BEYOND_ZOC));
+  });
+
+  it("spends all movement entering an enemy zone of control and cannot move again", async () => {
+    const board = await newGame();
+    const entered = await move(board.matchId, PHALANX, ZOC_STOP);
+    const again = await move(board.matchId, PHALANX, PHALANX_START);
+    expect(entered.ok).toBe(true);
+    expect(entered.movement[PHALANX]).toBe(0);
+    expect(again.ok).toBe(false);
   });
 
   it("rejects an out-of-range move and leaves the unit where it started", async () => {
