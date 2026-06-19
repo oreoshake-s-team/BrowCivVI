@@ -48,6 +48,7 @@ Until the app is scaffolded there is nothing to install — start with the scaff
 - `pnpm build` — production build. Runs `prisma migrate deploy` first **when a database URL is set** (preferring `DATABASE_URL_UNPOOLED`), then `next build`; with no DB URL configured it skips migration and just builds.
 - `pnpm db:migrate` — create/apply a migration locally during development (`prisma migrate dev`).
 - `pnpm db:deploy` — apply pending migrations to a target database (`prisma migrate deploy`).
+- `pnpm analyze` — inspect the client bundle. Runs a one-off **webpack** build with `ANALYZE=true` (the analyzer is a webpack plugin, so it does not run under the default Turbopack build) and writes treemap reports to `.next/analyze/`.
 
 ### Database environments
 
