@@ -16,6 +16,14 @@ export const UNIT_TYPES: Readonly<Record<string, UnitType>> = {
     movement: 4,
     strength: 35,
   },
+  "paphlagonian-cavalry": {
+    id: "paphlagonian-cavalry",
+    name: "Paphlagonian Cavalry",
+    class: "lightCavalry",
+    movement: 5,
+    strength: 24,
+    hitAndRun: true,
+  },
   hetairoi: {
     id: "hetairoi",
     name: "Hetairoi",

@@ -57,4 +57,13 @@ describe("advanceTurn", () => {
   it("leaves the off-turn faction's movement untouched", () => {
     expect(advanceTurn(match({ activeFaction: "persia" }), ctx).movement.per).toBe(0);
   });
+
+  it("clears the incoming faction's hasAttackedThisTurn flag", () => {
+    const m = match({
+      activeFaction: "persia",
+      units: [{ ...unit("mac", "macedon"), hasAttackedThisTurn: true }, unit("per", "persia")],
+    });
+    const macedon = advanceTurn(m, ctx).units.find((u) => u.id === "mac");
+    expect(macedon?.hasAttackedThisTurn).toBe(false);
+  });
 });

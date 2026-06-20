@@ -60,7 +60,8 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
 
   const units = input.units
     .map((unit) => {
-      if (unit.id === input.attackerId) return { ...unit, hp: unit.hp - result.attackerDamage };
+      if (unit.id === input.attackerId)
+        return { ...unit, hp: unit.hp - result.attackerDamage, hasAttackedThisTurn: true };
       if (unit.id === input.defenderId) return { ...unit, hp: unit.hp - result.defenderDamage };
       return unit;
     })

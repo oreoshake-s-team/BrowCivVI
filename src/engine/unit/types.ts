@@ -23,6 +23,7 @@ export interface Unit {
   readonly morale: number;
   readonly supplied: boolean;
   readonly hasMovedThisTurn: boolean;
+  readonly hasAttackedThisTurn?: boolean;
 }
 
 export function effectiveCapabilities(type: UnitType): ReadonlySet<UnitCapability> {
