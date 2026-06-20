@@ -45,6 +45,18 @@ export function neighbors(hex: Hex): readonly Hex[] {
   }));
 }
 
+function toCube(hex: Hex): { x: number; y: number; z: number } {
+  const x = hex.q - (hex.r - rowParity(hex.r)) / 2;
+  const z = hex.r;
+  return { x, y: -x - z, z };
+}
+
+export function hexDistance(a: Hex, b: Hex): number {
+  const ca = toCube(a);
+  const cb = toCube(b);
+  return (Math.abs(ca.x - cb.x) + Math.abs(ca.y - cb.y) + Math.abs(ca.z - cb.z)) / 2;
+}
+
 export function directionTo(from: Hex, to: Hex): HexDirection | null {
   const dq = to.q - from.q;
   const dr = to.r - from.r;

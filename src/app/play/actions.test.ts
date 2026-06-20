@@ -130,14 +130,18 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(hexKey(unitHex(reloaded.units, PHALANX)!)).toBe(hexKey(PHALANX_START));
   });
 
-  it("ends the turn, restoring movement and advancing the round after Persia auto-passes", async () => {
+  it("ends the turn, runs Persia's AI, and restores movement on the next round", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, PHALANX);
     await move(board.matchId, PHALANX, targets.reachable[0]!);
     const after = await endTurn(board.matchId);
+    const persiaActed = after.units.some(
+      (unit) => unit.owner === "persia" && unit.hasAttackedThisTurn === true,
+    );
     expect(after.turn).toBe(2);
     expect(after.activeFaction).toBe("macedon");
     expect(after.movement[PHALANX]).toBe(2);
+    expect(persiaActed).toBe(true);
   });
 
   it("resolves a legal adjacent attack with seeded damage", async () => {

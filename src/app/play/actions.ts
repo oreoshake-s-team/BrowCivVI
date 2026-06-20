@@ -1,20 +1,19 @@
 "use server";
 
 import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlice";
+import { runFactionTurn } from "@/engine/ai/greedyTurn";
 import { applyAttack } from "@/engine/combat/applyAttack";
 import { reachableAttacks } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
+import { domainOf, movementConstraints } from "@/engine/movement/constraints";
 import { riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
-import { enemyZoneOfControl } from "@/engine/movement/zoneOfControl";
 import { createRng } from "@/engine/rng";
 import { advanceTurn, type TurnContext } from "@/engine/turn/turn";
 import { unitTypeById } from "@/engine/unit/catalog";
-import type { MovementDomain, StackingLayer } from "@/engine/unit/classes";
-import { domainForClass, stackingLayerForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
 import { intentAllowed } from "@/server/rateLimit";
@@ -46,44 +45,10 @@ async function currentOwner(): Promise<string> {
   return ownerSubject();
 }
 
-function domainOf(typeId: string): MovementDomain {
-  const type = unitTypeById(typeId);
-  return type ? domainForClass(type.class) : "land";
-}
-
-function layerOf(typeId: string): StackingLayer {
-  const type = unitTypeById(typeId);
-  return type ? stackingLayerForClass(type.class) : "military";
-}
-
-interface MovementConstraints {
-  readonly blocked: ReadonlySet<string>;
-  readonly blockedDestinations: ReadonlySet<string>;
-  readonly zoneOfControl: ReadonlySet<string>;
-}
-
 const RIVER_EDGES = riverEdgeSet(FIRST_SLICE_MAP.rivers);
 
-function movementConstraints(match: MatchState, unit: Unit): MovementConstraints {
-  const moverLayer = layerOf(unit.typeId);
-  const blocked = new Set<string>();
-  const blockedDestinations = new Set<string>();
-  for (const other of match.units) {
-    if (other.id === unit.id) continue;
-    if (other.owner !== unit.owner) blocked.add(hexKey(other.hex));
-    else if (layerOf(other.typeId) === moverLayer) blockedDestinations.add(hexKey(other.hex));
-  }
-  const zoneOfControl = enemyZoneOfControl(
-    match.units,
-    unit.owner,
-    (typeId) => layerOf(typeId) === "military",
-    RIVER_EDGES,
-  );
-  return { blocked, blockedDestinations, zoneOfControl };
-}
-
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
-  const constraints = movementConstraints(match, unit);
+  const constraints = movementConstraints(match.units, unit, RIVER_EDGES);
   if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex))) return [];
   return availableMoves({
     from: unit.hex,
@@ -145,6 +110,13 @@ export async function endTurn(matchId: string): Promise<BoardView> {
   let next = advanceTurn(match, TURN_CONTEXT);
   let guard = match.turnOrder.length;
   while (next.activeFaction !== FIRST_SLICE_PLAYER_FACTION && guard-- > 0) {
+    next = runFactionTurn({
+      state: next,
+      faction: next.activeFaction,
+      map: FIRST_SLICE_MAP,
+      riverEdges: RIVER_EDGES,
+      rng: createRng((next.seed ^ (next.version + 1) ^ next.turn) >>> 0),
+    });
     next = advanceTurn(next, TURN_CONTEXT);
   }
 
@@ -178,7 +150,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
   if (unit === undefined)
     return { ok: false, units: match.units, reachable: [], movement: match.movement };
 
-  const constraints = movementConstraints(match, unit);
+  const constraints = movementConstraints(match.units, unit, RIVER_EDGES);
   if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex)))
     return {
       ok: false,
