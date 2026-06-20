@@ -1,0 +1,66 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 24rem;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-md);
+}
+
+.heading {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-size-ui-lg);
+  color: var(--color-ink);
+}
+
+.empty {
+  margin: 0;
+  font-size: var(--font-size-ui-sm);
+  color: var(--color-ink-muted);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.entry {
+  padding: var(--space-2xs) 0;
+  font-size: var(--font-size-ui-sm);
+  line-height: 1.5;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+.turn {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-subtle);
+}
+
+.icon {
+  margin-right: var(--space-3xs);
+}
+
+.actor {
+  font-weight: 600;
+  color: var(--faction-neutral-text);
+}
+
+.actor[data-faction="macedon"] {
+  color: var(--faction-macedon-text);
+}
+
+.actor[data-faction="persia"] {
+  color: var(--faction-persia-text);
+}
+
+.defeated {
+  font-weight: 600;
+  color: var(--color-danger-surface);
+}

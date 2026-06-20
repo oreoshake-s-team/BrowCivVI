@@ -9,6 +9,7 @@ import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layou
 import { blocksLand, type TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
+import type { MatchEvent } from "@/engine/match/events";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
 import { CitationCard } from "./CitationCard";
@@ -18,6 +19,7 @@ import { riverSegmentPoints } from "./geometry";
 import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
+import { MoveLog } from "./MoveLog";
 import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
 import { TerrainMotif } from "./TerrainMotif";
 import { fitView, panView, zoomView, viewBoxString } from "./viewport";
@@ -82,6 +84,7 @@ export interface HexBoardProps {
   readonly attackable?: readonly Hex[];
   readonly floaters?: readonly DamageFloater[];
   readonly fadingUnits?: readonly Unit[];
+  readonly events?: readonly MatchEvent[];
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
   readonly onAttack?: (attackerId: string, target: Hex) => void;
@@ -97,6 +100,7 @@ export function HexBoard({
   attackable = [],
   floaters = [],
   fadingUnits = [],
+  events = [],
   onSelect,
   onMove,
   onAttack,
@@ -628,6 +632,7 @@ export function HexBoard({
         <Legend />
         <InfoPanel unit={selectedUnit} moves={selectedMoves} />
         <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
+        <MoveLog events={events} />
       </aside>
 
       {cited !== null ? (

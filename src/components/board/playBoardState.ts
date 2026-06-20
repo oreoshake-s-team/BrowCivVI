@@ -1,5 +1,6 @@
 import type { BoardView } from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
+import type { MatchEvent } from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
 import type { BoardLoadFailure } from "./BoardLoadError";
 import type { DamageFloater } from "./HexBoard";
@@ -11,6 +12,7 @@ export interface PlayBoardState {
   readonly playerFaction: string;
   readonly turn: number;
   readonly activeFaction: string;
+  readonly events: readonly MatchEvent[];
   readonly reachable: readonly Hex[];
   readonly attackable: readonly Hex[];
   readonly floaters: readonly DamageFloater[];
@@ -40,6 +42,7 @@ export type PlayBoardAction =
       readonly units: readonly Unit[];
       readonly movement: Readonly<Record<string, number>>;
       readonly reachable: readonly Hex[];
+      readonly events?: readonly MatchEvent[];
     }
   | { readonly type: "actionRejected"; readonly units: readonly Unit[]; readonly message: string }
   | { readonly type: "toastShown"; readonly message: string }
@@ -47,6 +50,7 @@ export type PlayBoardAction =
       readonly type: "attackApplied";
       readonly units: readonly Unit[];
       readonly movement?: Readonly<Record<string, number>>;
+      readonly events?: readonly MatchEvent[];
     }
   | { readonly type: "floaterAdded"; readonly floater: DamageFloater }
   | { readonly type: "floaterRemoved"; readonly id: string }
@@ -69,6 +73,7 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
     playerFaction: "",
     turn: 1,
     activeFaction: "",
+    events: [],
     reachable: [],
     attackable: [],
     floaters: [],
@@ -91,6 +96,7 @@ function withBoard(state: PlayBoardState, board: BoardView): PlayBoardState {
     playerFaction: board.playerFaction,
     turn: board.turn,
     activeFaction: board.activeFaction,
+    events: board.events,
   };
 }
 
@@ -128,6 +134,7 @@ export function playBoardReducer(state: PlayBoardState, action: PlayBoardAction)
         units: action.units,
         movement: action.movement,
         reachable: action.reachable,
+        events: action.events ?? state.events,
       };
     case "actionRejected":
       return { ...state, units: action.units, toast: action.message };
@@ -138,6 +145,7 @@ export function playBoardReducer(state: PlayBoardState, action: PlayBoardAction)
         ...state,
         units: action.units,
         movement: action.movement ?? state.movement,
+        events: action.events ?? state.events,
       };
     case "floaterAdded":
       return { ...state, floaters: [...state.floaters, action.floater] };
