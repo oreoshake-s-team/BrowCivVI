@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { neighbor, neighbors, directionTo, HEX_DIRECTION_COUNT } from "./hex";
+import { neighbor, neighbors, directionTo, hexDistance, HEX_DIRECTION_COUNT } from "./hex";
 
 describe("neighbor", () => {
   it("steps east for direction 0 regardless of row parity", () => {
@@ -34,6 +34,26 @@ describe("neighbor", () => {
 describe("neighbors", () => {
   it("returns one hex per direction", () => {
     expect(neighbors({ q: 4, r: 3 })).toHaveLength(HEX_DIRECTION_COUNT);
+  });
+});
+
+describe("hexDistance", () => {
+  it("is zero between a hex and itself", () => {
+    expect(hexDistance({ q: 3, r: 2 }, { q: 3, r: 2 })).toBe(0);
+  });
+
+  it("is one between adjacent hexes", () => {
+    expect(hexDistance({ q: 2, r: 3 }, neighbor({ q: 2, r: 3 }, 2))).toBe(1);
+  });
+
+  it("counts the shortest offset path across rows of differing parity", () => {
+    expect(hexDistance({ q: 0, r: 0 }, { q: 0, r: 3 })).toBe(3);
+  });
+
+  it("is symmetric", () => {
+    expect(hexDistance({ q: 1, r: 1 }, { q: 4, r: 5 })).toBe(
+      hexDistance({ q: 4, r: 5 }, { q: 1, r: 1 }),
+    );
   });
 });
 
