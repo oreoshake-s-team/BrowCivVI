@@ -1,21 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { loadBoard, targetsFor, move, attack, newGame, endTurn } from "@/app/play/actions";
 import type { NamedRegion } from "@/engine/content/region";
-import type { Hex } from "@/engine/hex";
-import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
-import type { Unit } from "@/engine/unit/types";
-import { BoardLoadError, type BoardLoadFailure } from "./BoardLoadError";
-import { HexBoard, type DamageFloater } from "./HexBoard";
+import { BoardLoadError } from "./BoardLoadError";
+import { HexBoard } from "./HexBoard";
 import styles from "./PlayBoard.module.css";
 import { Toast } from "./Toast";
-
-const FLOATER_MS = 1100;
-const FADE_MS = 500;
-const RATE_LIMIT_MSG = "You're acting too fast — give it a moment and try again.";
+import { usePlayBoard } from "./usePlayBoard";
 
 function factionLabel(faction: string): string {
   return faction.length === 0 ? "" : faction.charAt(0).toUpperCase() + faction.slice(1);
@@ -28,267 +19,74 @@ export interface PlayBoardProps {
 }
 
 export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps) {
-  const router = useRouter();
-  const [matchId, setMatchId] = useState<string | null>(initialMatchId ?? null);
-  const [units, setUnits] = useState<readonly Unit[]>([]);
-  const [movement, setMovement] = useState<Readonly<Record<string, number>>>({});
-  const [playerFaction, setPlayerFaction] = useState<string>("");
-  const [turn, setTurn] = useState(1);
-  const [activeFaction, setActiveFaction] = useState<string>("");
-  const [endingTurn, setEndingTurn] = useState(false);
-  const [confirmingEnd, setConfirmingEnd] = useState(false);
-  const [reachable, setReachable] = useState<readonly Hex[]>([]);
-  const [attackable, setAttackable] = useState<readonly Hex[]>([]);
-  const [floaters, setFloaters] = useState<readonly DamageFloater[]>([]);
-  const [fadingUnits, setFadingUnits] = useState<readonly Unit[]>([]);
-  const [ready, setReady] = useState(false);
-  const [loadError, setLoadError] = useState<BoardLoadFailure | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [confirming, setConfirming] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const floaterSeq = useRef(0);
+  const board = usePlayBoard(initialMatchId);
+  const { state } = board;
 
-  useEffect(() => {
-    let active = true;
-    void loadBoard(initialMatchId)
-      .then((result) => {
-        if (!active) return;
-        if (result.status === "not-found") {
-          setLoadError("not-found");
-          return;
-        }
-        setLoadError(null);
-        const board = result.board;
-        setUnits(board.units);
-        setMovement(board.movement);
-        setPlayerFaction(board.playerFaction);
-        setTurn(board.turn);
-        setActiveFaction(board.activeFaction);
-        setMatchId(board.matchId);
-        setReady(true);
-        if (board.matchId !== initialMatchId) router.replace(`/play/${board.matchId}`);
-      })
-      .catch(() => {
-        if (active) setLoadError("error");
-      });
-    return () => {
-      active = false;
-    };
-  }, [initialMatchId, router, attempt]);
-
-  useEffect(() => {
-    if (toast === null) return undefined;
-    const timer = setTimeout(() => {
-      setToast(null);
-    }, 4000);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [toast]);
-
-  const clearTargets = () => {
-    setReachable([]);
-    setAttackable([]);
-  };
-
-  const isPlayerTurn = activeFaction === playerFaction;
-  const inputLocked = !isPlayerTurn || endingTurn;
-  const playerHasActions = units.some(
-    (unit) => unit.owner === playerFaction && (movement[unit.id] ?? 0) > 0,
-  );
-
-  const handleSelect = async (unitId: string | null) => {
-    if (unitId === null || matchId === null || inputLocked) {
-      clearTargets();
-      return;
-    }
-    const targets = await targetsFor(matchId, unitId);
-    setReachable(targets.reachable);
-    setAttackable(targets.attackable);
-  };
-
-  const handleMove = async (unitId: string, to: Hex) => {
-    if (matchId === null || inputLocked) return;
-    const previous = units;
-    setUnits(units.map((unit) => (unit.id === unitId ? { ...unit, hex: to } : unit)));
-    clearTargets();
-    const outcome = await move(matchId, unitId, to);
-    if (outcome.ok) {
-      setUnits(outcome.units);
-      setMovement(outcome.movement);
-      setReachable(outcome.reachable);
-    } else {
-      setUnits(previous);
-      setToast(
-        outcome.rateLimited ? RATE_LIMIT_MSG : "Move rejected — the board changed. Try again.",
-      );
-    }
-  };
-
-  const pushFloater = (hex: Hex, text: string) => {
-    floaterSeq.current += 1;
-    const id = `floater-${floaterSeq.current}`;
-    setFloaters((current) => [...current, { id, hex, text }]);
-    setTimeout(() => {
-      setFloaters((current) => current.filter((floater) => floater.id !== id));
-    }, FLOATER_MS);
-  };
-
-  const handleAttack = async (attackerId: string, target: Hex) => {
-    if (matchId === null || inputLocked) return;
-    const defender = units.find((unit) => hexKey(unit.hex) === hexKey(target));
-    if (defender === undefined) return;
-    clearTargets();
-    const outcome = await attack(matchId, attackerId, defender.id);
-    if (!outcome.ok) {
-      setToast(
-        outcome.rateLimited ? RATE_LIMIT_MSG : "Attack rejected — the board changed. Try again.",
-      );
-      return;
-    }
-    const previous = units;
-    setUnits(outcome.units);
-    if (outcome.movement !== undefined) setMovement(outcome.movement);
-    if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
-      pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);
-    }
-    if (outcome.defenderHex !== undefined && outcome.defenderDamage !== undefined) {
-      pushFloater(outcome.defenderHex, `-${outcome.defenderDamage}`);
-    }
-    const defeatedIds = new Set(outcome.defeated ?? []);
-    const fading = previous.filter((unit) => defeatedIds.has(unit.id));
-    if (fading.length > 0) {
-      setFadingUnits(fading);
-      setTimeout(() => {
-        setFadingUnits([]);
-      }, FADE_MS);
-    }
-  };
-
-  const startNewGame = async () => {
-    setConfirming(false);
-    const board = await newGame();
-    setUnits(board.units);
-    setMovement(board.movement);
-    setPlayerFaction(board.playerFaction);
-    setTurn(board.turn);
-    setActiveFaction(board.activeFaction);
-    setMatchId(board.matchId);
-    clearTargets();
-    router.push(`/play/${board.matchId}`);
-  };
-
-  const runEndTurn = async () => {
-    if (matchId === null) return;
-    setConfirmingEnd(false);
-    setEndingTurn(true);
-    clearTargets();
-    try {
-      const board = await endTurn(matchId);
-      setUnits(board.units);
-      setMovement(board.movement);
-      setTurn(board.turn);
-      setActiveFaction(board.activeFaction);
-    } finally {
-      setEndingTurn(false);
-    }
-  };
-
-  const requestEndTurn = () => {
-    if (playerHasActions) setConfirmingEnd(true);
-    else void runEndTurn();
-  };
-
-  if (loadError !== null) {
-    return (
-      <BoardLoadError
-        reason={loadError}
-        onRetry={() => {
-          setAttempt((n) => n + 1);
-        }}
-      />
-    );
+  if (state.loadError !== null) {
+    return <BoardLoadError reason={state.loadError} onRetry={board.retry} />;
   }
-  if (!ready) return <p role="status">Loading the campaign…</p>;
+  if (!state.ready) return <p role="status">Loading the campaign…</p>;
 
   return (
     <>
       <div className={styles.controls}>
         <span className={styles.turnInfo}>
-          <span className={styles.turnNumber}>Turn {turn}</span>
+          <span className={styles.turnNumber}>Turn {state.turn}</span>
           <span className={styles.activeFaction}>
-            <span className={styles.factionDot} data-faction={activeFaction} aria-hidden="true" />
-            {factionLabel(activeFaction)}
+            <span
+              className={styles.factionDot}
+              data-faction={state.activeFaction}
+              aria-hidden="true"
+            />
+            {factionLabel(state.activeFaction)}
           </span>
         </span>
-        {confirmingEnd ? (
+        {state.confirmingEnd ? (
           <span className={styles.confirm}>
             End turn with units still to act?
-            <button type="button" onClick={() => void runEndTurn()}>
+            <button type="button" onClick={board.confirmEndTurn}>
               End turn
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmingEnd(false);
-              }}
-            >
+            <button type="button" onClick={board.cancelEndTurn}>
               Cancel
             </button>
           </span>
         ) : (
-          <button type="button" onClick={requestEndTurn} disabled={inputLocked}>
-            {endingTurn ? "Ending…" : "End turn"}
+          <button type="button" onClick={board.requestEndTurn} disabled={!board.canEndTurn}>
+            {state.endingTurn ? "Ending…" : "End turn"}
           </button>
         )}
-        {confirming ? (
+        {state.confirmingNewGame ? (
           <span className={styles.confirm}>
             Start a new game?
-            <button type="button" onClick={() => void startNewGame()}>
+            <button type="button" onClick={board.confirmNewGame}>
               Yes
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setConfirming(false);
-              }}
-            >
+            <button type="button" onClick={board.cancelNewGame}>
               Cancel
             </button>
           </span>
         ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setConfirming(true);
-            }}
-          >
+          <button type="button" onClick={board.requestNewGame}>
             New game
           </button>
         )}
       </div>
       <HexBoard
         map={map}
-        units={units}
+        units={state.units}
         regions={regions}
-        movement={movement}
-        playerFaction={playerFaction}
-        reachable={reachable}
-        attackable={attackable}
-        floaters={floaters}
-        fadingUnits={fadingUnits}
-        onSelect={(unitId) => void handleSelect(unitId)}
-        onMove={(unitId, to) => void handleMove(unitId, to)}
-        onAttack={(attackerId, to) => void handleAttack(attackerId, to)}
+        movement={state.movement}
+        playerFaction={state.playerFaction}
+        reachable={state.reachable}
+        attackable={state.attackable}
+        floaters={state.floaters}
+        fadingUnits={state.fadingUnits}
+        onSelect={board.select}
+        onMove={board.moveUnit}
+        onAttack={board.attackUnit}
       />
-      {toast !== null ? (
-        <Toast
-          message={toast}
-          onDismiss={() => {
-            setToast(null);
-          }}
-        />
-      ) : null}
+      {state.toast !== null ? <Toast message={state.toast} onDismiss={board.dismissToast} /> : null}
     </>
   );
 }
