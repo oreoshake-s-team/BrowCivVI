@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { databaseEndpoint, selectMigrateUrl, selectRuntimeUrl } from "./migrateUrl.ts";
+import {
+  databaseEndpoint,
+  migrateFailureIsFatal,
+  selectMigrateUrl,
+  selectRuntimeUrl,
+} from "./migrateUrl.ts";
 
 const NEON_POOLED =
   "postgresql://u:p@ep-purple-sea-atdby62c-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require";
@@ -92,5 +97,19 @@ describe("databaseEndpoint", () => {
 
   it("returns undefined for an unparseable url", () => {
     expect(databaseEndpoint("not a url")).toBeUndefined();
+  });
+});
+
+describe("migrateFailureIsFatal", () => {
+  it("treats a failed migration as fatal on production builds", () => {
+    expect(migrateFailureIsFatal({ VERCEL_ENV: "production" })).toBe(true);
+  });
+
+  it("treats a failed migration as non-fatal on preview builds", () => {
+    expect(migrateFailureIsFatal({ VERCEL_ENV: "preview" })).toBe(false);
+  });
+
+  it("treats a failed migration as non-fatal on local builds", () => {
+    expect(migrateFailureIsFatal({})).toBe(false);
   });
 });
