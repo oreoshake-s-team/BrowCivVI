@@ -29,6 +29,7 @@ vi.mock("@/app/play/actions", () => ({
   targetsFor: vi.fn(),
   move: vi.fn(),
   attack: vi.fn(),
+  endTurn: vi.fn(),
 }));
 
 const SIZE = 36;
@@ -232,5 +233,44 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId="ghost" />);
 
     expect(await screen.findByText(/faded from the annals/)).not.toBeNull();
+  });
+
+  it("shows the current turn number and active faction", async () => {
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    expect(await screen.findByText("Turn 1")).not.toBeNull();
+    expect(await screen.findByText("Macedon")).not.toBeNull();
+  });
+
+  it("ends the turn and advances the bar when no unit has moves left", async () => {
+    vi.mocked(actions.endTurn).mockResolvedValue({
+      matchId: MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      turn: 2,
+      activeFaction: "macedon",
+    } satisfies BoardView);
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
+    expect(actions.endTurn).toHaveBeenCalledWith(MATCH_ID);
+    expect(await screen.findByText("Turn 2")).not.toBeNull();
+  });
+
+  it("asks to confirm before ending the turn with a unit that still has moves", async () => {
+    vi.mocked(actions.loadBoard).mockResolvedValue({
+      status: "ok",
+      board: {
+        matchId: MATCH_ID,
+        units: SAMPLE_UNITS,
+        movement: { [MOVER.id]: 2 },
+        playerFaction: "macedon",
+        turn: 1,
+        activeFaction: "macedon",
+      },
+    } satisfies LoadBoardResult);
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
+    expect(await screen.findByText(/units still to act/)).not.toBeNull();
+    expect(actions.endTurn).not.toHaveBeenCalled();
   });
 });

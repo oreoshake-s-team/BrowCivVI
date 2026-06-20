@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { loadBoard, targetsFor, move, attack, newGame } from "@/app/play/actions";
+import { loadBoard, targetsFor, move, attack, newGame, endTurn } from "@/app/play/actions";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
@@ -17,6 +17,10 @@ const FLOATER_MS = 1100;
 const FADE_MS = 500;
 const RATE_LIMIT_MSG = "You're acting too fast — give it a moment and try again.";
 
+function factionLabel(faction: string): string {
+  return faction.length === 0 ? "" : faction.charAt(0).toUpperCase() + faction.slice(1);
+}
+
 export interface PlayBoardProps {
   readonly map: GameMap;
   readonly regions?: readonly NamedRegion[];
@@ -29,6 +33,10 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
   const [units, setUnits] = useState<readonly Unit[]>([]);
   const [movement, setMovement] = useState<Readonly<Record<string, number>>>({});
   const [playerFaction, setPlayerFaction] = useState<string>("");
+  const [turn, setTurn] = useState(1);
+  const [activeFaction, setActiveFaction] = useState<string>("");
+  const [endingTurn, setEndingTurn] = useState(false);
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
   const [reachable, setReachable] = useState<readonly Hex[]>([]);
   const [attackable, setAttackable] = useState<readonly Hex[]>([]);
   const [floaters, setFloaters] = useState<readonly DamageFloater[]>([]);
@@ -54,6 +62,8 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         setUnits(board.units);
         setMovement(board.movement);
         setPlayerFaction(board.playerFaction);
+        setTurn(board.turn);
+        setActiveFaction(board.activeFaction);
         setMatchId(board.matchId);
         setReady(true);
         if (board.matchId !== initialMatchId) router.replace(`/play/${board.matchId}`);
@@ -81,8 +91,14 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     setAttackable([]);
   };
 
+  const isPlayerTurn = activeFaction === playerFaction;
+  const inputLocked = !isPlayerTurn || endingTurn;
+  const playerHasActions = units.some(
+    (unit) => unit.owner === playerFaction && (movement[unit.id] ?? 0) > 0,
+  );
+
   const handleSelect = async (unitId: string | null) => {
-    if (unitId === null || matchId === null) {
+    if (unitId === null || matchId === null || inputLocked) {
       clearTargets();
       return;
     }
@@ -92,7 +108,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
   };
 
   const handleMove = async (unitId: string, to: Hex) => {
-    if (matchId === null) return;
+    if (matchId === null || inputLocked) return;
     const previous = units;
     setUnits(units.map((unit) => (unit.id === unitId ? { ...unit, hex: to } : unit)));
     clearTargets();
@@ -119,7 +135,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
   };
 
   const handleAttack = async (attackerId: string, target: Hex) => {
-    if (matchId === null) return;
+    if (matchId === null || inputLocked) return;
     const defender = units.find((unit) => hexKey(unit.hex) === hexKey(target));
     if (defender === undefined) return;
     clearTargets();
@@ -155,9 +171,32 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     setUnits(board.units);
     setMovement(board.movement);
     setPlayerFaction(board.playerFaction);
+    setTurn(board.turn);
+    setActiveFaction(board.activeFaction);
     setMatchId(board.matchId);
     clearTargets();
     router.push(`/play/${board.matchId}`);
+  };
+
+  const runEndTurn = async () => {
+    if (matchId === null) return;
+    setConfirmingEnd(false);
+    setEndingTurn(true);
+    clearTargets();
+    try {
+      const board = await endTurn(matchId);
+      setUnits(board.units);
+      setMovement(board.movement);
+      setTurn(board.turn);
+      setActiveFaction(board.activeFaction);
+    } finally {
+      setEndingTurn(false);
+    }
+  };
+
+  const requestEndTurn = () => {
+    if (playerHasActions) setConfirmingEnd(true);
+    else void runEndTurn();
   };
 
   if (loadError !== null) {
@@ -175,6 +214,33 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
   return (
     <>
       <div className={styles.controls}>
+        <span className={styles.turnInfo}>
+          <span className={styles.turnNumber}>Turn {turn}</span>
+          <span className={styles.activeFaction}>
+            <span className={styles.factionDot} data-faction={activeFaction} aria-hidden="true" />
+            {factionLabel(activeFaction)}
+          </span>
+        </span>
+        {confirmingEnd ? (
+          <span className={styles.confirm}>
+            End turn with units still to act?
+            <button type="button" onClick={() => void runEndTurn()}>
+              End turn
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmingEnd(false);
+              }}
+            >
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button type="button" onClick={requestEndTurn} disabled={inputLocked}>
+            {endingTurn ? "Ending…" : "End turn"}
+          </button>
+        )}
         {confirming ? (
           <span className={styles.confirm}>
             Start a new game?

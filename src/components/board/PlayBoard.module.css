@@ -1,7 +1,45 @@
 .controls {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
   align-items: center;
   margin-bottom: var(--space-lg);
+}
+
+.turnInfo {
+  display: inline-flex;
+  gap: var(--space-sm);
+  align-items: center;
+  font-size: var(--font-size-ui-md);
+  color: var(--color-ink);
+}
+
+.turnNumber {
+  font-weight: 600;
+}
+
+.activeFaction {
+  display: inline-flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.factionDot {
+  display: inline-block;
+  width: var(--space-sm);
+  height: var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: 50%;
+}
+
+.factionDot[data-faction="macedon"] {
+  background: var(--faction-macedon-fill);
+  border-color: var(--faction-macedon-stroke);
+}
+
+.factionDot[data-faction="persia"] {
+  background: var(--faction-persia-fill);
+  border-color: var(--faction-persia-stroke);
 }
 
 .controls button {
