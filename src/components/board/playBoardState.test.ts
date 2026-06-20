@@ -29,6 +29,7 @@ const BOARD: BoardView = {
   playerFaction: "macedon",
   turn: 3,
   activeFaction: "macedon",
+  events: [],
 };
 
 const READY: PlayBoardState = playBoardReducer(initialPlayBoardState(null), {

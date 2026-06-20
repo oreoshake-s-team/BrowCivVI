@@ -45,6 +45,7 @@ function match(units: readonly Unit[]): MatchState {
     activeFaction: "persia",
     units,
     movement,
+    events: [],
   };
 }
 
@@ -71,6 +72,11 @@ describe("runFactionTurn attacks", () => {
   it("leaves the stronger enemy untouched", () => {
     expect(after.units.find((u) => u.id === "m-strong")?.hp).toBe(100);
   });
+
+  it("records an attack event naming the weakest enemy as the target", () => {
+    const attack = after.events.find((event) => event.kind === "attack");
+    expect(attack?.kind === "attack" ? attack.targetId : null).toBe("m-weak");
+  });
 });
 
 describe("runFactionTurn movement", () => {
@@ -88,6 +94,13 @@ describe("runFactionTurn movement", () => {
     const mover = unit("p1", "persian-cavalry", "persia", 1, 2);
     const after = run(match([enemy, mover]));
     expect(after.units.find((u) => u.id === "m1")?.hex).toEqual({ q: 8, r: 2 });
+  });
+
+  it("records a move event for the advancing unit", () => {
+    const enemy = unit("m1", "pezhetairos", "macedon", 10, 2);
+    const mover = unit("p1", "persian-cavalry", "persia", 1, 2);
+    const after = run(match([enemy, mover]));
+    expect(after.events.find((event) => event.kind === "move")?.unitId).toBe("p1");
   });
 });
 

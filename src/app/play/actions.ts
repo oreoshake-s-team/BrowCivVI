@@ -6,6 +6,7 @@ import { applyAttack } from "@/engine/combat/applyAttack";
 import { reachableAttacks } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
+import { appendAttack, appendMove, type MatchEvent } from "@/engine/match/events";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { domainOf, movementConstraints } from "@/engine/movement/constraints";
@@ -27,6 +28,7 @@ export interface BoardView {
   readonly playerFaction: string;
   readonly turn: number;
   readonly activeFaction: string;
+  readonly events: readonly MatchEvent[];
 }
 
 export type LoadBoardResult =
@@ -83,6 +85,7 @@ function boardView(match: MatchState): BoardView {
     playerFaction: FIRST_SLICE_PLAYER_FACTION,
     turn: match.turn,
     activeFaction: match.activeFaction,
+    events: match.events,
   };
 }
 
@@ -184,6 +187,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
       u.id === unitId ? { ...u, hex: result.hex, hasMovedThisTurn: true } : u,
     ),
     movement: { ...match.movement, [unitId]: result.remaining },
+    events: appendMove(match.events, match.turn, unit, unit.hex, result.hex),
   };
 
   try {
@@ -272,6 +276,7 @@ export async function attack(
       ...match,
       units: application.units,
       movement: application.movement,
+      events: appendAttack(match.events, match.turn, attacker, defender, application),
     });
     return {
       ok: true,
