@@ -46,4 +46,22 @@ describe("createMatch", () => {
   it("records an owner when provided", () => {
     expect(createMatch({ ...BASE, owner: "cookie-abc" }).owner).toBe("cookie-abc");
   });
+
+  it("starts with no city state when no cities are provided", () => {
+    expect(createMatch(BASE).cities).toEqual([]);
+  });
+
+  it("seeds city state from the provided authored cities", () => {
+    const cities = [
+      {
+        id: "sardis",
+        name: "Sardis",
+        hex: { q: 0, r: 0 },
+        owner: "persia",
+        value: 110,
+        defense: 24,
+      },
+    ];
+    expect(createMatch({ ...BASE, cities }).cities[0]?.owner).toBe("persia");
+  });
 });

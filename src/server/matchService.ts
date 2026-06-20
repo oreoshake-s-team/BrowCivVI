@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { FIRST_SLICE_UNITS } from "@/content/firstSlice";
+import { FIRST_SLICE_CITIES, FIRST_SLICE_UNITS } from "@/content/firstSlice";
 import type { MatchState } from "@/engine/match/state";
 import { createMatch } from "@/engine/match/state";
 import type { MatchStore } from "@/engine/match/store";
@@ -24,6 +24,7 @@ export function newMatchState(id: string, owner: string): MatchState {
     turnLimit: TURN_LIMIT,
     units: FIRST_SLICE_UNITS,
     movementOf,
+    cities: FIRST_SLICE_CITIES,
   });
 }
 

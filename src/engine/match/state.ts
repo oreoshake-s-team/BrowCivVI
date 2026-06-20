@@ -1,4 +1,7 @@
+import type { City } from "../map/types";
 import type { Unit } from "../unit/types";
+import type { CityState } from "./cities";
+import { seedCities } from "./cities";
 import type { MatchEvent } from "./events";
 
 export const CURRENT_SCHEMA_VERSION = 3;
@@ -17,6 +20,7 @@ export interface MatchState {
   readonly units: readonly Unit[];
   readonly movement: Readonly<Record<string, number>>;
   readonly events: readonly MatchEvent[];
+  readonly cities: readonly CityState[];
 }
 
 export interface CreateMatchInput {
@@ -28,6 +32,7 @@ export interface CreateMatchInput {
   readonly movementOf: (typeId: string) => number;
   readonly owner?: string | null;
   readonly factions?: readonly string[];
+  readonly cities?: readonly City[];
 }
 
 export function createMatch(input: CreateMatchInput): MatchState {
@@ -48,5 +53,6 @@ export function createMatch(input: CreateMatchInput): MatchState {
     units: input.units,
     movement,
     events: [],
+    cities: seedCities(input.cities ?? []),
   };
 }

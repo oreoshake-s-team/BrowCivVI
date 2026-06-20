@@ -43,4 +43,13 @@ describe("newMatchState", () => {
   it("seeds the authored first-slice units", () => {
     expect(newMatchState("m1", "owner-1").units.length).toBeGreaterThan(0);
   });
+
+  it("seeds city state from the authored first-slice cities", () => {
+    expect(newMatchState("m1", "owner-1").cities.length).toBeGreaterThan(0);
+  });
+
+  it("seeds Sardis under Persian control at full HP", () => {
+    const sardis = newMatchState("m1", "owner-1").cities.find((city) => city.id === "sardis");
+    expect(sardis?.owner).toBe("persia");
+  });
 });

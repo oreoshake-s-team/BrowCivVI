@@ -487,6 +487,8 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
 
 export const FIRST_SLICE_MAP: GameMap = createGameMap(HEXES, CITIES, RIVERS);
 
+export const FIRST_SLICE_CITIES: readonly City[] = CITIES;
+
 export const FIRST_SLICE_PLAYER_FACTION = "macedon";
 
 export const FIRST_SLICE_UNITS: readonly Unit[] = [

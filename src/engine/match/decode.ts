@@ -1,4 +1,5 @@
 import type { Unit } from "../unit/types";
+import type { CityState } from "./cities";
 import type { MatchEvent } from "./events";
 import type { MatchState } from "./state";
 import { CURRENT_SCHEMA_VERSION } from "./state";
@@ -33,6 +34,7 @@ export function decodeMatchState(raw: unknown): MatchState {
     turnOrder,
     activeFaction: typeof raw.activeFaction === "string" ? raw.activeFaction : (turnOrder[0] ?? ""),
     events: Array.isArray(raw.events) ? (raw.events as readonly MatchEvent[]) : [],
+    cities: Array.isArray(raw.cities) ? (raw.cities as readonly CityState[]) : [],
     schemaVersion: CURRENT_SCHEMA_VERSION,
   } as MatchState;
 }
