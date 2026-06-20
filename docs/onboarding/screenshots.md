@@ -34,7 +34,7 @@ numbers) they are deliberately tagged with their PR and issue.
 ## Adding images
 
 ```bash
-yarn screenshots --pr 42 --issue 17 --title "Royal Road redeploy" before.png after.png
+pnpm screenshots --pr 42 --issue 17 --title "Royal Road redeploy" before.png after.png
 ```
 
 Flags:
@@ -48,6 +48,38 @@ Flags:
 The command optimizes each image, writes it into the PR folder, and regenerates both the folder's
 `index.html` / `meta.json` and the root gallery. Re-running for the same PR merges new images into
 the existing folder.
+
+## Capturing screenshots for `ui` issues
+
+Every issue labeled `ui` must ship screenshots of the screen(s) the change touches. Capture them
+from the Playwright e2e harness so they reflect the real rendered output, then record them with the
+helper above.
+
+Use `captureScreenshot` from `e2e/support/screenshot.ts` inside a spec that navigates to the
+affected view. It full-page-screenshots into the gitignored `.screenshots/` directory and names the
+file from the screen name:
+
+```ts
+import { test } from "@playwright/test";
+import { captureScreenshot } from "./support/screenshot.ts";
+
+test("turn bar — active faction and End Turn", async ({ page }) => {
+  await page.goto("/play");
+  await captureScreenshot(page, "Turn bar");
+});
+```
+
+Then run the capture spec and record the output for the PR:
+
+```bash
+pnpm exec playwright test e2e/turn-bar.capture.spec.ts
+pnpm screenshots --pr <N> --issue <M> --title "<summary>" .screenshots/*.png
+```
+
+Capture only the screens the change touches — not a fixed set. Name capture specs
+`*.capture.spec.ts`: that pattern is gitignored, so these stay throwaway helpers for producing the
+PR's images and never join the always-on e2e suite. (Playwright browsers must be installed in the
+environment running the capture; that's the case in the e2e CI job and local dev.)
 
 ## Optimization
 

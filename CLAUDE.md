@@ -67,6 +67,7 @@ Use semantic (or Conventional) Commits to provide a standardized framework for n
 - After every push, wait for the CI status. If a test fails or a merge conflict exists, try to resolve it immediately.
 - Never merge a PR unless all CI statuses are green.
 - Always leave a comment on the issue to indicate work on an issue has started.
+- When the issue is labeled `ui`, capture screenshots of the screen(s) the change touches before requesting review: drive the affected views through the Playwright e2e harness with the `captureScreenshot(page, name)` helper (it writes to the gitignored `.screenshots/`), record them with `pnpm screenshots --pr <N> --issue <M> --title "<summary>" .screenshots/*.png`, and embed the resulting raw hotlink in the PR description. Only capture the screens the change touches, not a fixed set. See [`docs/onboarding/screenshots.md`](docs/onboarding/screenshots.md).
 
 ## Documentation
 
