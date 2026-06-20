@@ -1,0 +1,63 @@
+import { describe, it, expect } from "vitest";
+import type { Unit } from "../unit/types";
+import { decodeMatchState, UnknownSchemaError } from "./decode";
+import { createMatch } from "./state";
+
+const UNIT: Unit = {
+  id: "u1",
+  typeId: "pezhetairos",
+  owner: "macedon",
+  hex: { q: 0, r: 0 },
+  hp: 100,
+  morale: 80,
+  supplied: true,
+  hasMovedThisTurn: false,
+};
+
+const STATE = createMatch({
+  id: "m1",
+  seed: 7,
+  mapId: "first-slice",
+  turnLimit: 20,
+  units: [UNIT],
+  movementOf: () => 4,
+});
+
+describe("decodeMatchState", () => {
+  it("returns the state at the current schema version", () => {
+    expect(decodeMatchState(STATE).id).toBe("m1");
+  });
+
+  it("throws for a schema version newer than the engine understands", () => {
+    expect(() => decodeMatchState({ ...STATE, schemaVersion: 99 })).toThrow(UnknownSchemaError);
+  });
+
+  it("throws when the schema version is missing", () => {
+    expect(() => decodeMatchState({ id: "m1", units: [UNIT] })).toThrow(UnknownSchemaError);
+  });
+
+  it("throws for a non-object value", () => {
+    expect(() => decodeMatchState("nope")).toThrow(UnknownSchemaError);
+  });
+
+  it("derives turn order from unit owners when it is absent", () => {
+    const legacy = { schemaVersion: 1, units: [{ owner: "macedon" }, { owner: "persia" }] };
+    expect(decodeMatchState(legacy).turnOrder).toEqual(["macedon", "persia"]);
+  });
+
+  it("activates the first faction when the active faction is absent", () => {
+    const legacy = { schemaVersion: 1, units: [{ owner: "macedon" }, { owner: "persia" }] };
+    expect(decodeMatchState(legacy).activeFaction).toBe("macedon");
+  });
+
+  it("defaults the event log to empty when it is absent", () => {
+    const legacy = { ...STATE, schemaVersion: 2, events: undefined };
+    expect(decodeMatchState(legacy).events).toEqual([]);
+  });
+
+  it("preserves an existing event log", () => {
+    const event = { kind: "move", seq: 0 };
+    const legacy = { ...STATE, schemaVersion: 2, events: [event] };
+    expect(decodeMatchState(legacy).events).toEqual([event]);
+  });
+});

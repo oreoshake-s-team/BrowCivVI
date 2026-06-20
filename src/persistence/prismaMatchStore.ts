@@ -1,8 +1,8 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { decodeMatchState } from "@/engine/match/decode";
 import type { MatchState } from "@/engine/match/state";
 import type { MatchStore } from "@/engine/match/store";
 import { StaleMatchError } from "@/engine/match/store";
-import { upcastMatchState } from "@/engine/match/upcast";
 
 type MatchClient = Pick<PrismaClient, "match">;
 
@@ -31,7 +31,7 @@ export class PrismaMatchStore implements MatchStore {
       select: { state: true, version: true },
     });
     if (row === null) return null;
-    return { ...upcastMatchState(row.state), version: row.version };
+    return { ...decodeMatchState(row.state), version: row.version };
   }
 
   async save(state: MatchState): Promise<MatchState> {
