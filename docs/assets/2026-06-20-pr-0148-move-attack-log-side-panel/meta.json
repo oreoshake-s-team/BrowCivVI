@@ -1,0 +1,11 @@
+{
+  "pr": 148,
+  "date": "2026-06-20",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "battle-log-empty.webp",
+    "battle-log-populated.webp"
+  ],
+  "issue": 146,
+  "title": "Move/attack log side panel"
+}
