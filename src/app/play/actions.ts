@@ -2,12 +2,12 @@
 
 import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlice";
 import { applyAttack } from "@/engine/combat/applyAttack";
-import { attackableHexes } from "@/engine/combat/targets";
+import { reachableAttacks } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
-import { entryCost, riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
+import { riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { enemyZoneOfControl } from "@/engine/movement/zoneOfControl";
 import { createRng } from "@/engine/rng";
@@ -97,11 +97,7 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
 }
 
 function attackTargets(match: MatchState, attacker: Unit): readonly Hex[] {
-  const mp = match.movement[attacker.id] ?? 0;
-  return attackableHexes(match.units, attacker.id).filter((hex) => {
-    const cost = entryCost(FIRST_SLICE_MAP, RIVER_EDGES, attacker.hex, hex);
-    return cost !== null && mp >= cost;
-  });
+  return reachableAttacks(match.units, match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES);
 }
 
 async function resolveMatch(matchId?: string): Promise<MatchState> {

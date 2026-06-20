@@ -530,4 +530,14 @@ export const FIRST_SLICE_UNITS: readonly Unit[] = [
     supplied: true,
     hasMovedThisTurn: false,
   },
+  {
+    id: "per-paphlagonians",
+    typeId: "paphlagonian-cavalry",
+    owner: "persia",
+    hex: { q: 8, r: 3 },
+    hp: 100,
+    morale: 70,
+    supplied: true,
+    hasMovedThisTurn: false,
+  },
 ];

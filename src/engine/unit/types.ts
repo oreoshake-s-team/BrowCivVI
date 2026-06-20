@@ -11,6 +11,7 @@ export interface UnitType {
   readonly strength: number;
   readonly capabilities?: readonly UnitCapability[];
   readonly abilities?: readonly string[];
+  readonly hitAndRun?: boolean;
 }
 
 export interface Unit {
@@ -22,6 +23,7 @@ export interface Unit {
   readonly morale: number;
   readonly supplied: boolean;
   readonly hasMovedThisTurn: boolean;
+  readonly hasAttackedThisTurn?: boolean;
 }
 
 export function effectiveCapabilities(type: UnitType): ReadonlySet<UnitCapability> {

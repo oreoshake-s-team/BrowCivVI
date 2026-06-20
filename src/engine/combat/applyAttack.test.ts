@@ -36,6 +36,16 @@ describe("applyAttack", () => {
     expect(applyAttack(input()).movement.m1).toBe(0);
   });
 
+  it("a hit-and-run attacker keeps its remaining movement", () => {
+    const attacker = unit("m1", "paphlagonian-cavalry", "macedon", 1, 1);
+    expect(applyAttack(input({ units: [attacker, DEFENDER] })).movement.m1).toBe(2);
+  });
+
+  it("marks the attacker as having attacked this turn", () => {
+    const attacker = applyAttack(input()).units.find((u) => u.id === "m1");
+    expect(attacker?.hasAttackedThisTurn).toBe(true);
+  });
+
   it("leaves other units' movement untouched", () => {
     expect(applyAttack(input()).movement.p1).toBe(2);
   });

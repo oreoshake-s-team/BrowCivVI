@@ -11,7 +11,8 @@ function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): 
   const units = state.units.map((unit) => {
     if (unit.owner !== faction) return unit;
     movement[unit.id] = ctx.movementOf(unit.typeId);
-    return unit.hasMovedThisTurn ? { ...unit, hasMovedThisTurn: false } : unit;
+    if (!unit.hasMovedThisTurn && unit.hasAttackedThisTurn !== true) return unit;
+    return { ...unit, hasMovedThisTurn: false, hasAttackedThisTurn: false };
   });
   return { ...state, units, movement };
 }

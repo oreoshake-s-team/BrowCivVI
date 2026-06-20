@@ -60,7 +60,8 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
 
   const units = input.units
     .map((unit) => {
-      if (unit.id === input.attackerId) return { ...unit, hp: unit.hp - result.attackerDamage };
+      if (unit.id === input.attackerId)
+        return { ...unit, hp: unit.hp - result.attackerDamage, hasAttackedThisTurn: true };
       if (unit.id === input.defenderId) return { ...unit, hp: unit.hp - result.defenderDamage };
       return unit;
     })
@@ -70,9 +71,12 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
     (id) => !units.some((unit) => unit.id === id),
   );
 
+  const retainsMovement = unitTypeById(attacker.typeId)?.hitAndRun === true;
+  const movement = retainsMovement ? input.movement : { ...input.movement, [input.attackerId]: 0 };
+
   return {
     units,
-    movement: { ...input.movement, [input.attackerId]: 0 },
+    movement,
     attackerDamage: result.attackerDamage,
     defenderDamage: result.defenderDamage,
     defeated,
