@@ -29,9 +29,29 @@ const CITATION_HIDE_MS = 700;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 const WATER_TERRAINS: ReadonlySet<TerrainType> = new Set(["coast", "deepSea"]);
+const MEDIA_GLYPH = "▶";
 
 function hasPlayableMedia(media: readonly MediaLink[] | undefined): boolean {
   return media?.some((item) => item.kind === "podcast" || item.kind === "video") ?? false;
+}
+
+function MediaGlyph() {
+  return (
+    <tspan className={styles.mediaGlyph} dx={4} aria-hidden="true">
+      {MEDIA_GLYPH}
+    </tspan>
+  );
+}
+
+function riverGlyphAnchor(rivers: GameMap["rivers"], size: number): { x: number; y: number } {
+  let best: { x: number; y: number } | null = null;
+  for (const river of rivers) {
+    const a = hexToPixel(river.a, size);
+    const b = hexToPixel(river.b, size);
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    if (best === null || mid.y > best.y) best = mid;
+  }
+  return best ?? { x: 0, y: 0 };
 }
 
 function riverBankKeys(map: GameMap): ReadonlySet<string> {
@@ -375,6 +395,7 @@ export function HexBoard({
                 >
                   <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
                     {city.name}
+                    <MediaGlyph />
                   </text>
                 </CitationTarget>
               ) : city ? (
@@ -418,6 +439,14 @@ export function HexBoard({
                 />
               );
             })}
+            <text
+              className={styles.riverGlyph}
+              x={riverGlyphAnchor(map.rivers, SIZE).x}
+              y={riverGlyphAnchor(map.rivers, SIZE).y + SIZE * 0.5}
+              aria-hidden="true"
+            >
+              {MEDIA_GLYPH}
+            </text>
           </CitationTarget>
         ) : null}
 
@@ -447,6 +476,7 @@ export function HexBoard({
             >
               <text className={className} x={center.x} y={center.y}>
                 {region.name}
+                <MediaGlyph />
               </text>
             </CitationTarget>
           );

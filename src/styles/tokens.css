@@ -32,6 +32,7 @@
   --color-water-sea: var(--blue-800);
   --color-reach-fill: var(--gold-400-a38);
   --color-reach-stroke: var(--gold-700);
+  --color-media-accent: var(--gold-700);
   --color-danger-surface: var(--faction-persia-stroke);
   --color-on-danger: var(--faction-persia-text);
   --radius-sm: 3px;

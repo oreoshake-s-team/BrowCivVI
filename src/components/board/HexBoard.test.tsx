@@ -505,6 +505,23 @@ describe("HexBoard historical references", () => {
     expect(screen.queryByRole("button", { name: "Sardis historical reference" })).toBeNull();
   });
 
+  it("marks a media-bearing city label with the media glyph", () => {
+    const { container } = render(<HexBoard map={MEDIA_CITY_MAP} units={[]} />);
+    expect(container.textContent).toContain("▶");
+  });
+
+  it("leaves a media-less city label without a media glyph", () => {
+    const { container } = render(<HexBoard map={CITED_CITY_MAP} units={[]} />);
+    expect(container.textContent).not.toContain("▶");
+  });
+
+  it("marks the Granicus river with the media glyph", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />,
+    );
+    expect(container.textContent).toContain("▶");
+  });
+
   it("dismisses the citation card on Escape", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[GRANICUS_REGION]} />);
     fireEvent.focus(screen.getByRole("button", { name: "Granicus historical reference" }));
