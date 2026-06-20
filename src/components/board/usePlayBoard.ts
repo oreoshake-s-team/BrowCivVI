@@ -101,6 +101,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
         units: outcome.units,
         movement: outcome.movement,
         reachable: outcome.reachable,
+        ...(outcome.events !== undefined ? { events: outcome.events } : {}),
       });
     } else {
       dispatch({
@@ -133,6 +134,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       type: "attackApplied",
       units: outcome.units,
       ...(outcome.movement !== undefined ? { movement: outcome.movement } : {}),
+      ...(outcome.events !== undefined ? { events: outcome.events } : {}),
     });
     if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
       pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);

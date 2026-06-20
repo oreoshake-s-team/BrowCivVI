@@ -46,6 +46,49 @@ describe("playBoardReducer", () => {
     expect(READY.turn).toBe(3);
   });
 
+  it("projects the loaded event log", () => {
+    const event = { kind: "move", seq: 0 } as const;
+    const loaded = playBoardReducer(initialPlayBoardState(null), {
+      type: "boardLoaded",
+      board: {
+        ...BOARD,
+        events: [
+          {
+            ...event,
+            turn: 1,
+            faction: "macedon",
+            unitId: "mac",
+            unitTypeId: "pezhetairos",
+            from: { q: 0, r: 0 },
+            to: { q: 1, r: 0 },
+          },
+        ],
+      },
+    });
+    expect(loaded.events).toHaveLength(1);
+  });
+
+  it("updates the event log when a move reports new events", () => {
+    const event = {
+      kind: "move",
+      seq: 0,
+      turn: 3,
+      faction: "macedon",
+      unitId: "mac",
+      unitTypeId: "pezhetairos",
+      from: { q: 0, r: 0 },
+      to: { q: 1, r: 0 },
+    } as const;
+    const next = playBoardReducer(READY, {
+      type: "moveApplied",
+      units: READY.units,
+      movement: READY.movement,
+      reachable: [],
+      events: [event],
+    });
+    expect(next.events).toEqual([event]);
+  });
+
   it("clears reachable hexes when a new game starts", () => {
     const seeded = { ...READY, reachable: [{ q: 1, r: 1 }] };
     expect(playBoardReducer(seeded, { type: "gameStarted", board: BOARD }).reachable).toEqual([]);

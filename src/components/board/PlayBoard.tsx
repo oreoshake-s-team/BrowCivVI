@@ -4,6 +4,7 @@ import type { NamedRegion } from "@/engine/content/region";
 import type { GameMap } from "@/engine/map/types";
 import { BoardLoadError } from "./BoardLoadError";
 import { HexBoard } from "./HexBoard";
+import { MoveLog } from "./MoveLog";
 import styles from "./PlayBoard.module.css";
 import { Toast } from "./Toast";
 import { usePlayBoard } from "./usePlayBoard";
@@ -72,20 +73,23 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
           </button>
         )}
       </div>
-      <HexBoard
-        map={map}
-        units={state.units}
-        regions={regions}
-        movement={state.movement}
-        playerFaction={state.playerFaction}
-        reachable={state.reachable}
-        attackable={state.attackable}
-        floaters={state.floaters}
-        fadingUnits={state.fadingUnits}
-        onSelect={board.select}
-        onMove={board.moveUnit}
-        onAttack={board.attackUnit}
-      />
+      <div className={styles.boardArea}>
+        <HexBoard
+          map={map}
+          units={state.units}
+          regions={regions}
+          movement={state.movement}
+          playerFaction={state.playerFaction}
+          reachable={state.reachable}
+          attackable={state.attackable}
+          floaters={state.floaters}
+          fadingUnits={state.fadingUnits}
+          onSelect={board.select}
+          onMove={board.moveUnit}
+          onAttack={board.attackUnit}
+        />
+        <MoveLog events={state.events} />
+      </div>
       {state.toast !== null ? <Toast message={state.toast} onDismiss={board.dismissToast} /> : null}
     </>
   );

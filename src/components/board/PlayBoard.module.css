@@ -6,6 +6,18 @@
   margin-bottom: var(--space-lg);
 }
 
+.boardArea {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  align-items: flex-start;
+}
+
+.boardArea > :first-child {
+  flex: 1 1 40rem;
+  min-width: 0;
+}
+
 .turnInfo {
   display: inline-flex;
   gap: var(--space-sm);

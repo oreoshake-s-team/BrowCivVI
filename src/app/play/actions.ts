@@ -40,6 +40,7 @@ export interface MoveOutcome {
   readonly units: readonly Unit[];
   readonly reachable: readonly Hex[];
   readonly movement: Readonly<Record<string, number>>;
+  readonly events?: readonly MatchEvent[];
   readonly rateLimited?: boolean;
 }
 
@@ -198,6 +199,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
       units: saved.units,
       reachable: movedUnit === undefined ? [] : reachableForUnit(saved, movedUnit),
       movement: saved.movement,
+      events: saved.events,
     };
   } catch (error) {
     if (error instanceof StaleMatchError) {
@@ -226,6 +228,7 @@ export interface AttackOutcome {
   readonly defenderDamage?: number;
   readonly defeated?: readonly string[];
   readonly movement?: Readonly<Record<string, number>>;
+  readonly events?: readonly MatchEvent[];
   readonly rateLimited?: boolean;
 }
 
@@ -287,6 +290,7 @@ export async function attack(
       defenderDamage: application.defenderDamage,
       defeated: application.defeated,
       movement: saved.movement,
+      events: saved.events,
     };
   } catch (error) {
     if (error instanceof StaleMatchError) return { ok: false, units: match.units };
