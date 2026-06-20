@@ -106,6 +106,7 @@ export function HexBoard({
 
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoveredUnitId, setHoveredUnitId] = useState<string | null>(null);
   const [view, setView] = useState(() => fitView(bounds, PAD));
   const [cited, setCited] = useState<{
     name: string;
@@ -490,7 +491,9 @@ export function HexBoard({
           const isAttackTarget =
             selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
           const moves = movement[unit.id];
-          const showMoves = unit.owner === playerFaction && moves !== undefined && moves > 0;
+          const revealed = selected || hoveredUnitId === unit.id;
+          const showMoves =
+            moves !== undefined && (unit.owner === playerFaction ? moves > 0 : revealed);
           const toggle = () => {
             if (moved.current) return;
             setCited(null);
@@ -509,6 +512,18 @@ export function HexBoard({
               tabIndex={0}
               aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}`}
               aria-pressed={selected}
+              onMouseEnter={() => {
+                setHoveredUnitId(unit.id);
+              }}
+              onMouseLeave={() => {
+                setHoveredUnitId((current) => (current === unit.id ? null : current));
+              }}
+              onFocus={() => {
+                setHoveredUnitId(unit.id);
+              }}
+              onBlur={() => {
+                setHoveredUnitId((current) => (current === unit.id ? null : current));
+              }}
               onClick={(event) => {
                 event.stopPropagation();
                 if (moved.current) return;

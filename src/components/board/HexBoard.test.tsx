@@ -17,6 +17,8 @@ Element.prototype.hasPointerCapture = () => false;
 const MACEDON = "Pezhetairos (macedon)";
 const MAC_ID = "macedon-phalanx-1";
 const MAC_MAX = unitTypeById("pezhetairos")?.movement ?? 0;
+const PER_ID = "persia-cavalry-1";
+const PER_MAX = unitTypeById("persian-cavalry")?.movement ?? 0;
 
 const SEA_REGION: NamedRegion = {
   id: "test-sea",
@@ -551,9 +553,33 @@ describe("HexBoard movement display", () => {
     expect(container.querySelector(`[data-moves="${MAC_ID}"]`)?.textContent).toBe(`2/${MAC_MAX}`);
   });
 
-  it("omits the badge on an enemy unit", () => {
-    const { container } = render(friendly({ movement: { [MAC_ID]: 2, "persia-cavalry-1": 4 } }));
-    expect(container.querySelector('[data-moves="persia-cavalry-1"]')).toBeNull();
+  it("omits an enemy unit's badge until it is selected or hovered", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 2, [PER_ID]: 4 } }));
+    expect(container.querySelector(`[data-moves="${PER_ID}"]`)).toBeNull();
+  });
+
+  it("reveals an enemy unit's badge when it is selected", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 2, [PER_ID]: 4 } }));
+    fireEvent.click(container.querySelector(`[data-unit-id="${PER_ID}"]`)!);
+    expect(container.querySelector(`[data-moves="${PER_ID}"]`)?.textContent).toBe(`4/${PER_MAX}`);
+  });
+
+  it("reveals an enemy unit's badge on hover", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 2, [PER_ID]: 4 } }));
+    fireEvent.mouseEnter(container.querySelector(`[data-unit-id="${PER_ID}"]`)!);
+    expect(container.querySelector(`[data-moves="${PER_ID}"]`)).not.toBeNull();
+  });
+
+  it("reveals an enemy unit's badge on keyboard focus", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 2, [PER_ID]: 4 } }));
+    fireEvent.focus(container.querySelector(`[data-unit-id="${PER_ID}"]`)!);
+    expect(container.querySelector(`[data-moves="${PER_ID}"]`)).not.toBeNull();
+  });
+
+  it("reveals a spent enemy unit's badge when selected", () => {
+    const { container } = render(friendly({ movement: { [MAC_ID]: 2, [PER_ID]: 0 } }));
+    fireEvent.click(container.querySelector(`[data-unit-id="${PER_ID}"]`)!);
+    expect(container.querySelector(`[data-moves="${PER_ID}"]`)?.textContent).toBe(`0/${PER_MAX}`);
   });
 
   it("omits the badge once a friendly unit's movement is spent", () => {
