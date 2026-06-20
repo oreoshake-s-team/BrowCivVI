@@ -1,0 +1,60 @@
+import { describe, it, expect } from "vitest";
+import { createMatch, type MatchState } from "../match/state";
+import type { Unit } from "../unit/types";
+import { advanceTurn, type TurnContext } from "./turn";
+
+const ctx: TurnContext = { movementOf: () => 4 };
+
+function unit(id: string, owner: string, hasMovedThisTurn = false): Unit {
+  return {
+    id,
+    typeId: "pezhetairos",
+    owner,
+    hex: { q: 0, r: 0 },
+    hp: 100,
+    morale: 80,
+    supplied: true,
+    hasMovedThisTurn,
+  };
+}
+
+function match(over: Partial<MatchState> = {}): MatchState {
+  const base = createMatch({
+    id: "m1",
+    seed: 1,
+    mapId: "first-slice",
+    turnLimit: 20,
+    units: [unit("mac", "macedon", true), unit("per", "persia", true)],
+    movementOf: () => 0,
+  });
+  return { ...base, movement: { mac: 0, per: 0 }, ...over };
+}
+
+describe("advanceTurn", () => {
+  it("hands control to the next faction in order", () => {
+    expect(advanceTurn(match(), ctx).activeFaction).toBe("persia");
+  });
+
+  it("keeps the round number while moving within a round", () => {
+    expect(advanceTurn(match(), ctx).turn).toBe(1);
+  });
+
+  it("increments the round when the order wraps back to the first faction", () => {
+    expect(advanceTurn(match({ activeFaction: "persia" }), ctx).turn).toBe(2);
+  });
+
+  it("restores the incoming faction's movement", () => {
+    expect(advanceTurn(match({ activeFaction: "persia" }), ctx).movement.mac).toBe(4);
+  });
+
+  it("clears the incoming faction's hasMovedThisTurn flag", () => {
+    const macedon = advanceTurn(match({ activeFaction: "persia" }), ctx).units.find(
+      (u) => u.id === "mac",
+    );
+    expect(macedon?.hasMovedThisTurn).toBe(false);
+  });
+
+  it("leaves the off-turn faction's movement untouched", () => {
+    expect(advanceTurn(match({ activeFaction: "persia" }), ctx).movement.per).toBe(0);
+  });
+});

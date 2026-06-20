@@ -11,6 +11,7 @@ import { StaleMatchError } from "@/engine/match/store";
 import { entryCost, riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { createRng } from "@/engine/rng";
+import { advanceTurn, type TurnContext } from "@/engine/turn/turn";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { MovementDomain, StackingLayer } from "@/engine/unit/classes";
 import { domainForClass, stackingLayerForClass } from "@/engine/unit/classes";
@@ -25,6 +26,8 @@ export interface BoardView {
   readonly units: readonly Unit[];
   readonly movement: Readonly<Record<string, number>>;
   readonly playerFaction: string;
+  readonly turn: number;
+  readonly activeFaction: string;
 }
 
 export type LoadBoardResult =
@@ -118,8 +121,14 @@ function boardView(match: MatchState): BoardView {
     units: match.units,
     movement: match.movement,
     playerFaction: FIRST_SLICE_PLAYER_FACTION,
+    turn: match.turn,
+    activeFaction: match.activeFaction,
   };
 }
+
+const TURN_CONTEXT: TurnContext = {
+  movementOf: (typeId) => unitTypeById(typeId)?.movement ?? 0,
+};
 
 export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {
   const owner = await currentOwner();
@@ -129,6 +138,27 @@ export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {
     return owned === null ? { status: "not-found" } : { status: "ok", board: boardView(owned) };
   }
   return { status: "ok", board: boardView(await getOrCreateDefault(store, owner)) };
+}
+
+export async function endTurn(matchId: string): Promise<BoardView> {
+  const owner = await currentOwner();
+  const store = getStore();
+  const match = await loadOwned(store, owner, matchId);
+  if (match === null) return boardView(await resolveMatch(matchId));
+  if (match.activeFaction !== FIRST_SLICE_PLAYER_FACTION) return boardView(match);
+
+  let next = advanceTurn(match, TURN_CONTEXT);
+  let guard = match.turnOrder.length;
+  while (next.activeFaction !== FIRST_SLICE_PLAYER_FACTION && guard-- > 0) {
+    next = advanceTurn(next, TURN_CONTEXT);
+  }
+
+  try {
+    return boardView(await store.save(next));
+  } catch (error) {
+    if (error instanceof StaleMatchError) return boardView(match);
+    throw error;
+  }
 }
 
 export async function newGame(): Promise<BoardView> {

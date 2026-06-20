@@ -2,7 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { FIRST_SLICE_UNITS } from "@/content/firstSlice";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
-import { loadBoard, newGame, move, attack, targetsFor, type BoardView } from "./actions";
+import { loadBoard, newGame, move, attack, targetsFor, endTurn, type BoardView } from "./actions";
 
 const { getAuth0Mock, intentAllowedMock } = vi.hoisted(() => ({
   getAuth0Mock: vi.fn(),
@@ -128,6 +128,16 @@ describe("Server Action intent channel against the in-memory store", () => {
     const reloaded = await loadOk(board.matchId);
     expect(outcome.ok).toBe(false);
     expect(hexKey(unitHex(reloaded.units, PHALANX)!)).toBe(hexKey(PHALANX_START));
+  });
+
+  it("ends the turn, restoring movement and advancing the round after Persia auto-passes", async () => {
+    const board = await newGame();
+    const targets = await targetsFor(board.matchId, PHALANX);
+    await move(board.matchId, PHALANX, targets.reachable[0]!);
+    const after = await endTurn(board.matchId);
+    expect(after.turn).toBe(2);
+    expect(after.activeFaction).toBe("macedon");
+    expect(after.movement[PHALANX]).toBe(2);
   });
 
   it("resolves a legal adjacent attack with seeded damage", async () => {
