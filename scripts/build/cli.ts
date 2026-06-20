@@ -1,8 +1,23 @@
 import { execFileSync } from "node:child_process";
-import { selectMigrateUrl } from "./migrateUrl.ts";
+import { databaseEndpoint, selectMigrateUrl, selectRuntimeUrl } from "./migrateUrl.ts";
 
 function run(args: string[], env: NodeJS.ProcessEnv): void {
   execFileSync("pnpm", ["exec", ...args], { stdio: "inherit", env });
+}
+
+function assertEndpointsAgree(migrateUrl: string): void {
+  const runtimeUrl = selectRuntimeUrl(process.env);
+  if (runtimeUrl === undefined) return;
+  const migrateHost = databaseEndpoint(migrateUrl);
+  const runtimeHost = databaseEndpoint(runtimeUrl);
+  if (migrateHost !== undefined && runtimeHost !== undefined && migrateHost !== runtimeHost) {
+    console.error(
+      `build: FATAL — migration target (${migrateHost}) and runtime target (${runtimeHost}) are ` +
+        `different database endpoints. Refusing to build to avoid migrating the wrong database; ` +
+        `point DATABASE_URL and DATABASE_URL_UNPOOLED at the same Neon endpoint.`,
+    );
+    process.exit(1);
+  }
 }
 
 function main(): void {
@@ -10,6 +25,7 @@ function main(): void {
   if (migrateUrl === undefined) {
     console.log("build: no database URL configured — skipping prisma migrate deploy");
   } else {
+    assertEndpointsAgree(migrateUrl);
     let target = "unknown host";
     try {
       target = new URL(migrateUrl).host;

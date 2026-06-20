@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { selectMigrateUrl } from "./migrateUrl.ts";
+import { databaseEndpoint, selectMigrateUrl, selectRuntimeUrl } from "./migrateUrl.ts";
+
+const NEON_POOLED =
+  "postgresql://u:p@ep-purple-sea-atdby62c-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require";
+const NEON_DIRECT =
+  "postgresql://u:p@ep-purple-sea-atdby62c.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require";
+const NEON_OTHER =
+  "postgresql://u:p@ep-floral-shape-ahtzp1is.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require";
 
 describe("selectMigrateUrl", () => {
   it("prefers the unpooled connection for migrations", () => {
@@ -51,5 +58,39 @@ describe("selectMigrateUrl", () => {
         DATABASE_URL_UNPOOLED: "postgres://direct",
       }),
     ).toBe("postgres://direct");
+  });
+});
+
+describe("selectRuntimeUrl", () => {
+  it("uses the pooled DATABASE_URL in production", () => {
+    expect(selectRuntimeUrl({ DATABASE_URL: "postgres://pooled" })).toBe("postgres://pooled");
+  });
+
+  it("prefers the shared preview URL in preview deployments", () => {
+    expect(
+      selectRuntimeUrl({
+        VERCEL_ENV: "preview",
+        SHARED_PREVIEW_DATABASE_URL: "postgres://shared",
+        DATABASE_URL: "postgres://per-deployment",
+      }),
+    ).toBe("postgres://shared");
+  });
+
+  it("returns undefined when no runtime URL is configured", () => {
+    expect(selectRuntimeUrl({})).toBeUndefined();
+  });
+});
+
+describe("databaseEndpoint", () => {
+  it("normalizes the pooled and direct endpoints of one database to the same value", () => {
+    expect(databaseEndpoint(NEON_POOLED)).toBe(databaseEndpoint(NEON_DIRECT));
+  });
+
+  it("distinguishes different database endpoints", () => {
+    expect(databaseEndpoint(NEON_DIRECT)).not.toBe(databaseEndpoint(NEON_OTHER));
+  });
+
+  it("returns undefined for an unparseable url", () => {
+    expect(databaseEndpoint("not a url")).toBeUndefined();
   });
 });
