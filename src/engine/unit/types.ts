@@ -11,6 +11,7 @@ export interface UnitType {
   readonly strength: number;
   readonly capabilities?: readonly UnitCapability[];
   readonly abilities?: readonly string[];
+  readonly hitAndRun?: boolean;
 }
 
 export interface Unit {

@@ -70,9 +70,12 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
     (id) => !units.some((unit) => unit.id === id),
   );
 
+  const retainsMovement = unitTypeById(attacker.typeId)?.hitAndRun === true;
+  const movement = retainsMovement ? input.movement : { ...input.movement, [input.attackerId]: 0 };
+
   return {
     units,
-    movement: { ...input.movement, [input.attackerId]: 0 },
+    movement,
     attackerDamage: result.attackerDamage,
     defenderDamage: result.defenderDamage,
     defeated,

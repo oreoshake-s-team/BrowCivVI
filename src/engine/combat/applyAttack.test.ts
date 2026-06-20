@@ -1,7 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createRng } from "../rng";
 import type { Unit } from "../unit/types";
 import { applyAttack, type ApplyAttackInput } from "./applyAttack";
+
+vi.mock("../unit/catalog", async (importActual) => {
+  const actual = await importActual<typeof import("../unit/catalog")>();
+  const hitRunner = {
+    ...actual.unitTypeById("persian-cavalry")!,
+    id: "horse-archer",
+    hitAndRun: true,
+  };
+  return {
+    ...actual,
+    unitTypeById: (id: string) => (id === "horse-archer" ? hitRunner : actual.unitTypeById(id)),
+  };
+});
 
 const unit = (id: string, typeId: string, owner: string, q: number, r: number, hp = 100): Unit => ({
   id,
@@ -34,6 +47,11 @@ function input(over: Partial<ApplyAttackInput> = {}): ApplyAttackInput {
 describe("applyAttack", () => {
   it("spends all of the attacker's remaining movement", () => {
     expect(applyAttack(input()).movement.m1).toBe(0);
+  });
+
+  it("a hit-and-run attacker keeps its remaining movement", () => {
+    const attacker = unit("m1", "horse-archer", "macedon", 1, 1);
+    expect(applyAttack(input({ units: [attacker, DEFENDER] })).movement.m1).toBe(2);
   });
 
   it("leaves other units' movement untouched", () => {
