@@ -8,6 +8,7 @@ import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
 import type { Unit } from "@/engine/unit/types";
+import { BoardLoadError, type BoardLoadFailure } from "./BoardLoadError";
 import { HexBoard, type DamageFloater } from "./HexBoard";
 import styles from "./PlayBoard.module.css";
 import { Toast } from "./Toast";
@@ -33,25 +34,37 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
   const [floaters, setFloaters] = useState<readonly DamageFloater[]>([]);
   const [fadingUnits, setFadingUnits] = useState<readonly Unit[]>([]);
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<BoardLoadFailure | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [confirming, setConfirming] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const floaterSeq = useRef(0);
 
   useEffect(() => {
     let active = true;
-    void loadBoard(initialMatchId).then((board) => {
-      if (!active) return;
-      setUnits(board.units);
-      setMovement(board.movement);
-      setPlayerFaction(board.playerFaction);
-      setMatchId(board.matchId);
-      setReady(true);
-      if (board.matchId !== initialMatchId) router.replace(`/play/${board.matchId}`);
-    });
+    void loadBoard(initialMatchId)
+      .then((result) => {
+        if (!active) return;
+        if (result.status === "not-found") {
+          setLoadError("not-found");
+          return;
+        }
+        setLoadError(null);
+        const board = result.board;
+        setUnits(board.units);
+        setMovement(board.movement);
+        setPlayerFaction(board.playerFaction);
+        setMatchId(board.matchId);
+        setReady(true);
+        if (board.matchId !== initialMatchId) router.replace(`/play/${board.matchId}`);
+      })
+      .catch(() => {
+        if (active) setLoadError("error");
+      });
     return () => {
       active = false;
     };
-  }, [initialMatchId, router]);
+  }, [initialMatchId, router, attempt]);
 
   useEffect(() => {
     if (toast === null) return undefined;
@@ -147,6 +160,16 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     router.push(`/play/${board.matchId}`);
   };
 
+  if (loadError !== null) {
+    return (
+      <BoardLoadError
+        reason={loadError}
+        onRetry={() => {
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  }
   if (!ready) return <p role="status">Loading the campaign…</p>;
 
   return (

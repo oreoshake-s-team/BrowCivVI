@@ -27,6 +27,10 @@ export interface BoardView {
   readonly playerFaction: string;
 }
 
+export type LoadBoardResult =
+  | { readonly status: "ok"; readonly board: BoardView }
+  | { readonly status: "not-found" };
+
 export interface MoveOutcome {
   readonly ok: boolean;
   readonly units: readonly Unit[];
@@ -117,8 +121,14 @@ function boardView(match: MatchState): BoardView {
   };
 }
 
-export async function loadBoard(matchId?: string): Promise<BoardView> {
-  return boardView(await resolveMatch(matchId));
+export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {
+  const owner = await currentOwner();
+  const store = getStore();
+  if (matchId !== undefined) {
+    const owned = await loadOwned(store, owner, matchId);
+    return owned === null ? { status: "not-found" } : { status: "ok", board: boardView(owned) };
+  }
+  return { status: "ok", board: boardView(await getOrCreateDefault(store, owner)) };
 }
 
 export async function newGame(): Promise<BoardView> {

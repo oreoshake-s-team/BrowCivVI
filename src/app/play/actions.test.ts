@@ -2,7 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { FIRST_SLICE_UNITS } from "@/content/firstSlice";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
-import { loadBoard, newGame, move, attack, targetsFor } from "./actions";
+import { loadBoard, newGame, move, attack, targetsFor, type BoardView } from "./actions";
 
 const { getAuth0Mock, intentAllowedMock } = vi.hoisted(() => ({
   getAuth0Mock: vi.fn(),
@@ -50,10 +50,16 @@ afterEach(() => {
   getAuth0Mock.mockReset();
 });
 
+async function loadOk(matchId: string): Promise<BoardView> {
+  const result = await loadBoard(matchId);
+  if (result.status !== "ok") throw new Error(`expected ok, got ${result.status}`);
+  return result.board;
+}
+
 describe("Server Action intent channel against the in-memory store", () => {
   it("creates a match for the caller and returns the authored roster", async () => {
     const board = await newGame();
-    const loaded = await loadBoard(board.matchId);
+    const loaded = await loadOk(board.matchId);
     expect(board.matchId).not.toBe("");
     expect(loaded.matchId).toBe(board.matchId);
     expect(loaded.units.length).toBe(FIRST_SLICE_UNITS.length);
@@ -64,7 +70,7 @@ describe("Server Action intent channel against the in-memory store", () => {
     const targets = await targetsFor(board.matchId, PHALANX);
     const dest = targets.reachable[0]!;
     const outcome = await move(board.matchId, PHALANX, dest);
-    const reloaded = await loadBoard(board.matchId);
+    const reloaded = await loadOk(board.matchId);
     expect(outcome.ok).toBe(true);
     expect(hexKey(unitHex(outcome.units, PHALANX)!)).toBe(hexKey(dest));
     expect(hexKey(unitHex(reloaded.units, PHALANX)!)).toBe(hexKey(dest));
@@ -74,7 +80,7 @@ describe("Server Action intent channel against the in-memory store", () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, COMPANIONS);
     const outcome = await move(board.matchId, COMPANIONS, ABYDOS);
-    const reloaded = await loadBoard(board.matchId);
+    const reloaded = await loadOk(board.matchId);
     expect(targets.reachable.some((hex) => hexKey(hex) === hexKey(ABYDOS))).toBe(true);
     expect(outcome.ok).toBe(true);
     expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(ABYDOS));
@@ -83,7 +89,7 @@ describe("Server Action intent channel against the in-memory store", () => {
   it("rejects ending a move on a tile held by a friendly unit", async () => {
     const board = await newGame();
     const outcome = await move(board.matchId, COMPANIONS, PHALANX_START);
-    const reloaded = await loadBoard(board.matchId);
+    const reloaded = await loadOk(board.matchId);
     expect(outcome.ok).toBe(false);
     expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(COMPANIONS_START));
   });
@@ -119,7 +125,7 @@ describe("Server Action intent channel against the in-memory store", () => {
   it("rejects an out-of-range move and leaves the unit where it started", async () => {
     const board = await newGame();
     const outcome = await move(board.matchId, PHALANX, OFF_MAP);
-    const reloaded = await loadBoard(board.matchId);
+    const reloaded = await loadOk(board.matchId);
     expect(outcome.ok).toBe(false);
     expect(hexKey(unitHex(reloaded.units, PHALANX)!)).toBe(hexKey(PHALANX_START));
   });
@@ -156,5 +162,24 @@ describe("Server Action intent channel against the in-memory store", () => {
     intentAllowedMock.mockResolvedValueOnce(false);
     const outcome = await move(board.matchId, PHALANX, PHALANX_START);
     expect(outcome.rateLimited).toBe(true);
+  });
+});
+
+describe("loadBoard not-found handling", () => {
+  it("reports not-found for an unknown match id", async () => {
+    const result = await loadBoard("no-such-match");
+    expect(result.status).toBe("not-found");
+  });
+
+  it("reports not-found for a match owned by another player", async () => {
+    const other = await newGame();
+    signIn("auth0|player-two");
+    const result = await loadBoard(other.matchId);
+    expect(result.status).toBe("not-found");
+  });
+
+  it("creates and returns the default match when given no id", async () => {
+    const result = await loadBoard();
+    expect(result.status).toBe("ok");
   });
 });
