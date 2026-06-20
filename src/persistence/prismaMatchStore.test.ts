@@ -44,7 +44,7 @@ function storedRow(version: number) {
 }
 
 describe("PrismaMatchStore", () => {
-  it("loads and upcasts a stored match", async () => {
+  it("loads and decodes a stored match", async () => {
     const { prisma, store } = storeWith();
     prisma.match.findUnique.mockResolvedValue(storedRow(5));
     expect((await store.load("m1"))?.id).toBe("m1");
