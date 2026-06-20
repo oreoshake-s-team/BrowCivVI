@@ -1,5 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { databaseEndpoint, selectMigrateUrl, selectRuntimeUrl } from "./migrateUrl.ts";
+import {
+  databaseEndpoint,
+  migrateFailureIsFatal,
+  selectMigrateUrl,
+  selectRuntimeUrl,
+} from "./migrateUrl.ts";
 
 function run(args: string[], env: NodeJS.ProcessEnv): void {
   execFileSync("pnpm", ["exec", ...args], { stdio: "inherit", env });
@@ -33,7 +38,16 @@ function main(): void {
       target = "unparseable host";
     }
     console.log(`build: applying database migrations (prisma migrate deploy) → ${target}`);
-    run(["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: migrateUrl });
+    try {
+      run(["prisma", "migrate", "deploy"], { ...process.env, DATABASE_URL: migrateUrl });
+    } catch (error) {
+      if (migrateFailureIsFatal(process.env)) throw error;
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `build: prisma migrate deploy failed (${detail}); continuing without applied ` +
+          `migrations because this is a non-production build`,
+      );
+    }
   }
   run(["next", "build", "--turbopack"], process.env);
 }

@@ -1,3 +1,7 @@
+export function migrateFailureIsFatal(env: Record<string, string | undefined>): boolean {
+  return env.VERCEL_ENV === "production";
+}
+
 export function selectMigrateUrl(env: Record<string, string | undefined>): string | undefined {
   const keys =
     env.VERCEL_ENV === "preview"
