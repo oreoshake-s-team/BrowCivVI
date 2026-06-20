@@ -2,18 +2,25 @@
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as actions from "@/app/play/actions";
-import type { BoardView, MoveOutcome, AttackOutcome, SelectionTargets } from "@/app/play/actions";
+import type {
+  BoardView,
+  LoadBoardResult,
+  MoveOutcome,
+  AttackOutcome,
+  SelectionTargets,
+} from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
 import { hexToPixel } from "@/engine/map/layout";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
 import type { Unit } from "@/engine/unit/types";
 import { PlayBoard } from "./PlayBoard";
 
-const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+const { pushMock, replaceMock } = vi.hoisted(() => ({ pushMock: vi.fn(), replaceMock: vi.fn() }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn(), push: pushMock }),
-}));
+vi.mock("next/navigation", () => {
+  const router = { replace: replaceMock, push: pushMock };
+  return { useRouter: () => router };
+});
 
 vi.mock("@/app/play/actions", () => ({
   loadBoard: vi.fn(),
@@ -61,11 +68,14 @@ async function selectMover(container: HTMLElement): Promise<void> {
 describe("PlayBoard intent flow against mocked Server Actions", () => {
   beforeEach(() => {
     vi.mocked(actions.loadBoard).mockResolvedValue({
-      matchId: MATCH_ID,
-      units: SAMPLE_UNITS,
-      movement: NO_MOVEMENT,
-      playerFaction: "macedon",
-    } satisfies BoardView);
+      status: "ok",
+      board: {
+        matchId: MATCH_ID,
+        units: SAMPLE_UNITS,
+        movement: NO_MOVEMENT,
+        playerFaction: "macedon",
+      },
+    } satisfies LoadBoardResult);
     vi.mocked(actions.targetsFor).mockResolvedValue({
       reachable: [DEST],
       attackable: [ENEMY_HEX],
@@ -186,5 +196,35 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       expect(actions.newGame).toHaveBeenCalled();
     });
     expect(pushMock).toHaveBeenCalledWith(`/play/${NEW_MATCH_ID}`);
+  });
+
+  it("shows the load-error state and recovers when the load is retried", async () => {
+    vi.mocked(actions.loadBoard)
+      .mockReset()
+      .mockRejectedValueOnce(new Error("load failed"))
+      .mockResolvedValue({
+        status: "ok",
+        board: {
+          matchId: MATCH_ID,
+          units: SAMPLE_UNITS,
+          movement: NO_MOVEMENT,
+          playerFaction: "macedon",
+        },
+      } satisfies LoadBoardResult);
+
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByRole("button", { name: /Pezhetairos \(macedon\)/ })).not.toBeNull();
+  });
+
+  it("shows the not-found state for an unknown campaign", async () => {
+    vi.mocked(actions.loadBoard)
+      .mockReset()
+      .mockResolvedValue({ status: "not-found" } satisfies LoadBoardResult);
+
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId="ghost" />);
+
+    expect(await screen.findByText(/faded from the annals/)).not.toBeNull();
   });
 });

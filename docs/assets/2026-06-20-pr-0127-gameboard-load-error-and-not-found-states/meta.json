@@ -1,0 +1,11 @@
+{
+  "pr": 127,
+  "date": "2026-06-20",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "not-found-state.webp",
+    "server-error-state.webp"
+  ],
+  "issue": 120,
+  "title": "Gameboard load error and not-found states"
+}
