@@ -60,4 +60,15 @@ describe("decodeMatchState", () => {
     const legacy = { ...STATE, schemaVersion: 2, events: [event] };
     expect(decodeMatchState(legacy).events).toEqual([event]);
   });
+
+  it("defaults city state to empty when it is absent", () => {
+    const legacy = { ...STATE, cities: undefined };
+    expect(decodeMatchState(legacy).cities).toEqual([]);
+  });
+
+  it("preserves existing city state", () => {
+    const city = { id: "sardis", owner: "persia", hp: 192 };
+    const stored = { ...STATE, cities: [city] };
+    expect(decodeMatchState(stored).cities).toEqual([city]);
+  });
 });
