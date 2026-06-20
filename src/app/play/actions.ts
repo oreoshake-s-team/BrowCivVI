@@ -4,12 +4,12 @@ import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlic
 import { applyAttack } from "@/engine/combat/applyAttack";
 import { attackableHexes } from "@/engine/combat/targets";
 import type { Hex } from "@/engine/hex";
-import { neighbors } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { entryCost, riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
 import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
+import { enemyZoneOfControl } from "@/engine/movement/zoneOfControl";
 import { createRng } from "@/engine/rng";
 import { advanceTurn, type TurnContext } from "@/engine/turn/turn";
 import { unitTypeById } from "@/engine/unit/catalog";
@@ -62,26 +62,25 @@ interface MovementConstraints {
   readonly zoneOfControl: ReadonlySet<string>;
 }
 
+const RIVER_EDGES = riverEdgeSet(FIRST_SLICE_MAP.rivers);
+
 function movementConstraints(match: MatchState, unit: Unit): MovementConstraints {
   const moverLayer = layerOf(unit.typeId);
   const blocked = new Set<string>();
   const blockedDestinations = new Set<string>();
-  const zoneOfControl = new Set<string>();
   for (const other of match.units) {
     if (other.id === unit.id) continue;
-    if (other.owner !== unit.owner) {
-      blocked.add(hexKey(other.hex));
-      if (layerOf(other.typeId) === "military") {
-        for (const hex of neighbors(other.hex)) zoneOfControl.add(hexKey(hex));
-      }
-    } else if (layerOf(other.typeId) === moverLayer) {
-      blockedDestinations.add(hexKey(other.hex));
-    }
+    if (other.owner !== unit.owner) blocked.add(hexKey(other.hex));
+    else if (layerOf(other.typeId) === moverLayer) blockedDestinations.add(hexKey(other.hex));
   }
+  const zoneOfControl = enemyZoneOfControl(
+    match.units,
+    unit.owner,
+    (typeId) => layerOf(typeId) === "military",
+    RIVER_EDGES,
+  );
   return { blocked, blockedDestinations, zoneOfControl };
 }
-
-const RIVER_EDGES = riverEdgeSet(FIRST_SLICE_MAP.rivers);
 
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
   const constraints = movementConstraints(match, unit);

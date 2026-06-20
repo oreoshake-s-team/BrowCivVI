@@ -29,8 +29,8 @@ const PER_IMMORTALS = "per-immortals";
 const PHALANX_START: Hex = { q: 5, r: 1 };
 const COMPANIONS_START: Hex = { q: 6, r: 1 };
 const ABYDOS: Hex = { q: 5, r: 0 };
-const ZOC_STOP: Hex = { q: 6, r: 2 };
-const BEYOND_ZOC: Hex = { q: 6, r: 3 };
+const WEST_MID: Hex = { q: 6, r: 2 };
+const WEST_DEEP: Hex = { q: 6, r: 3 };
 const OFF_MAP: Hex = { q: 99, r: 99 };
 
 function unitHex(units: readonly { id: string; hex: Hex }[], id: string): Hex | undefined {
@@ -94,26 +94,26 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(COMPANIONS_START));
   });
 
-  it("halts movement on entering an enemy zone of control", async () => {
+  it("does not project an enemy zone of control across the Granicus", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, COMPANIONS);
     const keys = targets.reachable.map((hex) => hexKey(hex));
-    expect(keys).toContain(hexKey(ZOC_STOP));
-    expect(keys).not.toContain(hexKey(BEYOND_ZOC));
+    expect(keys).toContain(hexKey(WEST_MID));
+    expect(keys).toContain(hexKey(WEST_DEEP));
   });
 
-  it("keeps its move points but cannot move again after entering a zone of control", async () => {
+  it("keeps moving across a bank the river shields from enemy zone of control", async () => {
     const board = await newGame();
-    const entered = await move(board.matchId, PHALANX, ZOC_STOP);
-    const again = await move(board.matchId, PHALANX, PHALANX_START);
+    const entered = await move(board.matchId, PHALANX, WEST_MID);
+    const targets = await targetsFor(board.matchId, PHALANX);
     expect(entered.ok).toBe(true);
     expect(entered.movement[PHALANX]).toBe(1);
-    expect(again.ok).toBe(false);
+    expect(targets.reachable.length).toBeGreaterThan(0);
   });
 
   it("a melee that crosses the Granicus spends all its moves and cannot attack", async () => {
     const board = await newGame();
-    const crossed = await move(board.matchId, PER_IMMORTALS, ZOC_STOP);
+    const crossed = await move(board.matchId, PER_IMMORTALS, WEST_MID);
     const targets = await targetsFor(board.matchId, PER_IMMORTALS);
     const blocked = await attack(board.matchId, PER_IMMORTALS, COMPANIONS);
     expect(crossed.ok).toBe(true);
