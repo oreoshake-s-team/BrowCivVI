@@ -74,6 +74,8 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         units: SAMPLE_UNITS,
         movement: NO_MOVEMENT,
         playerFaction: "macedon",
+        turn: 1,
+        activeFaction: "macedon",
       },
     } satisfies LoadBoardResult);
     vi.mocked(actions.targetsFor).mockResolvedValue({
@@ -186,6 +188,8 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       units: SAMPLE_UNITS,
       movement: NO_MOVEMENT,
       playerFaction: "macedon",
+      turn: 1,
+      activeFaction: "macedon",
     } satisfies BoardView);
 
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -209,6 +213,8 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
           units: SAMPLE_UNITS,
           movement: NO_MOVEMENT,
           playerFaction: "macedon",
+          turn: 1,
+          activeFaction: "macedon",
         },
       } satisfies LoadBoardResult);
 

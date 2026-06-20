@@ -1,6 +1,6 @@
 import type { Unit } from "../unit/types";
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 export interface MatchState {
   readonly id: string;
@@ -11,6 +11,8 @@ export interface MatchState {
   readonly mapId: string;
   readonly turn: number;
   readonly turnLimit: number;
+  readonly turnOrder: readonly string[];
+  readonly activeFaction: string;
   readonly units: readonly Unit[];
   readonly movement: Readonly<Record<string, number>>;
 }
@@ -23,11 +25,13 @@ export interface CreateMatchInput {
   readonly units: readonly Unit[];
   readonly movementOf: (typeId: string) => number;
   readonly owner?: string | null;
+  readonly factions?: readonly string[];
 }
 
 export function createMatch(input: CreateMatchInput): MatchState {
   const movement: Record<string, number> = {};
   for (const unit of input.units) movement[unit.id] = input.movementOf(unit.typeId);
+  const turnOrder = input.factions ?? [...new Set(input.units.map((unit) => unit.owner))];
   return {
     id: input.id,
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -37,6 +41,8 @@ export function createMatch(input: CreateMatchInput): MatchState {
     mapId: input.mapId,
     turn: 1,
     turnLimit: input.turnLimit,
+    turnOrder,
+    activeFaction: turnOrder[0] ?? "",
     units: input.units,
     movement,
   };

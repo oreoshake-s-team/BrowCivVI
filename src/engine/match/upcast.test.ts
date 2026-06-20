@@ -35,4 +35,14 @@ describe("upcastMatchState", () => {
   it("throws for a non-object value", () => {
     expect(() => upcastMatchState("nope")).toThrow(UnknownSchemaError);
   });
+
+  it("derives turn order from unit owners when upcasting a v1 record", () => {
+    const v1 = { schemaVersion: 1, units: [{ owner: "macedon" }, { owner: "persia" }] };
+    expect(upcastMatchState(v1).turnOrder).toEqual(["macedon", "persia"]);
+  });
+
+  it("activates the first faction when upcasting a v1 record", () => {
+    const v1 = { schemaVersion: 1, units: [{ owner: "macedon" }, { owner: "persia" }] };
+    expect(upcastMatchState(v1).activeFaction).toBe("macedon");
+  });
 });
