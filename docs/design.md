@@ -233,7 +233,7 @@ The server is the only authority on whether an intent is legal. `incite` is reje
 
 ## 9. First-PR slice & roadmap
 
-Each PR keeps **app-code changes under ~150 lines** (excl. tests/CSS/config), per repo policy. Proposed sequence:
+Each PR keeps **app-code changes under ~300 lines** (`src/` `.ts`/`.tsx`; excl. tests/CSS/config/tooling/generated/docs), per repo policy. Proposed sequence:
 
 1. **Repo + skeleton** — Next.js app, TS strict config, test runner, CI, this doc.
 2. **Engine core (no UI)** — types for `Hex`, `Unit`, `MatchState`; `createMatch(seed)`; pure `applyIntent`; seeded RNG. Exhaustive unit tests. _No rendering._
