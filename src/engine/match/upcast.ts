@@ -25,6 +25,14 @@ function upcastV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+function upcastV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...raw,
+    schemaVersion: 3,
+    events: Array.isArray(raw.events) ? raw.events : [],
+  };
+}
+
 export function upcastMatchState(raw: unknown): MatchState {
   if (typeof raw !== "object" || raw === null) {
     throw new UnknownSchemaError(-1);
@@ -32,6 +40,9 @@ export function upcastMatchState(raw: unknown): MatchState {
   let current = raw as Record<string, unknown>;
   if (current.schemaVersion === 1) {
     current = upcastV1ToV2(current);
+  }
+  if (current.schemaVersion === 2) {
+    current = upcastV2ToV3(current);
   }
   if (current.schemaVersion === CURRENT_SCHEMA_VERSION) {
     return current as unknown as MatchState;

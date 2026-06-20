@@ -4,6 +4,7 @@ import type { Hex } from "../hex";
 import { hexDistance } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
+import { appendAttack, appendMove } from "../match/events";
 import type { MatchState } from "../match/state";
 import { domainOf, movementConstraints } from "../movement/constraints";
 import { riverEdgeKey } from "../movement/cost";
@@ -75,7 +76,12 @@ function attack(
     riverAttack: riverEdges.has(riverEdgeKey(attacker.hex, defender.hex)),
     rng,
   });
-  return { ...state, units: application.units, movement: application.movement };
+  return {
+    ...state,
+    units: application.units,
+    movement: application.movement,
+    events: appendAttack(state.events, state.turn, attacker, defender, application),
+  };
 }
 
 function stepToward(
@@ -116,6 +122,7 @@ function stepToward(
       current.id === unit.id ? { ...current, hex: result.hex, hasMovedThisTurn: true } : current,
     ),
     movement: { ...state.movement, [unit.id]: result.remaining },
+    events: appendMove(state.events, state.turn, unit, unit.hex, result.hex),
   };
 }
 

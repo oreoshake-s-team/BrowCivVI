@@ -77,6 +77,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         playerFaction: "macedon",
         turn: 1,
         activeFaction: "macedon",
+        events: [],
       },
     } satisfies LoadBoardResult);
     vi.mocked(actions.targetsFor).mockResolvedValue({
@@ -191,6 +192,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       playerFaction: "macedon",
       turn: 1,
       activeFaction: "macedon",
+      events: [],
     } satisfies BoardView);
 
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -216,6 +218,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
           playerFaction: "macedon",
           turn: 1,
           activeFaction: "macedon",
+          events: [],
         },
       } satisfies LoadBoardResult);
 
@@ -249,6 +252,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       playerFaction: "macedon",
       turn: 2,
       activeFaction: "macedon",
+      events: [],
     } satisfies BoardView);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
     fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
@@ -266,6 +270,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         playerFaction: "macedon",
         turn: 1,
         activeFaction: "macedon",
+        events: [],
       },
     } satisfies LoadBoardResult);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);

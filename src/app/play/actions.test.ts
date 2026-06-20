@@ -76,6 +76,14 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(hexKey(unitHex(reloaded.units, PHALANX)!)).toBe(hexKey(dest));
   });
 
+  it("records a player move in the authoritative event log", async () => {
+    const board = await newGame();
+    const targets = await targetsFor(board.matchId, PHALANX);
+    await move(board.matchId, PHALANX, targets.reachable[0]!);
+    const reloaded = await loadOk(board.matchId);
+    expect(reloaded.events.at(-1)).toMatchObject({ kind: "move", unitId: PHALANX });
+  });
+
   it("moves a unit through a friendly unit to a tile beyond it", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, COMPANIONS);
@@ -138,10 +146,12 @@ describe("Server Action intent channel against the in-memory store", () => {
     const persiaActed = after.units.some(
       (unit) => unit.owner === "persia" && unit.hasAttackedThisTurn === true,
     );
+    const persiaLogged = after.events.some((event) => event.faction === "persia");
     expect(after.turn).toBe(2);
     expect(after.activeFaction).toBe("macedon");
     expect(after.movement[PHALANX]).toBe(2);
     expect(persiaActed).toBe(true);
+    expect(persiaLogged).toBe(true);
   });
 
   it("resolves a legal adjacent attack with seeded damage", async () => {
@@ -151,6 +161,17 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(targets.attackable.length).toBeGreaterThan(0);
     expect(outcome.ok).toBe(true);
     expect(outcome.defenderDamage!).toBeGreaterThan(0);
+  });
+
+  it("records a resolved attack in the authoritative event log", async () => {
+    const board = await newGame();
+    await attack(board.matchId, COMPANIONS, PER_CAVALRY);
+    const reloaded = await loadOk(board.matchId);
+    expect(reloaded.events.at(-1)).toMatchObject({
+      kind: "attack",
+      unitId: COMPANIONS,
+      targetId: PER_CAVALRY,
+    });
   });
 
   it("rejects an attack on a friendly unit", async () => {

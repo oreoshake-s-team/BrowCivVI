@@ -1,6 +1,7 @@
 import type { Unit } from "../unit/types";
+import type { MatchEvent } from "./events";
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export interface MatchState {
   readonly id: string;
@@ -15,6 +16,7 @@ export interface MatchState {
   readonly activeFaction: string;
   readonly units: readonly Unit[];
   readonly movement: Readonly<Record<string, number>>;
+  readonly events: readonly MatchEvent[];
 }
 
 export interface CreateMatchInput {
@@ -45,5 +47,6 @@ export function createMatch(input: CreateMatchInput): MatchState {
     activeFaction: turnOrder[0] ?? "",
     units: input.units,
     movement,
+    events: [],
   };
 }
