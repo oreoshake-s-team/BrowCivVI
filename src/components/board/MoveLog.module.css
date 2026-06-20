@@ -1,12 +1,10 @@
 .panel {
   display: flex;
   flex-direction: column;
-  width: 22rem;
-  max-width: 100%;
-  max-height: 32rem;
-  padding: var(--space-md);
+  max-height: 24rem;
+  padding: var(--space-md) var(--space-lg);
   background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-muted);
   border-radius: var(--radius-md);
 }
 
