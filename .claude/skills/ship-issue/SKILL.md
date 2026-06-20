@@ -12,7 +12,7 @@ Implement a GitHub issue from start to a merge-ready green PR. Drive the entire 
 - Never commit directly to `main`. Always work in a worktree + branch (CLAUDE.md).
 - Match **authentic history and authentic Civ 6 effects** — do not invent placeholder mechanics. Reference `docs/design.md` (and its citations), the Civ 6 wiki, or ask the user if unsure. The authored baseline (the 334 BC opening at the Granicus, map, geography, content) must be historically exact; geography is enforced, dates are flavor (design §10).
 - Before acting on any ambiguous term (e.g. **Royal Road**, **Immortals**, **Hetairoi**, **phalangites / sarissa**, **satrapy**, **flanking**, **great general**, **divergence node**, **hex**), restate in one line what the issue covers and flag terms that could be a game/historical concept vs. a GitHub/tooling concept.
-- Keep app-code changes under ~150 lines (excl. tests/CSS/config). If it would exceed that, split into sub-issues and create follow-up tasks **before** proceeding (design §9).
+- Keep app-code changes under ~300 lines (`src/` `.ts`/`.tsx`; excl. tests/CSS/config/`scripts/` tooling/generated/docs). If it would exceed that, split into sub-issues and create follow-up tasks **before** proceeding (design §9).
 - Strict TypeScript — no `any`. Use `import`, not `require()` (this is an ESM project).
 - Client→server is **typed Server Actions only** (intents and authoritative per-viewer state both flow through Server Actions). No ad-hoc REST for game state (design §4).
 - The client is untrusted and near-stateless: it renders authoritative state and sends intents; game logic lives in the pure `/engine` and on the server (design §2–§4).
@@ -47,7 +47,7 @@ Run `pnpm install` before anything else and report whether it was nearly instant
 
 - Read the relevant source files (and `docs/design.md` for the area) before editing.
 - Write strict TypeScript — no `any`, no `require()`. Keep game logic in the pure `/engine` / server; the client only renders authoritative state and sends intents.
-- Keep each changed file under ~150 lines of app code.
+- Keep the PR's app-code change within the ~300-line budget (`src/` `.ts`/`.tsx`; tests/CSS/config/tooling excluded); split if larger.
 - Add or update CSS in the component's own CSS file; do not add inline styles.
 - Build for accessibility and i18n (keyboard board navigation, screen-reader labels, contrast, no hard-coded user-facing strings).
 
@@ -117,7 +117,7 @@ One sentence: PR link, Vercel preview link, and CI status as they become availab
 
 - Issue requirements are genuinely ambiguous after reading the issue body.
 - A UI/UX decision is unresolved — run the design-question gate above.
-- Implementation would exceed ~150 app-code lines — create sub-issues first.
+- Implementation would exceed ~300 app-code lines — create sub-issues first.
 - A test failure requires a design decision outside the issue scope.
 
 State the blocker in one sentence; do not stop silently.

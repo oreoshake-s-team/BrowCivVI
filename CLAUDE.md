@@ -25,7 +25,7 @@ The author is still learning frontend and relies on Claude to surface design dec
 - Squash all PRs into a single commit instead of merging/rebasing. Exception: follow-up commits based on feedback.
 - When creating a follow-up commit, record the feedback as an issue comment.
 - All functionality must have test coverage.
-- If a change requires more than 150 lines of changes to application code (excluding CSS, tests, config, etc), split it up into multiple changes and create followup tasks.
+- If a change exceeds **~300 lines of hand-written application code** — `src/**` `.ts`/`.tsx`, **excluding** test files (`*.test.ts`/`*.test.tsx`), CSS, config, `scripts/` tooling, generated code, docs, and JSON/lockfiles — split it into multiple changes and create follow-up tasks. The bar is a PR that reviews well in one sitting, not smallness for its own sake.
 - Code should be as compartmentalized as possible, including CSS.
 - Code should be written in strict typescript, no use of any types.
 - Typed Next.js Server Actions are the required client–server contract (intents and authoritative per-viewer state both flow through Server Actions); no ad-hoc REST endpoints for game state (design §4).
@@ -77,7 +77,7 @@ Consult `docs/design.md` before diving into unfamiliar areas — it is the singl
 - §5 — game model (hex map, data-driven units/factions, turn structure, swappable combat module, per-faction scoring).
 - §6 — the `Intent` / `SubmitResult` contract.
 - §7 — the pure, seeded, server-side AI opponent.
-- §9 — the PR-by-PR roadmap (each slice ≤ ~150 app-code lines).
+- §9 — the PR-by-PR roadmap (each slice ≤ ~300 app-code lines).
 - §10–§12 — historical accuracy, the educational media layer, and divergence nodes.
 - §13 — the data-driven faction/unit/effect mechanics catalog.
 - §14 — open questions still pending the author's decision.
