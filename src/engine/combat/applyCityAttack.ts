@@ -60,7 +60,11 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
 
   const cities = input.cities.map((candidate) =>
     candidate.id === input.cityId
-      ? { ...candidate, hp: Math.max(0, candidate.hp - result.defenderDamage) }
+      ? {
+          ...candidate,
+          hp: Math.max(0, candidate.hp - result.defenderDamage),
+          attackedThisTurn: true,
+        }
       : candidate,
   );
 

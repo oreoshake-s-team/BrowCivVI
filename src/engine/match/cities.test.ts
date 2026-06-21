@@ -3,8 +3,10 @@ import { createGameMap, hexKey, type City } from "../map/types";
 import {
   blockingCityHexes,
   captureCityAt,
+  CITY_HEAL_RATE,
   CITY_HP_PER_DEFENSE,
   cityMaxHp,
+  healCities,
   seedCities,
   type CityState,
 } from "./cities";
@@ -107,5 +109,33 @@ describe("blockingCityHexes", () => {
       "macedon",
     );
     expect(blocks.size).toBe(0);
+  });
+});
+
+describe("healCities", () => {
+  const max = () => 100;
+
+  it("heals an un-attacked faction city by the heal rate", () => {
+    const healed = healCities([{ id: "s", owner: "macedon", hp: 50 }], "macedon", max);
+    expect(healed[0]?.hp).toBe(50 + CITY_HEAL_RATE);
+  });
+
+  it("caps healing at the city's max HP", () => {
+    const healed = healCities([{ id: "s", owner: "macedon", hp: 95 }], "macedon", max);
+    expect(healed[0]?.hp).toBe(100);
+  });
+
+  it("does not heal a city attacked this turn but clears its flag", () => {
+    const healed = healCities(
+      [{ id: "s", owner: "macedon", hp: 50, attackedThisTurn: true }],
+      "macedon",
+      max,
+    );
+    expect([healed[0]?.hp, healed[0]?.attackedThisTurn]).toEqual([50, false]);
+  });
+
+  it("leaves another faction's city untouched", () => {
+    const healed = healCities([{ id: "s", owner: "persia", hp: 50 }], "macedon", max);
+    expect(healed[0]?.hp).toBe(50);
   });
 });

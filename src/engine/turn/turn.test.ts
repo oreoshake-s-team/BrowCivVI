@@ -3,7 +3,7 @@ import { createMatch, type MatchState } from "../match/state";
 import type { Unit } from "../unit/types";
 import { advanceTurn, type TurnContext } from "./turn";
 
-const ctx: TurnContext = { movementOf: () => 4 };
+const ctx: TurnContext = { movementOf: () => 4, cityMaxHp: () => 100 };
 
 function unit(id: string, owner: string, hasMovedThisTurn = false): Unit {
   return {
@@ -65,5 +65,40 @@ describe("advanceTurn", () => {
     });
     const macedon = advanceTurn(m, ctx).units.find((u) => u.id === "mac");
     expect(macedon?.hasAttackedThisTurn).toBe(false);
+  });
+});
+
+describe("advanceTurn city healing", () => {
+  function withCity(over: Partial<{ hp: number; attackedThisTurn: boolean }>): MatchState {
+    return match({
+      activeFaction: "persia",
+      cities: [{ id: "sardis", owner: "macedon", hp: 50, ...over }],
+    });
+  }
+
+  it("heals an un-attacked city of the incoming faction toward max", () => {
+    expect(advanceTurn(withCity({}), ctx).cities[0]?.hp).toBe(70);
+  });
+
+  it("does not heal a city attacked during the round", () => {
+    expect(advanceTurn(withCity({ attackedThisTurn: true }), ctx).cities[0]?.hp).toBe(50);
+  });
+
+  it("never heals beyond the city's max HP", () => {
+    expect(advanceTurn(withCity({ hp: 95 }), ctx).cities[0]?.hp).toBe(100);
+  });
+
+  it("clears the attacked-this-turn flag after the heal pass", () => {
+    expect(advanceTurn(withCity({ attackedThisTurn: true }), ctx).cities[0]?.attackedThisTurn).toBe(
+      false,
+    );
+  });
+
+  it("leaves an off-turn faction's city untouched", () => {
+    const m = match({
+      activeFaction: "macedon",
+      cities: [{ id: "sardis", owner: "macedon", hp: 50 }],
+    });
+    expect(advanceTurn(m, ctx).cities[0]?.hp).toBe(50);
   });
 });

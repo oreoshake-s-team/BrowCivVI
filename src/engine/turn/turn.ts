@@ -1,14 +1,20 @@
+import { healCities } from "../match/cities";
 import type { MatchState } from "../match/state";
 import { applyOutOfSupplyAttrition } from "../supply/attrition";
 
 export interface TurnContext {
   readonly movementOf: (typeId: string) => number;
+  readonly cityMaxHp: (cityId: string) => number;
 }
 
 export type TurnPhase = (state: MatchState, faction: string, ctx: TurnContext) => MatchState;
 
 function outOfSupplyAttrition(state: MatchState, faction: string): MatchState {
   return applyOutOfSupplyAttrition(state, faction);
+}
+
+function healFactionCities(state: MatchState, faction: string, ctx: TurnContext): MatchState {
+  return { ...state, cities: healCities(state.cities, faction, ctx.cityMaxHp) };
 }
 
 function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): MatchState {
@@ -22,7 +28,11 @@ function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): 
   return { ...state, units, movement };
 }
 
-export const TURN_START_PHASES: readonly TurnPhase[] = [restoreMovement, outOfSupplyAttrition];
+export const TURN_START_PHASES: readonly TurnPhase[] = [
+  restoreMovement,
+  healFactionCities,
+  outOfSupplyAttrition,
+];
 export const TURN_END_PHASES: readonly TurnPhase[] = [];
 
 function runPhases(

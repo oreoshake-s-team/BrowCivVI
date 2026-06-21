@@ -6,13 +6,28 @@ export interface CityState {
   readonly id: string;
   readonly owner: string | null;
   readonly hp: number;
+  readonly attackedThisTurn?: boolean;
 }
 
 export const CITY_HP_PER_DEFENSE = 8;
 export const CITY_CAPTURE_HP_FRACTION = 0.5;
+export const CITY_HEAL_RATE = 20;
 
 export function cityMaxHp(defense: number): number {
   return defense * CITY_HP_PER_DEFENSE;
+}
+
+export function healCities(
+  cities: readonly CityState[],
+  faction: string,
+  maxHpOf: (cityId: string) => number,
+): readonly CityState[] {
+  return cities.map((city) => {
+    if (city.owner !== faction) return city;
+    if (city.attackedThisTurn === true) return { ...city, attackedThisTurn: false };
+    const healed = Math.min(maxHpOf(city.id), city.hp + CITY_HEAL_RATE);
+    return healed === city.hp ? city : { ...city, hp: healed };
+  });
 }
 
 export function seedCities(cities: readonly City[]): readonly CityState[] {

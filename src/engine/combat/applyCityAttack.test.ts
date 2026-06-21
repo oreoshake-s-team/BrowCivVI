@@ -64,4 +64,8 @@ describe("applyCityAttack", () => {
   it("a wounded attacker still deals less damage to a city", () => {
     expect(strike(200, 30).cityDamage).toBeLessThan(strike(200, 100).cityDamage);
   });
+
+  it("flags the besieged city as attacked this turn", () => {
+    expect(strike(200).cities.find((c) => c.id === "c1")?.attackedThisTurn).toBe(true);
+  });
 });
