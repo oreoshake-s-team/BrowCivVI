@@ -1,7 +1,17 @@
 import type { Citation } from "../content/citation";
 import type { MediaLink } from "../content/media";
+import { neighbors } from "../hex";
+import type { GameMap } from "../map/types";
+import { hexKey, parseHexKey } from "../map/types";
+import { clampLoyalty, factionPolarity } from "../match/cities";
 import type { DivergenceRecord, MatchState } from "../match/state";
 import { randomInt, type Rng } from "../rng";
+
+export const SCORCHED_LOYALTY_DRIFT = 20;
+
+export interface DivergenceContext {
+  readonly map: GameMap;
+}
 
 export interface MoraleEffect {
   readonly kind: "morale";
@@ -23,6 +33,7 @@ export interface HpEffect {
 
 export interface ScorchEffect {
   readonly kind: "scorch";
+  readonly faction: string;
   readonly hexes: readonly string[];
 }
 
@@ -75,7 +86,23 @@ export function pendingDivergence(
   );
 }
 
-export function applyDivergenceEffect(state: MatchState, effect: DivergenceEffect): MatchState {
+function scorchedRegionCities(hexes: readonly string[], map: GameMap): ReadonlySet<string> {
+  const burned = new Set(hexes);
+  for (const key of hexes) {
+    for (const cell of neighbors(parseHexKey(key))) burned.add(hexKey(cell));
+  }
+  const cityIds = new Set<string>();
+  for (const city of map.cities.values()) {
+    if (burned.has(hexKey(city.hex))) cityIds.add(city.id);
+  }
+  return cityIds;
+}
+
+export function applyDivergenceEffect(
+  state: MatchState,
+  effect: DivergenceEffect,
+  ctx?: DivergenceContext,
+): MatchState {
   if (effect.kind === "morale") {
     return {
       ...state,
@@ -94,7 +121,19 @@ export function applyDivergenceEffect(state: MatchState, effect: DivergenceEffec
     return { ...state, movement };
   }
   if (effect.kind === "scorch") {
-    return { ...state, scorched: [...new Set([...state.scorched, ...effect.hexes])] };
+    const scorched = [...new Set([...state.scorched, ...effect.hexes])];
+    if (ctx === undefined) return { ...state, scorched };
+    const region = scorchedRegionCities(effect.hexes, ctx.map);
+    const drift = -SCORCHED_LOYALTY_DRIFT * factionPolarity(effect.faction);
+    return {
+      ...state,
+      scorched,
+      cities: state.cities.map((city) =>
+        region.has(city.id)
+          ? { ...city, loyalty: clampLoyalty((city.loyalty ?? 0) + drift) }
+          : city,
+      ),
+    };
   }
   return {
     ...state,
@@ -116,12 +155,13 @@ export function resolveDivergenceNode(
   node: DivergenceNode,
   optionId: string,
   rng: Rng,
+  ctx?: DivergenceContext,
 ): DivergenceResolution | null {
   const chosen = playerOptions(node).find((option) => option.id === optionId);
   if (chosen === undefined) return null;
   const rival = seededRivalOption(node, rng);
   const effects = [...chosen.effects, ...(rival?.effects ?? [])];
-  const next = effects.reduce(applyDivergenceEffect, state);
+  const next = effects.reduce((acc, effect) => applyDivergenceEffect(acc, effect, ctx), state);
   const record: DivergenceRecord = { choice: chosen.id, rival: rival?.id ?? "" };
   return { state: { ...next, divergence: { ...next.divergence, [node.id]: record } }, record };
 }

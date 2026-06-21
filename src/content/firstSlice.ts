@@ -548,7 +548,7 @@ const GRANICUS_NODE: DivergenceNode = {
         "Memnon's counsel prevails — the satrapies are put to the torch, denying Alexander supply, though burning one's own land unsettles the host.",
       effects: [
         { kind: "morale", faction: "persia", delta: -4 },
-        { kind: "scorch", hexes: SCORCHED_SATRAPIES },
+        { kind: "scorch", faction: "persia", hexes: SCORCHED_SATRAPIES },
       ],
     },
   ],
