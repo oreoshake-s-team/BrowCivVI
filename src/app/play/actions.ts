@@ -34,6 +34,7 @@ import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { createRng } from "@/engine/rng";
 import { advanceTurn, type TurnContext } from "@/engine/turn/turn";
 import { unitTypeById } from "@/engine/unit/catalog";
+import { stackingLayerForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
 import { intentAllowed } from "@/server/rateLimit";
@@ -171,6 +172,11 @@ const TURN_CONTEXT: TurnContext = {
   movementOf: (typeId) => unitTypeById(typeId)?.movement ?? 0,
   cityMaxHp: (cityId) => cityMaxHp(FIRST_SLICE_MAP.cities.get(cityId)?.defense ?? 0),
   supply: { map: FIRST_SLICE_MAP, riverEdges: RIVER_EDGES },
+  loyalty: {
+    map: FIRST_SLICE_MAP,
+    isMilitary: (typeId) =>
+      stackingLayerForClass(unitTypeById(typeId)?.class ?? "civilian") === "military",
+  },
 };
 
 export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {
