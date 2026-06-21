@@ -75,6 +75,11 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(loaded.units.length).toBe(FIRST_SLICE_UNITS.length);
   });
 
+  it("surfaces per-faction city scores reflecting the authored holdings", async () => {
+    const board = await newGame();
+    expect([board.scores?.macedon ?? 0, board.scores?.persia ?? 0].every((s) => s > 0)).toBe(true);
+  });
+
   it("applies a legal move and persists it", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, PHALANX);
