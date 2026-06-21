@@ -238,7 +238,7 @@ export async function resolveDivergence(
   if (pending?.id !== nodeId) return { ok: false, board: boardView(match) };
 
   const rng = createRng((match.seed ^ 0x9e3779b9) >>> 0);
-  const resolved = resolveDivergenceNode(match, pending, optionId, rng);
+  const resolved = resolveDivergenceNode(match, pending, optionId, rng, { map: FIRST_SLICE_MAP });
   if (resolved === null) return { ok: false, board: boardView(match) };
 
   try {

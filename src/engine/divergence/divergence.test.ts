@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  FIRST_SLICE_CITIES,
   FIRST_SLICE_DIVERGENCE_NODES,
+  FIRST_SLICE_MAP,
   FIRST_SLICE_UNITS,
   SCORCHED_SATRAPIES,
 } from "@/content/firstSlice";
@@ -10,7 +12,9 @@ import {
   applyDivergenceEffect,
   pendingDivergence,
   resolveDivergenceNode,
+  SCORCHED_LOYALTY_DRIFT,
   seededRivalOption,
+  type ScorchEffect,
 } from "./divergence";
 
 const NODE = FIRST_SLICE_DIVERGENCE_NODES[0]!;
@@ -25,6 +29,23 @@ function match(): MatchState {
     movementOf: () => 4,
   });
 }
+
+function matchWithCities(): MatchState {
+  return createMatch({
+    id: "m1",
+    seed: 1,
+    mapId: "first-slice",
+    turnLimit: 20,
+    units: FIRST_SLICE_UNITS,
+    movementOf: () => 4,
+    cities: FIRST_SLICE_CITIES,
+  });
+}
+
+const SCORCH: ScorchEffect = { kind: "scorch", faction: "persia", hexes: SCORCHED_SATRAPIES };
+const MAP_CTX = { map: FIRST_SLICE_MAP };
+const loyaltyOf = (state: MatchState, id: string) =>
+  state.cities.find((city) => city.id === id)?.loyalty ?? 0;
 
 const macedonMorale = (state: MatchState) =>
   state.units.find((unit) => unit.id === "mac-phalanx")?.morale ?? 0;
@@ -94,14 +115,46 @@ describe("applyDivergenceEffect", () => {
   });
 
   it("records burned hexes from a scorch effect", () => {
-    const next = applyDivergenceEffect(match(), { kind: "scorch", hexes: ["7,2", "8,2"] });
+    const next = applyDivergenceEffect(match(), {
+      kind: "scorch",
+      faction: "persia",
+      hexes: ["7,2", "8,2"],
+    });
     expect(next.scorched).toEqual(["7,2", "8,2"]);
   });
 
   it("does not re-record an already-burned hex", () => {
-    const once = applyDivergenceEffect(match(), { kind: "scorch", hexes: ["7,2"] });
-    const twice = applyDivergenceEffect(once, { kind: "scorch", hexes: ["7,2", "8,2"] });
+    const once = applyDivergenceEffect(match(), {
+      kind: "scorch",
+      faction: "persia",
+      hexes: ["7,2"],
+    });
+    const twice = applyDivergenceEffect(once, {
+      kind: "scorch",
+      faction: "persia",
+      hexes: ["7,2", "8,2"],
+    });
     expect(twice.scorched).toEqual(["7,2", "8,2"]);
+  });
+
+  it("erodes a scorched satrapy's loyalty toward the enemy of the burner", () => {
+    const before = matchWithCities();
+    const after = applyDivergenceEffect(before, SCORCH, MAP_CTX);
+    expect(loyaltyOf(after, "dascylium") - loyaltyOf(before, "dascylium")).toBe(
+      SCORCHED_LOYALTY_DRIFT,
+    );
+  });
+
+  it("leaves cities outside the scorched region untouched", () => {
+    const before = matchWithCities();
+    const after = applyDivergenceEffect(before, SCORCH, MAP_CTX);
+    expect(loyaltyOf(after, "pella")).toBe(loyaltyOf(before, "pella"));
+  });
+
+  it("skips the loyalty cost when no map context is supplied", () => {
+    const before = matchWithCities();
+    const after = applyDivergenceEffect(before, SCORCH);
+    expect(loyaltyOf(after, "dascylium")).toBe(loyaltyOf(before, "dascylium"));
   });
 });
 
@@ -180,5 +233,31 @@ describe("resolveDivergenceNode", () => {
       createRng(seedFor("pitched")),
     );
     expect(resolved!.state.scorched).toEqual([]);
+  });
+
+  it("erodes satrapy loyalty when the rival commits to scorched earth", () => {
+    const before = matchWithCities();
+    const resolved = resolveDivergenceNode(
+      before,
+      NODE,
+      "reckless",
+      createRng(seedFor("scorched")),
+      MAP_CTX,
+    );
+    expect(loyaltyOf(resolved!.state, "dascylium") - loyaltyOf(before, "dascylium")).toBe(
+      SCORCHED_LOYALTY_DRIFT,
+    );
+  });
+
+  it("leaves satrapy loyalty intact when the rival gives pitched battle", () => {
+    const before = matchWithCities();
+    const resolved = resolveDivergenceNode(
+      before,
+      NODE,
+      "reckless",
+      createRng(seedFor("pitched")),
+      MAP_CTX,
+    );
+    expect(loyaltyOf(resolved!.state, "dascylium")).toBe(loyaltyOf(before, "dascylium"));
   });
 });
