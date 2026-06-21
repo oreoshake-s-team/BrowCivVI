@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Unit } from "../unit/types";
-import { createMatch, CURRENT_SCHEMA_VERSION } from "./state";
+import { createMatch, CURRENT_SCHEMA_VERSION, matchFormatOutdated } from "./state";
 
 const UNIT: Unit = {
   id: "u1",
@@ -21,6 +21,16 @@ const BASE = {
   units: [UNIT],
   movementOf: () => 4,
 };
+
+describe("matchFormatOutdated", () => {
+  it("flags a save stamped below the current schema version", () => {
+    expect(matchFormatOutdated(CURRENT_SCHEMA_VERSION - 1)).toBe(true);
+  });
+
+  it("does not flag a save at the current schema version", () => {
+    expect(matchFormatOutdated(CURRENT_SCHEMA_VERSION)).toBe(false);
+  });
+});
 
 describe("createMatch", () => {
   it("stamps the current schema version", () => {

@@ -57,6 +57,7 @@ function projectBoard(board: BoardView): Partial<PlayBoardState> {
     events: board.events,
     scorched: board.scorched,
     pendingDivergence: board.pendingDivergence ?? null,
+    incompatible: board.incompatible ?? false,
   };
 }
 

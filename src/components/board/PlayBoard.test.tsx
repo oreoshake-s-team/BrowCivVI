@@ -369,6 +369,44 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     expect(pushMock).toHaveBeenCalledWith(`/play/${NEW_MATCH_ID}`);
   });
 
+  it("prompts a new game for a match saved before city capture, then starts fresh", async () => {
+    vi.mocked(actions.loadBoard).mockResolvedValue({
+      status: "ok",
+      board: {
+        matchId: MATCH_ID,
+        units: SAMPLE_UNITS,
+        movement: NO_MOVEMENT,
+        playerFaction: "macedon",
+        cities: [],
+        turn: 7,
+        activeFaction: "macedon",
+        events: [],
+        scorched: [],
+        incompatible: true,
+      },
+    } satisfies LoadBoardResult);
+    vi.mocked(actions.newGame).mockResolvedValue({
+      matchId: NEW_MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      cities: CITIES_VIEW,
+      turn: 1,
+      activeFaction: "macedon",
+      events: [],
+      scorched: [],
+    } satisfies BoardView);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Start new game" }));
+
+    expect(container.querySelector("svg")).toBeNull();
+    await waitFor(() => {
+      expect(actions.newGame).toHaveBeenCalled();
+    });
+    expect(pushMock).toHaveBeenCalledWith(`/play/${NEW_MATCH_ID}`);
+  });
+
   it("shows the load-error state and recovers when the load is retried", async () => {
     vi.mocked(actions.loadBoard)
       .mockReset()
