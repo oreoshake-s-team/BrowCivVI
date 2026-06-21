@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { BoardView } from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
+import type { CityState } from "@/engine/match/cities";
 import type { MatchEvent } from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
 import type { BoardLoadFailure } from "./BoardLoadError";
@@ -20,12 +21,14 @@ export interface PlayBoardStore extends PlayBoardState {
     movement: Readonly<Record<string, number>>,
     reachable: readonly Hex[],
     events?: readonly MatchEvent[],
+    cities?: readonly CityState[],
   ) => void;
   readonly actionRejected: (units: readonly Unit[], message: string) => void;
   readonly attackApplied: (
     units: readonly Unit[],
     movement?: Readonly<Record<string, number>>,
     events?: readonly MatchEvent[],
+    cities?: readonly CityState[],
   ) => void;
   readonly addFloater: (floater: DamageFloater) => void;
   readonly removeFloater: (id: string) => void;
@@ -46,6 +49,7 @@ function projectBoard(board: BoardView): Partial<PlayBoardState> {
   return {
     matchId: board.matchId,
     units: board.units,
+    cities: board.cities,
     movement: board.movement,
     playerFaction: board.playerFaction,
     turn: board.turn,
@@ -89,17 +93,24 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
       attackable: [],
     }));
   },
-  moveApplied: (units, movement, reachable, events) => {
-    set((state) => ({ units, movement, reachable, events: events ?? state.events }));
+  moveApplied: (units, movement, reachable, events, cities) => {
+    set((state) => ({
+      units,
+      movement,
+      reachable,
+      events: events ?? state.events,
+      cities: cities ?? state.cities,
+    }));
   },
   actionRejected: (units, message) => {
     set({ units, toast: message });
   },
-  attackApplied: (units, movement, events) => {
+  attackApplied: (units, movement, events, cities) => {
     set((state) => ({
       units,
       movement: movement ?? state.movement,
       events: events ?? state.events,
+      cities: cities ?? state.cities,
     }));
   },
   addFloater: (floater) => {

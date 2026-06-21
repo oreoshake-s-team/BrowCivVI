@@ -12,7 +12,8 @@ import type {
 import type { Hex } from "@/engine/hex";
 import { hexToPixel } from "@/engine/map/layout";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
-import type { AttackEvent, MatchEvent } from "@/engine/match/events";
+import { cityMaxHp, type CityState } from "@/engine/match/cities";
+import type { AttackEvent, CaptureEvent, CityAttackEvent, MatchEvent } from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
 import { PlayBoard } from "./PlayBoard";
 import { REPLAY_TIMING } from "./usePlayBoard";
@@ -31,6 +32,7 @@ vi.mock("@/app/play/actions", () => ({
   targetsFor: vi.fn(),
   move: vi.fn(),
   attack: vi.fn(),
+  attackCity: vi.fn(),
   endTurn: vi.fn(),
   resolveDivergence: vi.fn(),
 }));
@@ -44,6 +46,9 @@ const ORIGIN = MOVER.hex;
 const ENEMY_HEX = DEFENDER.hex;
 const DEST: Hex = { q: 1, r: 0 };
 const NO_MOVEMENT: Readonly<Record<string, number>> = {};
+const CITY_ID = "dascylium";
+const CITY_HEX: Hex = { q: 3, r: 1 };
+const CITIES_VIEW: readonly CityState[] = [{ id: CITY_ID, owner: "persia", hp: cityMaxHp(20) }];
 const MOVE_REJECTED = "Move rejected — the board changed. Try again.";
 const ATTACK_REJECTED = "Attack rejected — the board changed. Try again.";
 const RATE_LIMITED = "You're acting too fast — give it a moment and try again.";
@@ -78,6 +83,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         units: SAMPLE_UNITS,
         movement: NO_MOVEMENT,
         playerFaction: "macedon",
+        cities: CITIES_VIEW,
         turn: 1,
         activeFaction: "macedon",
         events: [],
@@ -188,6 +194,83 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     expect(container.querySelector(`[data-unit-id="${DEFENDER.id}"]`)).not.toBeNull();
   });
 
+  it("sends a city-attack intent and logs the siege end to end", async () => {
+    vi.mocked(actions.targetsFor).mockResolvedValue({
+      reachable: [DEST],
+      attackable: [CITY_HEX],
+    } satisfies SelectionTargets);
+    const siege: CityAttackEvent = {
+      kind: "cityAttack",
+      seq: 0,
+      turn: 1,
+      faction: "macedon",
+      unitId: MOVER.id,
+      unitTypeId: MOVER.typeId,
+      cityId: CITY_ID,
+      cityDamage: 30,
+      retaliation: 6,
+      cityFell: false,
+    };
+    vi.mocked(actions.attackCity).mockResolvedValue({
+      ok: true,
+      units: SAMPLE_UNITS,
+      cities: CITIES_VIEW,
+      attackerHex: ORIGIN,
+      cityHex: CITY_HEX,
+      cityDamage: 30,
+      attackerDamage: 6,
+      cityFell: false,
+      movement: NO_MOVEMENT,
+      events: [siege],
+    });
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Pezhetairos \(macedon\)/ }));
+    const overlay = await waitFor(() => {
+      const el = container.querySelector(`[data-city-attack="${CITY_ID}"]`);
+      if (el === null) throw new Error("city attack target not offered");
+      return el;
+    });
+    fireEvent.click(overlay);
+
+    expect(await screen.findByText(/besieged Dascylium — dealt 30, took 6/)).not.toBeNull();
+    expect(actions.attackCity).toHaveBeenCalledWith(MATCH_ID, MOVER.id, CITY_ID);
+  });
+
+  it("logs a capture when a unit moves onto a fallen city", async () => {
+    vi.mocked(actions.targetsFor).mockResolvedValue({
+      reachable: [CITY_HEX],
+      attackable: [],
+    } satisfies SelectionTargets);
+    const capture: CaptureEvent = {
+      kind: "capture",
+      seq: 0,
+      turn: 1,
+      faction: "macedon",
+      unitId: MOVER.id,
+      unitTypeId: MOVER.typeId,
+      cityId: CITY_ID,
+      previousOwner: "persia",
+    };
+    const movedUnits: readonly Unit[] = SAMPLE_UNITS.map((unit) =>
+      unit.id === MOVER.id ? { ...unit, hex: CITY_HEX } : unit,
+    );
+    vi.mocked(actions.move).mockResolvedValue({
+      ok: true,
+      units: movedUnits,
+      reachable: [],
+      movement: NO_MOVEMENT,
+      events: [capture],
+      cities: [{ id: CITY_ID, owner: "macedon", hp: 80 }],
+    } satisfies MoveOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.contextMenu(container.querySelector('[data-hex="3,1"]')!);
+
+    expect(await screen.findByText(/captured Dascylium from Persia/)).not.toBeNull();
+  });
+
   it("keeps a hit-and-run attacker selected and refreshes its targets when it retains movement", async () => {
     vi.mocked(actions.attack).mockResolvedValue({
       ok: true,
@@ -264,6 +347,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       units: SAMPLE_UNITS,
       movement: NO_MOVEMENT,
       playerFaction: "macedon",
+      cities: CITIES_VIEW,
       turn: 1,
       activeFaction: "macedon",
       events: [],
@@ -290,6 +374,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
           units: SAMPLE_UNITS,
           movement: NO_MOVEMENT,
           playerFaction: "macedon",
+          cities: CITIES_VIEW,
           turn: 1,
           activeFaction: "macedon",
           events: [],
@@ -324,6 +409,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       units: SAMPLE_UNITS,
       movement: NO_MOVEMENT,
       playerFaction: "macedon",
+      cities: CITIES_VIEW,
       turn: 2,
       activeFaction: "macedon",
       events: [],
@@ -358,6 +444,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       units: SAMPLE_UNITS,
       movement: NO_MOVEMENT,
       playerFaction: "macedon",
+      cities: CITIES_VIEW,
       turn: 2,
       activeFaction: "macedon",
       events: [aiAttack],
@@ -396,6 +483,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       units: SAMPLE_UNITS,
       movement: NO_MOVEMENT,
       playerFaction: "macedon",
+      cities: CITIES_VIEW,
       turn: 2,
       activeFaction: "macedon",
       events: [aiMove],
@@ -419,6 +507,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         units: SAMPLE_UNITS,
         movement: { [MOVER.id]: 2 },
         playerFaction: "macedon",
+        cities: CITIES_VIEW,
         turn: 1,
         activeFaction: "macedon",
         events: [],
@@ -470,6 +559,7 @@ describe("PlayBoard divergence node", () => {
     units: SAMPLE_UNITS,
     movement: NO_MOVEMENT,
     playerFaction: "macedon",
+    cities: CITIES_VIEW,
     turn: 1,
     activeFaction: "macedon",
     events: [],

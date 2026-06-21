@@ -5,7 +5,9 @@ import type { Citation } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
 import { createGameMap } from "@/engine/map/types";
+import { cityMaxHp, type CityState } from "@/engine/match/cities";
 import { unitTypeById } from "@/engine/unit/catalog";
+import type { Unit } from "@/engine/unit/types";
 import { HexBoard } from "./HexBoard";
 
 afterEach(cleanup);
@@ -636,5 +638,115 @@ describe("HexBoard terrain motifs", () => {
   it("leaves a passable tile unblocked", () => {
     const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(container.querySelector('[data-hex="1,0"][data-blocked]')).toBeNull();
+  });
+});
+
+const SARDIS_HEX = { q: 0, r: 0 };
+const SARDIS_MAX = cityMaxHp(20);
+const ADJACENT_MAC: Unit = {
+  id: MAC_ID,
+  typeId: "pezhetairos",
+  owner: "macedon",
+  hex: { q: 1, r: 0 },
+  hp: 100,
+  morale: 80,
+  supplied: true,
+  hasMovedThisTurn: false,
+};
+
+function persiaSardis(hp: number): readonly CityState[] {
+  return [{ id: "sardis", owner: "persia", hp }];
+}
+
+describe("HexBoard city rendering", () => {
+  it("tints a city hex with its current owner's faction fill", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    const tint = container.querySelector('[data-city-tint="sardis"]');
+    expect(tint?.getAttribute("style")).toContain("--faction-persia-fill");
+  });
+
+  it("recolors a captured city to the new owner", () => {
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[]}
+        cities={[{ id: "sardis", owner: "macedon", hp: SARDIS_MAX }]}
+      />,
+    );
+    const tint = container.querySelector('[data-city-tint="sardis"]');
+    expect(tint?.getAttribute("style")).toContain("--faction-macedon-fill");
+  });
+
+  it("outlines a city hex with its owner's faction color", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    const border = container.querySelector('[data-city-border="sardis"]');
+    expect(border?.getAttribute("style")).toContain("--faction-persia-stroke");
+  });
+
+  it("renders a city HP bar", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector('[data-city-hp="sardis"]')).not.toBeNull();
+  });
+
+  it("flags a heavily damaged city's HP bar as low", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(20)} />,
+    );
+    expect(container.querySelector('[data-city-hp="sardis"] [data-low]')).not.toBeNull();
+  });
+
+  it("does not flag a healthy city's HP bar as low", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector('[data-city-hp="sardis"] [data-low]')).toBeNull();
+  });
+
+  it("labels the HP bar with the current and max HP for assistive tech", () => {
+    render(<HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(40)} />);
+    expect(screen.getByRole("img", { name: `Sardis: 40 of ${SARDIS_MAX} HP` })).not.toBeNull();
+  });
+
+  it("offers a city as an attack target once a unit is selected", () => {
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[ADJACENT_MAC]}
+        cities={persiaSardis(SARDIS_MAX)}
+        attackable={[SARDIS_HEX]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: MACEDON }));
+    expect(container.querySelector('[data-city-attack="sardis"]')).not.toBeNull();
+  });
+
+  it("does not offer a city as a target when it is out of range", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[ADJACENT_MAC]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: MACEDON }));
+    expect(container.querySelector('[data-city-attack="sardis"]')).toBeNull();
+  });
+
+  it("sends a city-attack intent when a targeted city is clicked", () => {
+    const onAttackCity = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[ADJACENT_MAC]}
+        cities={persiaSardis(SARDIS_MAX)}
+        attackable={[SARDIS_HEX]}
+        onAttackCity={onAttackCity}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: MACEDON }));
+    fireEvent.click(container.querySelector('[data-city-attack="sardis"]')!);
+    expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
   });
 });

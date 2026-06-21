@@ -5,6 +5,7 @@ import {
   targetsFor,
   move,
   attack,
+  attackCity,
   newGame,
   endTurn,
   resolveDivergence,
@@ -34,6 +35,7 @@ export interface PlayBoardController {
   readonly select: (unitId: string | null) => void;
   readonly moveUnit: (unitId: string, to: Hex) => void;
   readonly attackUnit: (attackerId: string, target: Hex) => void;
+  readonly attackCity: (attackerId: string, cityId: string) => void;
   readonly requestEndTurn: () => void;
   readonly confirmEndTurn: () => void;
   readonly cancelEndTurn: () => void;
@@ -123,7 +125,13 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     if (outcome.ok) {
       usePlayBoardStore
         .getState()
-        .moveApplied(outcome.units, outcome.movement, outcome.reachable, outcome.events);
+        .moveApplied(
+          outcome.units,
+          outcome.movement,
+          outcome.reachable,
+          outcome.events,
+          outcome.cities,
+        );
       await refreshTargetsOrDeselect(store.matchId, unitId);
     } else {
       usePlayBoardStore
@@ -164,6 +172,31 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       setTimeout(() => {
         usePlayBoardStore.getState().setFading([]);
       }, FADE_MS);
+    }
+    await refreshTargetsOrDeselect(store.matchId, attackerId);
+  };
+
+  const attackCityAt = async (attackerId: string, cityId: string) => {
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null || inputLocked(store)) return;
+    store.setTargets([], []);
+    const outcome = await attackCity(store.matchId, attackerId, cityId);
+    if (!outcome.ok) {
+      usePlayBoardStore
+        .getState()
+        .setToast(
+          outcome.rateLimited ? RATE_LIMIT_MSG : "Attack rejected — the board changed. Try again.",
+        );
+      return;
+    }
+    usePlayBoardStore
+      .getState()
+      .attackApplied(outcome.units, outcome.movement, outcome.events, outcome.cities);
+    if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
+      pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);
+    }
+    if (outcome.cityHex !== undefined && outcome.cityDamage !== undefined) {
+      pushFloater(outcome.cityHex, `-${outcome.cityDamage}`);
     }
     await refreshTargetsOrDeselect(store.matchId, attackerId);
   };
@@ -235,6 +268,9 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     },
     attackUnit: (attackerId, to) => {
       void attackUnit(attackerId, to);
+    },
+    attackCity: (attackerId, cityId) => {
+      void attackCityAt(attackerId, cityId);
     },
     requestEndTurn,
     confirmEndTurn: () => {

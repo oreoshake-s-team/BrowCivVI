@@ -59,6 +59,7 @@ export interface DivergenceView {
 export interface BoardView {
   readonly matchId: string;
   readonly units: readonly Unit[];
+  readonly cities: readonly CityState[];
   readonly movement: Readonly<Record<string, number>>;
   readonly playerFaction: string;
   readonly turn: number;
@@ -151,6 +152,7 @@ function boardView(match: MatchState): BoardView {
   return {
     matchId: match.id,
     units: match.units,
+    cities: match.cities,
     movement: match.movement,
     playerFaction: FIRST_SLICE_PLAYER_FACTION,
     turn: match.turn,
