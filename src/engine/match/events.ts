@@ -52,7 +52,16 @@ export interface CaptureEvent {
   readonly previousOwner: string | null;
 }
 
-export type MatchEvent = MoveEvent | AttackEvent | CityAttackEvent | CaptureEvent;
+export interface DefectionEvent {
+  readonly kind: "defection";
+  readonly seq: number;
+  readonly turn: number;
+  readonly faction: string;
+  readonly cityId: string;
+  readonly previousOwner: string | null;
+}
+
+export type MatchEvent = MoveEvent | AttackEvent | CityAttackEvent | CaptureEvent | DefectionEvent;
 
 export interface AttackOutcomeSummary {
   readonly attackerDamage: number;
@@ -155,6 +164,26 @@ export function appendCapture(
       faction: unit.owner,
       unitId: unit.id,
       unitTypeId: unit.typeId,
+      cityId,
+      previousOwner,
+    },
+  ];
+}
+
+export function appendDefection(
+  events: readonly MatchEvent[],
+  turn: number,
+  cityId: string,
+  newOwner: string,
+  previousOwner: string | null,
+): readonly MatchEvent[] {
+  return [
+    ...events,
+    {
+      kind: "defection",
+      seq: events.length,
+      turn,
+      faction: newOwner,
       cityId,
       previousOwner,
     },

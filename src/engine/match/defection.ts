@@ -1,6 +1,7 @@
 import { neighbors } from "../hex";
 import { hexKey } from "../map/types";
 import { LOYALTY_DEFECT_THRESHOLD, type CityState } from "./cities";
+import { appendDefection } from "./events";
 import type { LoyaltyContext } from "./loyalty";
 import type { MatchState } from "./state";
 
@@ -37,7 +38,14 @@ function nextCity(state: MatchState, ctx: LoyaltyContext, city: CityState): City
 }
 
 export function applyDefections(state: MatchState, ctx: LoyaltyContext): MatchState {
-  const cities = state.cities.map((city) => nextCity(state, ctx, city));
+  let events = state.events;
+  const cities = state.cities.map((city) => {
+    const next = nextCity(state, ctx, city);
+    if (next.owner !== city.owner && next.owner !== null) {
+      events = appendDefection(events, state.turn, city.id, next.owner, city.owner);
+    }
+    return next;
+  });
   const changed = cities.some((city, index) => city !== state.cities[index]);
-  return changed ? { ...state, cities } : state;
+  return changed ? { ...state, cities, events } : state;
 }

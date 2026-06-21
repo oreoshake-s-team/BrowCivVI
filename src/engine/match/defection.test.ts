@@ -39,7 +39,7 @@ function unit(owner: string, q: number, typeId = "pezhetairos"): Unit {
 }
 
 function stateWith(cityState: CityState, units: readonly Unit[] = []): MatchState {
-  return { units, cities: [cityState] } as unknown as MatchState;
+  return { units, cities: [cityState], events: [], turn: 3 } as unknown as MatchState;
 }
 
 function defect(city: City, cityState: CityState, units: readonly Unit[] = []): CityState {
@@ -142,5 +142,27 @@ describe("applyDefections", () => {
   it("returns the same state reference when no city changes", () => {
     const state = stateWith({ id: "town", owner: "persia", hp: 8, loyalty: -60 });
     expect(applyDefections(state, ctxFor(town({ owner: "persia" })))).toBe(state);
+  });
+
+  it("emits a defection event recording the new owner when a city flips", () => {
+    const state = stateWith({
+      id: "town",
+      owner: "persia",
+      hp: 8,
+      loyalty: 60,
+      defecting: true,
+    });
+    const result = applyDefections(state, ctxFor(town({ owner: "persia" })));
+    expect(result.events.at(-1)).toMatchObject({
+      kind: "defection",
+      cityId: "town",
+      faction: "macedon",
+      previousOwner: "persia",
+    });
+  });
+
+  it("does not emit an event when a city only becomes pending", () => {
+    const state = stateWith({ id: "town", owner: "persia", hp: 8, loyalty: 60 });
+    expect(applyDefections(state, ctxFor(town({ owner: "persia" }))).events).toHaveLength(0);
   });
 });

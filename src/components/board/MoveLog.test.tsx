@@ -5,6 +5,7 @@ import type {
   AttackEvent,
   CaptureEvent,
   CityAttackEvent,
+  DefectionEvent,
   MatchEvent,
   MoveEvent,
 } from "@/engine/match/events";
@@ -36,6 +37,19 @@ const captureEvent = (seq: number): CaptureEvent => ({
   unitTypeId: "pezhetairos",
   cityId: "sardis",
   previousOwner: "persia",
+});
+
+const defectionEvent = (
+  seq: number,
+  faction: string,
+  previousOwner: string | null,
+): DefectionEvent => ({
+  kind: "defection",
+  seq,
+  turn: 6,
+  faction,
+  cityId: "sardis",
+  previousOwner,
 });
 
 const moveEvent = (seq: number, faction: string): MoveEvent => ({
@@ -126,5 +140,38 @@ describe("MoveLog", () => {
   it("falls back to the city id when no name is supplied", () => {
     render(<MoveLog events={[captureEvent(0)]} />);
     expect(screen.getByText(/captured sardis from Persia/)).not.toBeNull();
+  });
+
+  it("frames a defection as the new owner winning the city", () => {
+    render(
+      <MoveLog
+        events={[defectionEvent(0, "macedon", "persia")]}
+        cityNames={CITY_NAMES}
+        playerFaction="macedon"
+      />,
+    );
+    expect(screen.getByText(/won over/)).not.toBeNull();
+  });
+
+  it("marks a defection the player gained", () => {
+    render(
+      <MoveLog
+        events={[defectionEvent(0, "macedon", "persia")]}
+        cityNames={CITY_NAMES}
+        playerFaction="macedon"
+      />,
+    );
+    expect(screen.getByText("Sardis").getAttribute("data-defection")).toBe("gain");
+  });
+
+  it("marks a defection the player lost", () => {
+    render(
+      <MoveLog
+        events={[defectionEvent(0, "persia", "macedon")]}
+        cityNames={CITY_NAMES}
+        playerFaction="macedon"
+      />,
+    );
+    expect(screen.getByText("Sardis").getAttribute("data-defection")).toBe("loss");
   });
 });

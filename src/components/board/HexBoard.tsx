@@ -890,7 +890,7 @@ export function HexBoard({
 
       <aside className={styles.sidebar}>
         <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
-        <MoveLog events={events} cityNames={cityNames} />
+        <MoveLog events={events} cityNames={cityNames} playerFaction={playerFaction} />
       </aside>
 
       {cited !== null ? (
