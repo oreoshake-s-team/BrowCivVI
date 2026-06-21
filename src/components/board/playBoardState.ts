@@ -17,6 +17,8 @@ export interface PlayBoardState {
   readonly deselectSignal: number;
   readonly floaters: readonly DamageFloater[];
   readonly fadingUnits: readonly Unit[];
+  readonly replaying: boolean;
+  readonly panTarget: Hex | null;
   readonly ready: boolean;
   readonly loadError: BoardLoadFailure | null;
   readonly endingTurn: boolean;
@@ -39,6 +41,8 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
     deselectSignal: 0,
     floaters: [],
     fadingUnits: [],
+    replaying: false,
+    panTarget: null,
     ready: false,
     loadError: null,
     endingTurn: false,
@@ -53,7 +57,7 @@ export function isPlayerTurn(state: PlayBoardState): boolean {
 }
 
 export function inputLocked(state: PlayBoardState): boolean {
-  return !isPlayerTurn(state) || state.endingTurn;
+  return !isPlayerTurn(state) || state.endingTurn || state.replaying;
 }
 
 export function playerHasActions(state: PlayBoardState): boolean {

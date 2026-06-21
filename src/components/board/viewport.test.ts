@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { fitView, panView, zoomView, MIN_SPAN } from "./viewport";
+import {
+  fitView,
+  panView,
+  zoomView,
+  centerViewOn,
+  lerpView,
+  easeInOut,
+  MIN_SPAN,
+} from "./viewport";
 
 describe("fitView", () => {
   it("pads the bounds into a viewBox", () => {
@@ -39,5 +47,35 @@ describe("zoomView", () => {
 
   it("clamps zoom-out at the maximum span", () => {
     expect(zoomView({ x: 0, y: 0, w: 200, h: 200 }, 5, 100, 100, 300).w).toBe(300);
+  });
+});
+
+describe("centerViewOn", () => {
+  it("places the point at the middle of the viewBox", () => {
+    const view = centerViewOn({ x: 0, y: 0, w: 100, h: 80 }, 200, 160);
+    expect([view.x + view.w / 2, view.y + view.h / 2]).toEqual([200, 160]);
+  });
+
+  it("preserves the current zoom span", () => {
+    expect(centerViewOn({ x: 5, y: 5, w: 100, h: 80 }, 200, 160).w).toBe(100);
+  });
+});
+
+describe("lerpView", () => {
+  it("returns the source view at progress 0", () => {
+    const from = { x: 0, y: 0, w: 100, h: 100 };
+    expect(lerpView(from, { x: 40, y: 20, w: 100, h: 100 }, 0)).toEqual(from);
+  });
+
+  it("interpolates halfway between the views", () => {
+    expect(lerpView({ x: 0, y: 0, w: 100, h: 100 }, { x: 40, y: 20, w: 100, h: 100 }, 0.5).x).toBe(
+      20,
+    );
+  });
+});
+
+describe("easeInOut", () => {
+  it("stays pinned at the endpoints", () => {
+    expect([easeInOut(0), easeInOut(1)]).toEqual([0, 1]);
   });
 });

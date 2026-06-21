@@ -33,6 +33,9 @@ export interface PlayBoardStore extends PlayBoardState {
   readonly endTurnStarted: () => void;
   readonly endTurnFinished: (board: BoardView) => void;
   readonly endTurnFailed: () => void;
+  readonly replayStarted: (board: BoardView) => void;
+  readonly replayPanned: (hex: Hex) => void;
+  readonly replayFinished: () => void;
   readonly setConfirmEnd: (value: boolean) => void;
   readonly setConfirmNewGame: (value: boolean) => void;
   readonly setToast: (toast: string | null) => void;
@@ -56,7 +59,14 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
     set({ ...projectBoard(board), loadError: null, ready: true });
   },
   gameStarted: (board) => {
-    set({ ...projectBoard(board), reachable: [], attackable: [], confirmingNewGame: false });
+    set({
+      ...projectBoard(board),
+      reachable: [],
+      attackable: [],
+      replaying: false,
+      panTarget: null,
+      confirmingNewGame: false,
+    });
   },
   loadFailed: (reason) => {
     set({ loadError: reason });
@@ -107,6 +117,22 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
   },
   endTurnFailed: () => {
     set({ endingTurn: false });
+  },
+  replayStarted: (board) => {
+    set({
+      ...projectBoard(board),
+      endingTurn: false,
+      replaying: true,
+      panTarget: null,
+      reachable: [],
+      attackable: [],
+    });
+  },
+  replayPanned: (hex) => {
+    set({ panTarget: hex });
+  },
+  replayFinished: () => {
+    set({ replaying: false, panTarget: null });
   },
   setConfirmEnd: (value) => {
     set({ confirmingEnd: value });

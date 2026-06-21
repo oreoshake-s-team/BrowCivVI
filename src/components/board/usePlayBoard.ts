@@ -1,14 +1,31 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { loadBoard, targetsFor, move, attack, newGame, endTurn } from "@/app/play/actions";
+import {
+  loadBoard,
+  targetsFor,
+  move,
+  attack,
+  newGame,
+  endTurn,
+  type BoardView,
+} from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
 import { inputLocked, playerHasActions, type PlayBoardState } from "./playBoardState";
 import { usePlayBoardStore } from "./playBoardStore";
+import { newAttackEvents, replayAttacks, type ReplayTiming } from "./replayAttacks";
 
 const FLOATER_MS = 1100;
 const FADE_MS = 500;
 const RATE_LIMIT_MSG = "You're acting too fast — give it a moment and try again.";
+
+export const REPLAY_TIMING: ReplayTiming = { panMs: 280, holdMs: 1200 };
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 export interface PlayBoardController {
   readonly state: PlayBoardState;
@@ -158,12 +175,36 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
   const confirmEndTurn = async () => {
     const store = usePlayBoardStore.getState();
     if (store.matchId === null) return;
+    const sinceSeq = store.events.length;
     store.endTurnStarted();
+    let board: BoardView;
     try {
-      usePlayBoardStore.getState().endTurnFinished(await endTurn(store.matchId));
+      board = await endTurn(store.matchId);
     } catch {
       usePlayBoardStore.getState().endTurnFailed();
+      return;
     }
+    const attacks = newAttackEvents(board.events, sinceSeq);
+    if (attacks.length === 0) {
+      usePlayBoardStore.getState().endTurnFinished(board);
+      return;
+    }
+    usePlayBoardStore.getState().replayStarted(board);
+    await replayAttacks(
+      attacks,
+      {
+        panTo: (event) => {
+          usePlayBoardStore.getState().replayPanned(event.attackerHex);
+        },
+        showHit: (event) => {
+          pushFloater(event.attackerHex, `-${event.attackerDamage}`);
+          pushFloater(event.targetHex, `-${event.defenderDamage}`);
+        },
+        delay,
+      },
+      REPLAY_TIMING,
+    );
+    usePlayBoardStore.getState().replayFinished();
   };
 
   const requestEndTurn = () => {

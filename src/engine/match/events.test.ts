@@ -52,6 +52,7 @@ describe("appendAttack", () => {
       faction: "persia",
       unitId: "p1",
       unitTypeId: "persian-cavalry",
+      attackerHex: { q: 4, r: 1 },
       targetId: "m1",
       targetTypeId: "pezhetairos",
       targetHex: { q: 4, r: 2 },
