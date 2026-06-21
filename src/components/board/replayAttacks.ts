@@ -1,4 +1,4 @@
-import type { AttackEvent, MatchEvent } from "@/engine/match/events";
+import type { AttackEvent, DefectionEvent, MatchEvent } from "@/engine/match/events";
 
 export interface ReplayTiming {
   panMs: number;
@@ -17,6 +17,16 @@ export function newAttackEvents(
 ): readonly AttackEvent[] {
   return events
     .filter((event): event is AttackEvent => event.kind === "attack" && event.seq >= sinceSeq)
+    .slice()
+    .sort((a, b) => a.seq - b.seq);
+}
+
+export function newDefectionEvents(
+  events: readonly MatchEvent[],
+  sinceSeq: number,
+): readonly DefectionEvent[] {
+  return events
+    .filter((event): event is DefectionEvent => event.kind === "defection" && event.seq >= sinceSeq)
     .slice()
     .sort((a, b) => a.seq - b.seq);
 }

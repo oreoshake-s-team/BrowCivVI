@@ -15,7 +15,12 @@ import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
 import { inputLocked, playerHasActions, type PlayBoardState } from "./playBoardState";
 import { usePlayBoardStore } from "./playBoardStore";
-import { newAttackEvents, replayAttacks, type ReplayTiming } from "./replayAttacks";
+import {
+  newAttackEvents,
+  newDefectionEvents,
+  replayAttacks,
+  type ReplayTiming,
+} from "./replayAttacks";
 
 const FLOATER_MS = 1100;
 const FADE_MS = 500;
@@ -220,7 +225,8 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       return;
     }
     const attacks = newAttackEvents(board.events, sinceSeq);
-    if (attacks.length === 0) {
+    const defections = newDefectionEvents(board.events, sinceSeq);
+    if (attacks.length === 0 && defections.length === 0) {
       usePlayBoardStore.getState().endTurnFinished(board);
       return;
     }
@@ -239,6 +245,10 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       },
       REPLAY_TIMING,
     );
+    for (const defection of defections) {
+      usePlayBoardStore.getState().defectionRevealed(defection.hex);
+      await delay(REPLAY_TIMING.panMs + REPLAY_TIMING.holdMs);
+    }
     usePlayBoardStore.getState().replayFinished();
   };
 

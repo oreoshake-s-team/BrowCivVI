@@ -58,6 +58,7 @@ export interface DefectionEvent {
   readonly turn: number;
   readonly faction: string;
   readonly cityId: string;
+  readonly hex: Hex;
   readonly previousOwner: string | null;
 }
 
@@ -174,6 +175,7 @@ export function appendDefection(
   events: readonly MatchEvent[],
   turn: number,
   cityId: string,
+  hex: Hex,
   newOwner: string,
   previousOwner: string | null,
 ): readonly MatchEvent[] {
@@ -185,6 +187,7 @@ export function appendDefection(
       turn,
       faction: newOwner,
       cityId,
+      hex,
       previousOwner,
     },
   ];

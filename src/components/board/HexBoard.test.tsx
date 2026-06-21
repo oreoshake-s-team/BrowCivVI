@@ -861,3 +861,24 @@ describe("HexBoard loyalty meter", () => {
     expect(screen.getByRole("img", { name: "Sardis loyalty: +40" })).not.toBeNull();
   });
 });
+
+describe("HexBoard defection pulse", () => {
+  it("pulses the hex of a just-defected city", () => {
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[]}
+        cities={persiaSardis(SARDIS_MAX)}
+        defectionPulse={SARDIS_HEX}
+      />,
+    );
+    expect(container.querySelector('[data-defection-pulse="0,0"]')).not.toBeNull();
+  });
+
+  it("shows no pulse when none is active", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector("[data-defection-pulse]")).toBeNull();
+  });
+});

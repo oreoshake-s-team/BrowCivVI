@@ -41,8 +41,9 @@ export function applyDefections(state: MatchState, ctx: LoyaltyContext): MatchSt
   let events = state.events;
   const cities = state.cities.map((city) => {
     const next = nextCity(state, ctx, city);
-    if (next.owner !== city.owner && next.owner !== null) {
-      events = appendDefection(events, state.turn, city.id, next.owner, city.owner);
+    const hex = ctx.map.cities.get(city.id)?.hex;
+    if (next.owner !== city.owner && next.owner !== null && hex !== undefined) {
+      events = appendDefection(events, state.turn, city.id, hex, next.owner, city.owner);
     }
     return next;
   });

@@ -49,6 +49,7 @@ const defectionEvent = (
   turn: 6,
   faction,
   cityId: "sardis",
+  hex: { q: 8, r: 4 },
   previousOwner,
 });
 
