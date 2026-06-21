@@ -80,6 +80,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         playerFaction={state.playerFaction}
         reachable={state.reachable}
         attackable={state.attackable}
+        deselectSignal={state.deselectSignal}
         floaters={state.floaters}
         fadingUnits={state.fadingUnits}
         events={state.events}
