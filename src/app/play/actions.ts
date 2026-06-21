@@ -25,6 +25,7 @@ import {
   appendMove,
   type MatchEvent,
 } from "@/engine/match/events";
+import { matchCityScores } from "@/engine/match/scoring";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { domainOf, movementConstraints } from "@/engine/movement/constraints";
@@ -66,6 +67,7 @@ export interface BoardView {
   readonly activeFaction: string;
   readonly events: readonly MatchEvent[];
   readonly scorched: readonly string[];
+  readonly scores?: Readonly<Record<string, number>>;
   readonly pendingDivergence?: DivergenceView;
 }
 
@@ -160,6 +162,7 @@ function boardView(match: MatchState): BoardView {
     activeFaction: match.activeFaction,
     events: match.events,
     scorched: match.scorched,
+    scores: matchCityScores(match, (id) => FIRST_SLICE_MAP.cities.get(id)?.value ?? 0),
     ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
   };
 }
