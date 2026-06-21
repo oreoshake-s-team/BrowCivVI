@@ -1,9 +1,19 @@
 "use server";
 
-import { FIRST_SLICE_MAP, FIRST_SLICE_PLAYER_FACTION } from "@/content/firstSlice";
+import {
+  FIRST_SLICE_DIVERGENCE_NODES,
+  FIRST_SLICE_MAP,
+  FIRST_SLICE_PLAYER_FACTION,
+} from "@/content/firstSlice";
 import { runFactionTurn } from "@/engine/ai/greedyTurn";
 import { applyAttack } from "@/engine/combat/applyAttack";
 import { reachableAttacks } from "@/engine/combat/targets";
+import {
+  pendingDivergence,
+  playerOptions,
+  resolveDivergenceNode,
+  type DivergenceNode,
+} from "@/engine/divergence/divergence";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import { appendAttack, appendMove, type MatchEvent } from "@/engine/match/events";
@@ -21,6 +31,23 @@ import { intentAllowed } from "@/server/rateLimit";
 import { ownerSubject } from "@/server/session";
 import { getStore } from "@/server/store";
 
+export interface DivergenceOptionView {
+  readonly id: string;
+  readonly label: string;
+  readonly quote: string;
+  readonly outcome: string;
+}
+
+export interface DivergenceView {
+  readonly id: string;
+  readonly title: string;
+  readonly prompt: string;
+  readonly advisor: string;
+  readonly options: readonly DivergenceOptionView[];
+  readonly citation: DivergenceNode["citation"];
+  readonly media: DivergenceNode["media"];
+}
+
 export interface BoardView {
   readonly matchId: string;
   readonly units: readonly Unit[];
@@ -29,6 +56,12 @@ export interface BoardView {
   readonly turn: number;
   readonly activeFaction: string;
   readonly events: readonly MatchEvent[];
+  readonly pendingDivergence?: DivergenceView;
+}
+
+export interface DivergenceOutcome {
+  readonly ok: boolean;
+  readonly board: BoardView;
 }
 
 export type LoadBoardResult =
@@ -78,7 +111,26 @@ async function resolveMatch(matchId?: string): Promise<MatchState> {
   return getOrCreateDefault(store, owner);
 }
 
+function divergenceView(node: DivergenceNode): DivergenceView {
+  const options = playerOptions(node);
+  return {
+    id: node.id,
+    title: node.title,
+    prompt: node.prompt,
+    advisor: options[0]?.advisor ?? "",
+    options: options.map((option) => ({
+      id: option.id,
+      label: option.label,
+      quote: option.quote,
+      outcome: option.outcome,
+    })),
+    citation: node.citation,
+    media: node.media,
+  };
+}
+
 function boardView(match: MatchState): BoardView {
+  const pending = pendingDivergence(match, FIRST_SLICE_DIVERGENCE_NODES);
   return {
     matchId: match.id,
     units: match.units,
@@ -87,6 +139,7 @@ function boardView(match: MatchState): BoardView {
     turn: match.turn,
     activeFaction: match.activeFaction,
     events: match.events,
+    ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
   };
 }
 
@@ -134,6 +187,31 @@ export async function endTurn(matchId: string): Promise<BoardView> {
 
 export async function newGame(): Promise<BoardView> {
   return boardView(await createNewMatch(getStore(), await currentOwner()));
+}
+
+export async function resolveDivergence(
+  matchId: string,
+  nodeId: string,
+  optionId: string,
+): Promise<DivergenceOutcome> {
+  const owner = await currentOwner();
+  const store = getStore();
+  const match = await loadOwned(store, owner, matchId);
+  if (match === null) return { ok: false, board: boardView(await resolveMatch(matchId)) };
+
+  const pending = pendingDivergence(match, FIRST_SLICE_DIVERGENCE_NODES);
+  if (pending?.id !== nodeId) return { ok: false, board: boardView(match) };
+
+  const rng = createRng((match.seed ^ 0x9e3779b9) >>> 0);
+  const resolved = resolveDivergenceNode(match, pending, optionId, rng);
+  if (resolved === null) return { ok: false, board: boardView(match) };
+
+  try {
+    return { ok: true, board: boardView(await store.save(resolved.state)) };
+  } catch (error) {
+    if (error instanceof StaleMatchError) return { ok: false, board: boardView(match) };
+    throw error;
+  }
 }
 
 export async function reachableFor(matchId: string, unitId: string): Promise<readonly Hex[]> {

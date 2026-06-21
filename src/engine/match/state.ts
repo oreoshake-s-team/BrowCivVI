@@ -4,7 +4,12 @@ import type { CityState } from "./cities";
 import { seedCities } from "./cities";
 import type { MatchEvent } from "./events";
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
+
+export interface DivergenceRecord {
+  readonly choice: string;
+  readonly rival: string;
+}
 
 export interface MatchState {
   readonly id: string;
@@ -21,6 +26,7 @@ export interface MatchState {
   readonly movement: Readonly<Record<string, number>>;
   readonly events: readonly MatchEvent[];
   readonly cities: readonly CityState[];
+  readonly divergence: Readonly<Record<string, DivergenceRecord>>;
 }
 
 export interface CreateMatchInput {
@@ -54,5 +60,6 @@ export function createMatch(input: CreateMatchInput): MatchState {
     movement,
     events: [],
     cities: seedCities(input.cities ?? []),
+    divergence: {},
   };
 }

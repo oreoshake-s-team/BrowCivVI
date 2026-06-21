@@ -2,7 +2,16 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { FIRST_SLICE_UNITS } from "@/content/firstSlice";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
-import { loadBoard, newGame, move, attack, targetsFor, endTurn, type BoardView } from "./actions";
+import {
+  loadBoard,
+  newGame,
+  move,
+  attack,
+  targetsFor,
+  endTurn,
+  resolveDivergence,
+  type BoardView,
+} from "./actions";
 
 const { getAuth0Mock, intentAllowedMock } = vi.hoisted(() => ({
   getAuth0Mock: vi.fn(),
@@ -216,5 +225,33 @@ describe("loadBoard not-found handling", () => {
   it("creates and returns the default match when given no id", async () => {
     const result = await loadBoard();
     expect(result.status).toBe("ok");
+  });
+});
+
+describe("divergence resolution", () => {
+  it("surfaces the Granicus node on a fresh match", async () => {
+    const board = await newGame();
+    expect(board.pendingDivergence?.id).toBe("granicus");
+  });
+
+  it("applies the chosen option and clears the pending node", async () => {
+    const board = await newGame();
+    const outcome = await resolveDivergence(board.matchId, "granicus", "reckless");
+    expect(outcome.ok).toBe(true);
+    expect(outcome.board.pendingDivergence).toBeUndefined();
+    expect(outcome.board.units.find((unit) => unit.id === PHALANX)?.morale).toBe(93);
+  });
+
+  it("cannot be resolved a second time", async () => {
+    const board = await newGame();
+    await resolveDivergence(board.matchId, "granicus", "reckless");
+    const again = await resolveDivergence(board.matchId, "granicus", "cautious");
+    expect(again.ok).toBe(false);
+  });
+
+  it("rejects an unknown option", async () => {
+    const board = await newGame();
+    const outcome = await resolveDivergence(board.matchId, "granicus", "flee");
+    expect(outcome.ok).toBe(false);
   });
 });

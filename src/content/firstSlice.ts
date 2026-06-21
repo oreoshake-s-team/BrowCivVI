@@ -1,5 +1,6 @@
 import type { Citation, Confidence, SourceType } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
+import type { DivergenceNode } from "@/engine/divergence/divergence";
 import type { TerrainType } from "@/engine/map/terrain";
 import type { City, GameMap, MapHex, RiverEdge } from "@/engine/map/types";
 import { createGameMap } from "@/engine/map/types";
@@ -490,6 +491,78 @@ export const FIRST_SLICE_MAP: GameMap = createGameMap(HEXES, CITIES, RIVERS);
 export const FIRST_SLICE_CITIES: readonly City[] = CITIES;
 
 export const FIRST_SLICE_PLAYER_FACTION = "macedon";
+
+const GRANICUS_NODE: DivergenceNode = {
+  id: "granicus",
+  trigger: { turn: 1, faction: "macedon" },
+  title: "The Granicus, 334 BC",
+  prompt:
+    "The Persian horse line the far bank. Parmenion counsels caution; the army awaits Alexander's word.",
+  options: [
+    {
+      id: "reckless",
+      faction: "macedon",
+      advisor: "Parmenion",
+      label: "Attack across the river at once",
+      quote:
+        "“The banks are steep and the enemy waits in order. I would not hazard a crossing now, King.”",
+      outcome:
+        "Alexander charges anyway and is nearly cut down — Cleitus the Black severs the arm of the satrap about to kill him. The army, seeing their king survive, is emboldened.",
+      effect: { kind: "morale", faction: "macedon", delta: 8 },
+    },
+    {
+      id: "cautious",
+      faction: "macedon",
+      advisor: "Parmenion",
+      label: "Camp, and cross at dawn",
+      quote: "“Let us camp by the river and force the crossing at first light, in good order.”",
+      outcome: "The army crosses in order at dawn — steadier, if less glorious.",
+      effect: { kind: "morale", faction: "macedon", delta: 3 },
+    },
+    {
+      id: "pitched",
+      faction: "persia",
+      advisor: "Memnon",
+      label: "Stand and give pitched battle",
+      quote: "“The satraps will not yield their lands without a fight at the river.”",
+      outcome: "The satraps reject Memnon and commit to the river line.",
+      effect: { kind: "morale", faction: "persia", delta: 5 },
+    },
+    {
+      id: "scorched",
+      faction: "persia",
+      advisor: "Memnon",
+      label: "Scorched earth — burn the land, deny supply",
+      quote:
+        "“Burn the crops and fall back. Starve the Macedonian advance; do not stake all here.”",
+      outcome:
+        "Memnon's counsel prevails — the satrapies are put to the torch, denying Alexander supply, though burning one's own land unsettles the host.",
+      effect: { kind: "morale", faction: "persia", delta: -4 },
+    },
+  ],
+  citation: ref(
+    "Parmenion urged Alexander not to assault across the Granicus; Alexander attacked and was saved by Cleitus the Black. Memnon's scorched-earth counsel was rejected by the satraps.",
+    "Arrian, Anabasis I.12–16; Plutarch, Alexander 16",
+    GRANICUS,
+    "primary",
+  ),
+  media: [
+    {
+      id: "granicus-tides-invades-persia",
+      title: "Alexander the Great Invades Persia (Tides of History)",
+      url: "https://open.spotify.com/episode/0ZWSBCirAa9gajYNw9hdQ8",
+      kind: "podcast",
+    },
+    {
+      id: "granicus-kings-and-generals",
+      title: "Battle of Granicus 334 BC — Alexander's Conquests (Kings and Generals)",
+      url: "https://www.youtube.com/watch?v=s40yYSWkrzk",
+      kind: "video",
+    },
+  ],
+};
+
+export const FIRST_SLICE_DIVERGENCE_NODES: readonly DivergenceNode[] = [GRANICUS_NODE];
 
 export const FIRST_SLICE_UNITS: readonly Unit[] = [
   {
