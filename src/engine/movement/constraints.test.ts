@@ -60,3 +60,12 @@ describe("movementConstraints zone of control", () => {
     expect(zoc.has(hexKey(CONTROLLED))).toBe(true);
   });
 });
+
+describe("movementConstraints city blocks", () => {
+  it("treats a blocked city hex as impassable", () => {
+    const mover = unit("m1", "macedon", PEZHETAIROS, { q: 0, r: 0 });
+    const cityKey = hexKey({ q: 1, r: 1 });
+    const constraints = movementConstraints([mover], mover, noRivers, new Set([cityKey]));
+    expect(constraints.blocked.has(cityKey)).toBe(true);
+  });
+});

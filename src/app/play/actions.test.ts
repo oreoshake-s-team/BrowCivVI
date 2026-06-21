@@ -94,14 +94,14 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(reloaded.events.at(-1)).toMatchObject({ kind: "move", unitId: PHALANX });
   });
 
-  it("moves a unit through a friendly unit to a tile beyond it", async () => {
+  it("cannot move onto an enemy city that still has HP", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, COMPANIONS);
     const outcome = await move(board.matchId, COMPANIONS, ABYDOS);
     const reloaded = await loadOk(board.matchId);
-    expect(targets.reachable.some((hex) => hexKey(hex) === hexKey(ABYDOS))).toBe(true);
-    expect(outcome.ok).toBe(true);
-    expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(ABYDOS));
+    expect(targets.reachable.some((hex) => hexKey(hex) === hexKey(ABYDOS))).toBe(false);
+    expect(outcome.ok).toBe(false);
+    expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(COMPANIONS_START));
   });
 
   it("rejects ending a move on a tile held by a friendly unit", async () => {
