@@ -111,7 +111,8 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     });
     expect(actions.move).toHaveBeenCalledWith(MATCH_ID, MOVER.id, DEST);
     expect(actions.targetsFor).toHaveBeenCalledWith(MATCH_ID, MOVER.id);
-    expect(container.querySelector(".reach")).toBeNull();
+    expect(container.querySelector(".reach")).not.toBeNull();
+    expect(container.querySelector(`[data-attack-target="${DEFENDER.id}"]`)).not.toBeNull();
     expect(screen.queryByText(MOVE_REJECTED)).toBeNull();
   });
 
@@ -182,6 +183,76 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
 
     expect(await screen.findByText(ATTACK_REJECTED)).not.toBeNull();
     expect(container.querySelector(`[data-unit-id="${DEFENDER.id}"]`)).not.toBeNull();
+  });
+
+  it("keeps a hit-and-run attacker selected and refreshes its targets when it retains movement", async () => {
+    vi.mocked(actions.attack).mockResolvedValue({
+      ok: true,
+      units: SAMPLE_UNITS,
+      attackerHex: ORIGIN,
+      defenderHex: ENEMY_HEX,
+      attackerDamage: 6,
+      defenderDamage: 18,
+      movement: { [MOVER.id]: 1 },
+    } satisfies AttackOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.contextMenu(container.querySelector(`[data-unit-id="${DEFENDER.id}"]`)!);
+
+    await waitFor(() => {
+      expect(actions.targetsFor).toHaveBeenCalledTimes(2);
+    });
+    expect(container.querySelector(".reach")).not.toBeNull();
+    expect(container.querySelector(`[data-attack-target="${DEFENDER.id}"]`)).not.toBeNull();
+    expect(screen.queryByText("Select a unit to inspect it.")).toBeNull();
+  });
+
+  it("auto-deselects a unit that spends all movement with no adjacent enemy after moving", async () => {
+    vi.mocked(actions.targetsFor)
+      .mockReset()
+      .mockResolvedValueOnce({ reachable: [DEST], attackable: [ENEMY_HEX] })
+      .mockResolvedValue({ reachable: [], attackable: [] });
+    const movedUnits: readonly Unit[] = SAMPLE_UNITS.map((unit) =>
+      unit.id === MOVER.id ? { ...unit, hex: DEST } : unit,
+    );
+    vi.mocked(actions.move).mockResolvedValue({
+      ok: true,
+      units: movedUnits,
+      reachable: [],
+      movement: NO_MOVEMENT,
+    } satisfies MoveOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.contextMenu(container.querySelector('[data-hex="1,0"]')!);
+
+    expect(await screen.findByText("Select a unit to inspect it.")).not.toBeNull();
+    expect(container.querySelector(".reach")).toBeNull();
+  });
+
+  it("auto-deselects a non-hit-and-run attacker whose movement is spent with no further targets", async () => {
+    vi.mocked(actions.targetsFor)
+      .mockReset()
+      .mockResolvedValueOnce({ reachable: [DEST], attackable: [ENEMY_HEX] })
+      .mockResolvedValue({ reachable: [], attackable: [] });
+    vi.mocked(actions.attack).mockResolvedValue({
+      ok: true,
+      units: [MOVER],
+      attackerHex: ORIGIN,
+      defenderHex: ENEMY_HEX,
+      attackerDamage: 9,
+      defenderDamage: 30,
+      defeated: [DEFENDER.id],
+      movement: NO_MOVEMENT,
+    } satisfies AttackOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.contextMenu(container.querySelector(`[data-unit-id="${DEFENDER.id}"]`)!);
+
+    expect(await screen.findByText("Select a unit to inspect it.")).not.toBeNull();
+    expect(container.querySelector(".reach")).toBeNull();
   });
 
   it("starts a new game and routes to the new match", async () => {

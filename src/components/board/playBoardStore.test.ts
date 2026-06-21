@@ -103,4 +103,15 @@ describe("playBoardStore", () => {
     store().reset();
     expect(store().ready).toBe(false);
   });
+
+  it("clears targets when auto-deselecting", () => {
+    store().setTargets([{ q: 1, r: 1 }], [{ q: 2, r: 2 }]);
+    store().autoDeselect();
+    expect([store().reachable.length, store().attackable.length]).toEqual([0, 0]);
+  });
+
+  it("bumps the deselect signal so the board drops its selection", () => {
+    store().autoDeselect();
+    expect(store().deselectSignal).toBe(1);
+  });
 });

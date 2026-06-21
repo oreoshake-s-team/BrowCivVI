@@ -82,6 +82,7 @@ export interface HexBoardProps {
   readonly playerFaction?: string;
   readonly reachable?: readonly Hex[];
   readonly attackable?: readonly Hex[];
+  readonly deselectSignal?: number;
   readonly floaters?: readonly DamageFloater[];
   readonly fadingUnits?: readonly Unit[];
   readonly events?: readonly MatchEvent[];
@@ -98,6 +99,7 @@ export function HexBoard({
   playerFaction = "",
   reachable = [],
   attackable = [],
+  deselectSignal = 0,
   floaters = [],
   fadingUnits = [],
   events = [],
@@ -145,6 +147,12 @@ export function HexBoard({
   const labeledHexKeys = new Set(
     regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
   );
+
+  const [seenDeselect, setSeenDeselect] = useState(deselectSignal);
+  if (deselectSignal !== seenDeselect) {
+    setSeenDeselect(deselectSignal);
+    setSelectedId(null);
+  }
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);

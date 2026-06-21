@@ -13,6 +13,7 @@ export interface PlayBoardStore extends PlayBoardState {
   readonly loadFailed: (reason: BoardLoadFailure) => void;
   readonly reset: () => void;
   readonly setTargets: (reachable: readonly Hex[], attackable: readonly Hex[]) => void;
+  readonly autoDeselect: () => void;
   readonly moveOptimistic: (unitId: string, to: Hex) => void;
   readonly moveApplied: (
     units: readonly Unit[],
@@ -65,6 +66,9 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
   },
   setTargets: (reachable, attackable) => {
     set({ reachable, attackable });
+  },
+  autoDeselect: () => {
+    set((state) => ({ reachable: [], attackable: [], deselectSignal: state.deselectSignal + 1 }));
   },
   moveOptimistic: (unitId, to) => {
     set((state) => ({

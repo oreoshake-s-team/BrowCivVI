@@ -85,6 +85,16 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     usePlayBoardStore.getState().setTargets(targets.reachable, targets.attackable);
   };
 
+  const refreshTargetsOrDeselect = async (matchId: string, unitId: string) => {
+    const targets = await targetsFor(matchId, unitId);
+    const store = usePlayBoardStore.getState();
+    if (targets.reachable.length === 0 && targets.attackable.length === 0) {
+      store.autoDeselect();
+      return;
+    }
+    store.setTargets(targets.reachable, targets.attackable);
+  };
+
   const moveUnit = async (unitId: string, to: Hex) => {
     const store = usePlayBoardStore.getState();
     if (store.matchId === null || inputLocked(store)) return;
@@ -95,6 +105,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       usePlayBoardStore
         .getState()
         .moveApplied(outcome.units, outcome.movement, outcome.reachable, outcome.events);
+      await refreshTargetsOrDeselect(store.matchId, unitId);
     } else {
       usePlayBoardStore
         .getState()
@@ -135,6 +146,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
         usePlayBoardStore.getState().setFading([]);
       }, FADE_MS);
     }
+    await refreshTargetsOrDeselect(store.matchId, attackerId);
   };
 
   const confirmNewGame = async () => {

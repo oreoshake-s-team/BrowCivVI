@@ -1,0 +1,11 @@
+{
+  "pr": 171,
+  "date": "2026-06-21",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "keep-selected-after-move.webp",
+    "keep-selected-before-move.webp"
+  ],
+  "issue": 164,
+  "title": "Keep unit selected after acting"
+}
