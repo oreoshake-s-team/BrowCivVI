@@ -2,6 +2,7 @@ import type { Hex, HexDirection } from "../hex";
 import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey } from "../map/types";
+import type { CityState } from "../match/cities";
 import { entryCost } from "../movement/cost";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
@@ -38,6 +39,38 @@ export function reachableAttacks(
   if (attacker.hasAttackedThisTurn === true) return [];
   const mp = movement[attacker.id] ?? 0;
   return attackableHexes(units, attacker.id).filter((hex) => {
+    const cost = entryCost(map, riverEdges, attacker.hex, hex);
+    return cost !== null && mp >= cost;
+  });
+}
+
+export function attackableCityHexes(
+  attacker: Unit,
+  map: GameMap,
+  cities: readonly CityState[],
+): readonly Hex[] {
+  if (!canAttack(attacker)) return [];
+  const targets: Hex[] = [];
+  for (let dir = 0; dir < HEX_DIRECTION_COUNT; dir++) {
+    const step = neighbor(attacker.hex, dir as HexDirection);
+    const cityId = map.hexes.get(hexKey(step))?.cityId;
+    if (cityId === undefined) continue;
+    const city = cities.find((candidate) => candidate.id === cityId);
+    if (city !== undefined && city.owner !== attacker.owner && city.hp > 0) targets.push(step);
+  }
+  return targets;
+}
+
+export function reachableCityAttacks(
+  movement: Readonly<Record<string, number>>,
+  attacker: Unit,
+  map: GameMap,
+  riverEdges: ReadonlySet<string>,
+  cities: readonly CityState[],
+): readonly Hex[] {
+  if (attacker.hasAttackedThisTurn === true) return [];
+  const mp = movement[attacker.id] ?? 0;
+  return attackableCityHexes(attacker, map, cities).filter((hex) => {
     const cost = entryCost(map, riverEdges, attacker.hex, hex);
     return cost !== null && mp >= cost;
   });
