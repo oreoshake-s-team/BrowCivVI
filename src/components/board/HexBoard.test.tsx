@@ -804,3 +804,60 @@ describe("HexBoard city rendering", () => {
     expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
   });
 });
+
+function sardisLoyalty(loyalty: number): readonly CityState[] {
+  return [{ id: "sardis", owner: "persia", hp: SARDIS_MAX, loyalty }];
+}
+
+describe("HexBoard loyalty meter", () => {
+  it("shows the loyalty meter on a contested city", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(-20)} />,
+    );
+    expect(container.querySelector('[data-city-loyalty="sardis"]')).not.toBeNull();
+  });
+
+  it("hides the loyalty meter on a city settled with its owner", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(-60)} />,
+    );
+    expect(container.querySelector('[data-city-loyalty="sardis"]')).toBeNull();
+  });
+
+  it("fills the meter toward Macedon when loyalty is positive", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(40)} />,
+    );
+    expect(
+      container.querySelector('[data-city-loyalty="sardis"] [data-leaning="macedon"]'),
+    ).not.toBeNull();
+  });
+
+  it("fills the meter toward Persia when loyalty is negative", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(-20)} />,
+    );
+    expect(
+      container.querySelector('[data-city-loyalty="sardis"] [data-leaning="persia"]'),
+    ).not.toBeNull();
+  });
+
+  it("pulses a wavering glow when a city crosses the threshold toward the enemy", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(60)} />,
+    );
+    expect(container.querySelector('[data-wavering="sardis"]')).not.toBeNull();
+  });
+
+  it("does not pulse a glow on a city loyal to its owner", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(-60)} />,
+    );
+    expect(container.querySelector('[data-wavering="sardis"]')).toBeNull();
+  });
+
+  it("labels the meter with a signed loyalty value for assistive tech", () => {
+    render(<HexBoard map={CITED_CITY_MAP} units={[]} cities={sardisLoyalty(40)} />);
+    expect(screen.getByRole("img", { name: "Sardis loyalty: +40" })).not.toBeNull();
+  });
+});

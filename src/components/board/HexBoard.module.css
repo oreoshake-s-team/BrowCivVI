@@ -149,6 +149,41 @@
   fill: var(--color-city-hp-low);
 }
 
+.cityLoyaltyTrack {
+  fill: var(--color-loyalty-track);
+  stroke: var(--color-hex-stroke);
+  stroke-width: 1;
+}
+
+.cityLoyaltyCenter {
+  fill: var(--color-loyalty-center);
+}
+
+.cityWavering {
+  fill: none;
+  stroke: var(--color-loyalty-wavering);
+  stroke-width: 3;
+  animation: loyalty-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes loyalty-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cityWavering {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
 .cityAttack {
   cursor: pointer;
   outline: none;
