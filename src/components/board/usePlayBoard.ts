@@ -29,113 +29,98 @@ export interface PlayBoardController {
 export function usePlayBoard(initialMatchId?: string): PlayBoardController {
   const router = useRouter();
   const state = usePlayBoardStore();
-  const dispatch = state.dispatch;
   const floaterSeq = useRef(0);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
-    dispatch({ type: "reset" });
+    const store = usePlayBoardStore.getState();
+    store.reset();
     void loadBoard(initialMatchId)
       .then((result) => {
         if (!active) return;
         if (result.status === "not-found") {
-          dispatch({ type: "loadFailed", reason: "not-found" });
+          store.loadFailed("not-found");
           return;
         }
-        dispatch({ type: "boardLoaded", board: result.board });
+        store.boardLoaded(result.board);
         if (result.board.matchId !== initialMatchId) {
           router.replace(`/play/${result.board.matchId}`);
         }
       })
       .catch(() => {
-        if (active) dispatch({ type: "loadFailed", reason: "error" });
+        if (active) store.loadFailed("error");
       });
     return () => {
       active = false;
     };
-  }, [initialMatchId, router, attempt, dispatch]);
+  }, [initialMatchId, router, attempt]);
 
   useEffect(() => {
     if (state.toast === null) return undefined;
     const timer = setTimeout(() => {
-      dispatch({ type: "toastCleared" });
+      usePlayBoardStore.getState().setToast(null);
     }, 4000);
     return () => {
       clearTimeout(timer);
     };
-  }, [state.toast, dispatch]);
+  }, [state.toast]);
 
   const pushFloater = (hex: Hex, text: string) => {
     floaterSeq.current += 1;
     const id = `floater-${floaterSeq.current}`;
-    dispatch({ type: "floaterAdded", floater: { id, hex, text } });
+    usePlayBoardStore.getState().addFloater({ id, hex, text });
     setTimeout(() => {
-      dispatch({ type: "floaterRemoved", id });
+      usePlayBoardStore.getState().removeFloater(id);
     }, FLOATER_MS);
   };
 
   const select = async (unitId: string | null) => {
-    const current = usePlayBoardStore.getState();
-    if (unitId === null || current.matchId === null || inputLocked(current)) {
-      dispatch({ type: "targetsCleared" });
+    const store = usePlayBoardStore.getState();
+    if (unitId === null || store.matchId === null || inputLocked(store)) {
+      store.setTargets([], []);
       return;
     }
-    const targets = await targetsFor(current.matchId, unitId);
-    dispatch({
-      type: "targetsLoaded",
-      reachable: targets.reachable,
-      attackable: targets.attackable,
-    });
+    const targets = await targetsFor(store.matchId, unitId);
+    usePlayBoardStore.getState().setTargets(targets.reachable, targets.attackable);
   };
 
   const moveUnit = async (unitId: string, to: Hex) => {
-    const current = usePlayBoardStore.getState();
-    if (current.matchId === null || inputLocked(current)) return;
-    const previous = current.units;
-    dispatch({ type: "moveOptimistic", unitId, to });
-    const outcome = await move(current.matchId, unitId, to);
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null || inputLocked(store)) return;
+    const previous = store.units;
+    store.moveOptimistic(unitId, to);
+    const outcome = await move(store.matchId, unitId, to);
     if (outcome.ok) {
-      dispatch({
-        type: "moveApplied",
-        units: outcome.units,
-        movement: outcome.movement,
-        reachable: outcome.reachable,
-        ...(outcome.events !== undefined ? { events: outcome.events } : {}),
-      });
+      usePlayBoardStore
+        .getState()
+        .moveApplied(outcome.units, outcome.movement, outcome.reachable, outcome.events);
     } else {
-      dispatch({
-        type: "actionRejected",
-        units: previous,
-        message: outcome.rateLimited
-          ? RATE_LIMIT_MSG
-          : "Move rejected — the board changed. Try again.",
-      });
+      usePlayBoardStore
+        .getState()
+        .actionRejected(
+          previous,
+          outcome.rateLimited ? RATE_LIMIT_MSG : "Move rejected — the board changed. Try again.",
+        );
     }
   };
 
   const attackUnit = async (attackerId: string, target: Hex) => {
-    const current = usePlayBoardStore.getState();
-    if (current.matchId === null || inputLocked(current)) return;
-    const defender = current.units.find((unit) => hexKey(unit.hex) === hexKey(target));
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null || inputLocked(store)) return;
+    const defender = store.units.find((unit) => hexKey(unit.hex) === hexKey(target));
     if (defender === undefined) return;
-    dispatch({ type: "targetsCleared" });
-    const outcome = await attack(current.matchId, attackerId, defender.id);
+    store.setTargets([], []);
+    const outcome = await attack(store.matchId, attackerId, defender.id);
     if (!outcome.ok) {
-      dispatch({
-        type: "toastShown",
-        message: outcome.rateLimited
-          ? RATE_LIMIT_MSG
-          : "Attack rejected — the board changed. Try again.",
-      });
+      usePlayBoardStore
+        .getState()
+        .setToast(
+          outcome.rateLimited ? RATE_LIMIT_MSG : "Attack rejected — the board changed. Try again.",
+        );
       return;
     }
-    dispatch({
-      type: "attackApplied",
-      units: outcome.units,
-      ...(outcome.movement !== undefined ? { movement: outcome.movement } : {}),
-      ...(outcome.events !== undefined ? { events: outcome.events } : {}),
-    });
+    usePlayBoardStore.getState().attackApplied(outcome.units, outcome.movement, outcome.events);
     if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
       pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);
     }
@@ -143,35 +128,38 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       pushFloater(outcome.defenderHex, `-${outcome.defenderDamage}`);
     }
     const defeatedIds = new Set(outcome.defeated ?? []);
-    const fading = current.units.filter((unit) => defeatedIds.has(unit.id));
+    const fading = store.units.filter((unit) => defeatedIds.has(unit.id));
     if (fading.length > 0) {
-      dispatch({ type: "fadingSet", units: fading });
+      usePlayBoardStore.getState().setFading(fading);
       setTimeout(() => {
-        dispatch({ type: "fadingCleared" });
+        usePlayBoardStore.getState().setFading([]);
       }, FADE_MS);
     }
   };
 
   const confirmNewGame = async () => {
     const board = await newGame();
-    dispatch({ type: "gameStarted", board });
+    usePlayBoardStore.getState().gameStarted(board);
     router.push(`/play/${board.matchId}`);
   };
 
   const confirmEndTurn = async () => {
-    const current = usePlayBoardStore.getState();
-    if (current.matchId === null) return;
-    dispatch({ type: "endTurnStarted" });
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null) return;
+    store.endTurnStarted();
     try {
-      dispatch({ type: "endTurnFinished", board: await endTurn(current.matchId) });
+      usePlayBoardStore.getState().endTurnFinished(await endTurn(store.matchId));
     } catch {
-      dispatch({ type: "endTurnFailed" });
+      usePlayBoardStore.getState().endTurnFailed();
     }
   };
 
   const requestEndTurn = () => {
-    if (playerHasActions(usePlayBoardStore.getState())) dispatch({ type: "confirmEnd" });
-    else void confirmEndTurn();
+    if (playerHasActions(usePlayBoardStore.getState())) {
+      usePlayBoardStore.getState().setConfirmEnd(true);
+    } else {
+      void confirmEndTurn();
+    }
   };
 
   return {
@@ -191,22 +179,22 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       void confirmEndTurn();
     },
     cancelEndTurn: () => {
-      dispatch({ type: "cancelEnd" });
+      usePlayBoardStore.getState().setConfirmEnd(false);
     },
     requestNewGame: () => {
-      dispatch({ type: "confirmNewGame" });
+      usePlayBoardStore.getState().setConfirmNewGame(true);
     },
     confirmNewGame: () => {
       void confirmNewGame();
     },
     cancelNewGame: () => {
-      dispatch({ type: "cancelNewGame" });
+      usePlayBoardStore.getState().setConfirmNewGame(false);
     },
     retry: () => {
       setAttempt((n) => n + 1);
     },
     dismissToast: () => {
-      dispatch({ type: "toastCleared" });
+      usePlayBoardStore.getState().setToast(null);
     },
   };
 }
