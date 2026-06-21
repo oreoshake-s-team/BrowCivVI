@@ -11,7 +11,7 @@ Closes #
 
 ## Changes
 
-<!-- Bullet the notable changes. Keep app-code edits ≤ ~150 lines (excl. tests/CSS/config);
+<!-- Bullet the notable changes. Keep app-code edits ≤ ~300 lines (excl. tests/CSS/config);
      if larger, link the follow-up sub-issues this was split into (docs/design.md §9). -->
 
 -
