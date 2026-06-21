@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { decodeMatchState } from "@/engine/match/decode";
 import type { MatchState } from "@/engine/match/state";
-import type { MatchStore } from "@/engine/match/store";
+import type { MatchStore, OwnedMatch } from "@/engine/match/store";
 import { StaleMatchError } from "@/engine/match/store";
 
 type MatchClient = Pick<PrismaClient, "match">;
@@ -42,5 +42,16 @@ export class PrismaMatchStore implements MatchStore {
     });
     if (count === 0) throw new StaleMatchError(state.id);
     return next;
+  }
+
+  async listByOwner(owner: string): Promise<readonly OwnedMatch[]> {
+    const rows = await this.prisma.match.findMany({
+      where: { owner },
+      select: { state: true, version: true, updatedAt: true },
+    });
+    return rows.map((row) => ({
+      state: { ...decodeMatchState(row.state), version: row.version },
+      updatedAt: row.updatedAt.getTime(),
+    }));
   }
 }

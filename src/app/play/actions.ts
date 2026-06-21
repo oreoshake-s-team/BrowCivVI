@@ -26,7 +26,7 @@ import {
   type MatchEvent,
 } from "@/engine/match/events";
 import { matchCityScores } from "@/engine/match/scoring";
-import type { MatchState } from "@/engine/match/state";
+import { matchFormatOutdated, type MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { domainOf, movementConstraints } from "@/engine/movement/constraints";
 import { riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
@@ -34,6 +34,7 @@ import { availableMoves, resolveMove } from "@/engine/movement/resolveMove";
 import { createRng } from "@/engine/rng";
 import { advanceTurn, type TurnContext } from "@/engine/turn/turn";
 import { unitTypeById } from "@/engine/unit/catalog";
+import { stackingLayerForClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { getOrCreateDefault, createNewMatch, loadOwned } from "@/server/matchService";
 import { intentAllowed } from "@/server/rateLimit";
@@ -69,6 +70,7 @@ export interface BoardView {
   readonly scorched: readonly string[];
   readonly scores?: Readonly<Record<string, number>>;
   readonly pendingDivergence?: DivergenceView;
+  readonly incompatible?: boolean;
 }
 
 export interface DivergenceOutcome {
@@ -152,6 +154,7 @@ function divergenceView(node: DivergenceNode): DivergenceView {
 
 function boardView(match: MatchState): BoardView {
   const pending = pendingDivergence(match, FIRST_SLICE_DIVERGENCE_NODES);
+  const incompatible = matchFormatOutdated(match.schemaVersion);
   return {
     matchId: match.id,
     units: match.units,
@@ -164,6 +167,7 @@ function boardView(match: MatchState): BoardView {
     scorched: match.scorched,
     scores: matchCityScores(match, (id) => FIRST_SLICE_MAP.cities.get(id)?.value ?? 0),
     ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
+    ...(incompatible ? { incompatible: true } : {}),
   };
 }
 
@@ -171,6 +175,11 @@ const TURN_CONTEXT: TurnContext = {
   movementOf: (typeId) => unitTypeById(typeId)?.movement ?? 0,
   cityMaxHp: (cityId) => cityMaxHp(FIRST_SLICE_MAP.cities.get(cityId)?.defense ?? 0),
   supply: { map: FIRST_SLICE_MAP, riverEdges: RIVER_EDGES },
+  loyalty: {
+    map: FIRST_SLICE_MAP,
+    isMilitary: (typeId) =>
+      stackingLayerForClass(unitTypeById(typeId)?.class ?? "civilian") === "military",
+  },
 };
 
 export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {
@@ -464,6 +473,7 @@ export async function attackCity(
     movement: match.movement,
     attackerId,
     cityId,
+    cityHex: cityData.hex,
     cityDefense: cityData.defense,
     cityTerrainDefense: terrain?.defenseModifier ?? 0,
     cityTerrainMoveCost: terrain?.moveCost ?? 1,

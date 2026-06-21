@@ -372,450 +372,460 @@ export function HexBoard({
 
   return (
     <div className={styles.layout} ref={containerRef}>
-      <svg
-        ref={svgRef}
-        className={styles.board}
-        viewBox={viewBoxString(view)}
-        data-pan-target={panTargetKey ?? undefined}
-        role="img"
-        aria-label="Hex map of the Granicus crossing"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        <UnitSpriteDefs />
-        {Array.from(map.hexes.values()).map((mapHex) => {
-          const key = hexKey(mapHex.hex);
-          const center = hexToPixel(mapHex.hex, SIZE);
-          const city = mapHex.cityId ? map.cities.get(mapHex.cityId) : undefined;
-          const cityCitation = city?.citation;
-          const cityState = city ? cityStateById.get(city.id) : undefined;
-          const cityOwner = cityState?.owner ?? city?.owner ?? null;
-          const cityMax = city ? cityMaxHp(city.defense) : 0;
-          const cityHp = cityState?.hp ?? cityMax;
-          const cityHpFrac = cityMax > 0 ? Math.max(0, Math.min(1, cityHp / cityMax)) : 0;
-          const isCityTarget = city !== undefined && selectedId !== null && attackableKeys.has(key);
-          const attackCity = () => {
-            if (city !== undefined && selectedId !== null && onAttackCity)
-              onAttackCity(selectedId, city.id);
-          };
-          const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
-          const isBank = bankRegion !== undefined;
-          const landBlocked = blocksLand(mapHex.terrain);
-          return (
-            <g key={key} data-testid={`hex-${key}`}>
-              <polygon
-                data-hex={key}
-                data-blocked={landBlocked || undefined}
-                className={[
-                  "hex",
-                  styles.hex,
-                  landBlocked ? styles.hexBlocked : undefined,
-                  hovered === key ? styles.hexHover : undefined,
-                  isBank ? styles.hexBank : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                points={hexPolygonPoints(center, SIZE)}
-                style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
-                tabIndex={isBank ? 0 : undefined}
-                role={isBank ? "button" : undefined}
-                aria-label={
-                  isBank ? `${bankRegion.name} riverbank historical reference` : undefined
-                }
-                onMouseEnter={(event) => {
-                  setHovered(key);
-                  if (bankRegion !== undefined && selectedId === null && !occupiedKeys.has(key))
-                    showCitation(
-                      bankRegion.name,
-                      bankRegion.citation,
-                      event.currentTarget,
-                      bankRegion.media,
-                    );
-                }}
-                onMouseLeave={() => {
-                  setHovered((current) => (current === key ? null : current));
-                  if (bankRegion !== undefined) scheduleHide();
-                }}
-                onFocus={(event) => {
-                  if (bankRegion !== undefined)
-                    showCitation(
-                      bankRegion.name,
-                      bankRegion.citation,
-                      event.currentTarget,
-                      bankRegion.media,
-                    );
-                }}
-                onBlur={() => {
-                  if (bankRegion !== undefined) scheduleHide();
-                }}
-                onClick={() => {
-                  tapHex(mapHex.hex);
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  if (!moved.current) tryMove(mapHex.hex);
-                }}
-              />
-              {city ? (
+      <div className={styles.stage}>
+        <svg
+          ref={svgRef}
+          className={styles.board}
+          viewBox={viewBoxString(view)}
+          data-pan-target={panTargetKey ?? undefined}
+          role="img"
+          aria-label="Hex map of the Granicus crossing"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          <UnitSpriteDefs />
+          {Array.from(map.hexes.values()).map((mapHex) => {
+            const key = hexKey(mapHex.hex);
+            const center = hexToPixel(mapHex.hex, SIZE);
+            const city = mapHex.cityId ? map.cities.get(mapHex.cityId) : undefined;
+            const cityCitation = city?.citation;
+            const cityState = city ? cityStateById.get(city.id) : undefined;
+            const cityOwner = cityState?.owner ?? city?.owner ?? null;
+            const cityMax = city ? cityMaxHp(city.defense) : 0;
+            const cityHp = cityState?.hp ?? cityMax;
+            const cityHpFrac = cityMax > 0 ? Math.max(0, Math.min(1, cityHp / cityMax)) : 0;
+            const isCityTarget =
+              city !== undefined && selectedId !== null && attackableKeys.has(key);
+            const attackCity = () => {
+              if (city !== undefined && selectedId !== null && onAttackCity)
+                onAttackCity(selectedId, city.id);
+            };
+            const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
+            const isBank = bankRegion !== undefined;
+            const landBlocked = blocksLand(mapHex.terrain);
+            return (
+              <g key={key} data-testid={`hex-${key}`}>
                 <polygon
-                  className={styles.cityTint}
-                  data-city-tint={city.id}
+                  data-hex={key}
+                  data-blocked={landBlocked || undefined}
+                  className={[
+                    "hex",
+                    styles.hex,
+                    landBlocked ? styles.hexBlocked : undefined,
+                    hovered === key ? styles.hexHover : undefined,
+                    isBank ? styles.hexBank : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   points={hexPolygonPoints(center, SIZE)}
-                  style={{ fill: factionStyle(cityOwner).fill }}
-                  pointerEvents="none"
-                />
-              ) : null}
-              {city ? (
-                <polygon
-                  className={styles.cityBorder}
-                  data-city-border={city.id}
-                  points={hexPolygonPoints(center, SIZE)}
-                  style={{ stroke: factionStyle(cityOwner).stroke }}
-                  pointerEvents="none"
-                />
-              ) : null}
-              {isBank ? (
-                <polygon
-                  className={["bank", styles.bank].filter(Boolean).join(" ")}
-                  points={hexPolygonPoints(center, SIZE)}
-                  pointerEvents="none"
-                />
-              ) : null}
-              {labeledHexKeys.has(key) ? null : (
-                <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
-              )}
-              {scorchedKeys.has(key) ? (
-                <text
-                  className={styles.scorch}
-                  data-scorched={key}
-                  x={center.x + SIZE * 0.5}
-                  y={center.y - SIZE * 0.42}
-                >
-                  <title>Burned land — supply denied</title>
-                  🔥
-                </text>
-              ) : null}
-              {showQandR && (
-                <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
-                  {mapHex.hex.q}, {mapHex.hex.r}
-                </text>
-              )}
-              {city && cityCitation !== undefined && hasPlayableMedia(city.media) ? (
-                <CitationTarget
-                  label={city.name}
-                  className={styles.citeTarget}
-                  onShow={(target) => {
-                    showCitation(city.name, cityCitation, target, city.media);
+                  style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
+                  tabIndex={isBank ? 0 : undefined}
+                  role={isBank ? "button" : undefined}
+                  aria-label={
+                    isBank ? `${bankRegion.name} riverbank historical reference` : undefined
+                  }
+                  onMouseEnter={(event) => {
+                    setHovered(key);
+                    if (bankRegion !== undefined && selectedId === null && !occupiedKeys.has(key))
+                      showCitation(
+                        bankRegion.name,
+                        bankRegion.citation,
+                        event.currentTarget,
+                        bankRegion.media,
+                      );
                   }}
-                  onHide={() => {
-                    scheduleHide();
+                  onMouseLeave={() => {
+                    setHovered((current) => (current === key ? null : current));
+                    if (bankRegion !== undefined) scheduleHide();
                   }}
-                >
-                  <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
-                    {city.name}
-                    <MediaGlyph />
-                  </text>
-                </CitationTarget>
-              ) : city ? (
-                <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
-                  {city.name}
-                </text>
-              ) : null}
-              {city ? (
-                <g
-                  className={styles.cityHp}
-                  data-city-hp={city.id}
-                  role="img"
-                  aria-label={`${city.name}: ${cityHp} of ${cityMax} HP`}
-                  pointerEvents="none"
-                >
-                  <rect
-                    className={styles.cityHpTrack}
-                    x={center.x - SIZE * 0.5}
-                    y={center.y - SIZE * 0.98}
-                    width={SIZE}
-                    height={SIZE * 0.16}
-                    rx={SIZE * 0.08}
-                  />
-                  <rect
-                    className={styles.cityHpFill}
-                    data-low={cityHpFrac <= 0.34 || undefined}
-                    x={center.x - SIZE * 0.5}
-                    y={center.y - SIZE * 0.98}
-                    width={SIZE * cityHpFrac}
-                    height={SIZE * 0.16}
-                    rx={SIZE * 0.08}
-                  />
-                </g>
-              ) : null}
-              {isCityTarget ? (
-                <g
-                  className={styles.cityAttack}
-                  data-city-attack={city.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${city.name} — attackable`}
-                  transform={`translate(${center.x}, ${center.y})`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (!moved.current) attackCity();
+                  onFocus={(event) => {
+                    if (bankRegion !== undefined)
+                      showCitation(
+                        bankRegion.name,
+                        bankRegion.citation,
+                        event.currentTarget,
+                        bankRegion.media,
+                      );
+                  }}
+                  onBlur={() => {
+                    if (bankRegion !== undefined) scheduleHide();
+                  }}
+                  onClick={() => {
+                    tapHex(mapHex.hex);
                   }}
                   onContextMenu={(event) => {
                     event.preventDefault();
-                    if (!moved.current) attackCity();
+                    if (!moved.current) tryMove(mapHex.hex);
                   }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      attackCity();
-                    }
-                  }}
-                >
-                  <polygon
-                    className={styles.cityAttackHit}
-                    points={hexPolygonPoints({ x: 0, y: 0 }, SIZE)}
-                  />
-                  <g className={styles.attackMark}>
-                    <line x1={-SIZE * 0.2} y1={-SIZE * 0.2} x2={SIZE * 0.2} y2={SIZE * 0.2} />
-                    <line x1={-SIZE * 0.2} y1={SIZE * 0.2} x2={SIZE * 0.2} y2={-SIZE * 0.2} />
-                  </g>
-                </g>
-              ) : null}
-            </g>
-          );
-        })}
-
-        {reachable.map((hex) => (
-          <polygon
-            key={`reach-${hexKey(hex)}`}
-            className={["reach", styles.reach].filter(Boolean).join(" ")}
-            points={hexPolygonPoints(hexToPixel(hex, SIZE), SIZE)}
-          />
-        ))}
-
-        {map.rivers.length > 0 && granicus !== undefined ? (
-          <CitationTarget
-            label={granicus.name}
-            className={styles.citeTarget}
-            onShow={(target) => {
-              showCitation(granicus.name, granicus.citation, target, granicus.media);
-            }}
-            onHide={() => {
-              scheduleHide();
-            }}
-          >
-            {map.rivers.map((river, index) => {
-              const [p1, p2] = riverSegmentPoints(river.a, river.b, SIZE);
-              return (
-                <line
-                  key={`river-${index}`}
-                  className={["river", styles.river].filter(Boolean).join(" ")}
-                  x1={p1.x}
-                  y1={p1.y}
-                  x2={p2.x}
-                  y2={p2.y}
                 />
-              );
-            })}
-            <text
-              className={styles.riverGlyph}
-              x={riverGlyphAnchor(map.rivers, SIZE).x}
-              y={riverGlyphAnchor(map.rivers, SIZE).y + SIZE * 0.5}
-              aria-hidden="true"
-            >
-              {MEDIA_GLYPH}
-            </text>
-          </CitationTarget>
-        ) : null}
-
-        {regions.map((region) => {
-          const labelHex = region.labelHex;
-          if (labelHex === undefined) return null;
-          const center = hexToPixel(labelHex, SIZE);
-          const className = SEA_KINDS.has(region.kind) ? styles.seaLabel : styles.featureLabel;
-          if (!hasPlayableMedia(region.media)) {
-            return (
-              <text key={region.id} className={className} x={center.x} y={center.y}>
-                {region.name}
-              </text>
+                {city ? (
+                  <polygon
+                    className={styles.cityTint}
+                    data-city-tint={city.id}
+                    points={hexPolygonPoints(center, SIZE)}
+                    style={{ fill: factionStyle(cityOwner).fill }}
+                    pointerEvents="none"
+                  />
+                ) : null}
+                {city ? (
+                  <polygon
+                    className={styles.cityBorder}
+                    data-city-border={city.id}
+                    points={hexPolygonPoints(center, SIZE)}
+                    style={{ stroke: factionStyle(cityOwner).stroke }}
+                    pointerEvents="none"
+                  />
+                ) : null}
+                {isBank ? (
+                  <polygon
+                    className={["bank", styles.bank].filter(Boolean).join(" ")}
+                    points={hexPolygonPoints(center, SIZE)}
+                    pointerEvents="none"
+                  />
+                ) : null}
+                {labeledHexKeys.has(key) ? null : (
+                  <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
+                )}
+                {scorchedKeys.has(key) ? (
+                  <text
+                    className={styles.scorch}
+                    data-scorched={key}
+                    x={center.x + SIZE * 0.5}
+                    y={center.y - SIZE * 0.42}
+                  >
+                    <title>Burned land — supply denied</title>
+                    🔥
+                  </text>
+                ) : null}
+                {showQandR && (
+                  <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
+                    {mapHex.hex.q}, {mapHex.hex.r}
+                  </text>
+                )}
+                {city && cityCitation !== undefined && hasPlayableMedia(city.media) ? (
+                  <CitationTarget
+                    label={city.name}
+                    className={styles.citeTarget}
+                    onShow={(target) => {
+                      showCitation(city.name, cityCitation, target, city.media);
+                    }}
+                    onHide={() => {
+                      scheduleHide();
+                    }}
+                  >
+                    <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
+                      {city.name}
+                      <MediaGlyph />
+                    </text>
+                  </CitationTarget>
+                ) : city ? (
+                  <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
+                    {city.name}
+                  </text>
+                ) : null}
+                {city ? (
+                  <g
+                    className={styles.cityHp}
+                    data-city-hp={city.id}
+                    role="img"
+                    aria-label={`${city.name}: ${cityHp} of ${cityMax} HP`}
+                    pointerEvents="none"
+                  >
+                    <rect
+                      className={styles.cityHpTrack}
+                      x={center.x - SIZE * 0.5}
+                      y={center.y - SIZE * 0.98}
+                      width={SIZE}
+                      height={SIZE * 0.16}
+                      rx={SIZE * 0.08}
+                    />
+                    <rect
+                      className={styles.cityHpFill}
+                      data-low={cityHpFrac <= 0.34 || undefined}
+                      x={center.x - SIZE * 0.5}
+                      y={center.y - SIZE * 0.98}
+                      width={SIZE * cityHpFrac}
+                      height={SIZE * 0.16}
+                      rx={SIZE * 0.08}
+                    />
+                  </g>
+                ) : null}
+                {isCityTarget ? (
+                  <g
+                    className={styles.cityAttack}
+                    data-city-attack={city.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${city.name} — attackable`}
+                    transform={`translate(${center.x}, ${center.y})`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!moved.current) attackCity();
+                    }}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      if (!moved.current) attackCity();
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        attackCity();
+                      }
+                    }}
+                  >
+                    <polygon
+                      className={styles.cityAttackHit}
+                      points={hexPolygonPoints({ x: 0, y: 0 }, SIZE)}
+                    />
+                    <g className={styles.attackMark}>
+                      <line x1={-SIZE * 0.2} y1={-SIZE * 0.2} x2={SIZE * 0.2} y2={SIZE * 0.2} />
+                      <line x1={-SIZE * 0.2} y1={SIZE * 0.2} x2={SIZE * 0.2} y2={-SIZE * 0.2} />
+                    </g>
+                  </g>
+                ) : null}
+              </g>
             );
-          }
-          return (
+          })}
+
+          {reachable.map((hex) => (
+            <polygon
+              key={`reach-${hexKey(hex)}`}
+              className={["reach", styles.reach].filter(Boolean).join(" ")}
+              points={hexPolygonPoints(hexToPixel(hex, SIZE), SIZE)}
+            />
+          ))}
+
+          {map.rivers.length > 0 && granicus !== undefined ? (
             <CitationTarget
-              key={region.id}
-              label={region.name}
+              label={granicus.name}
               className={styles.citeTarget}
               onShow={(target) => {
-                showCitation(region.name, region.citation, target, region.media);
+                showCitation(granicus.name, granicus.citation, target, granicus.media);
               }}
               onHide={() => {
                 scheduleHide();
               }}
             >
-              <text className={className} x={center.x} y={center.y}>
-                {region.name}
-                <MediaGlyph />
+              {map.rivers.map((river, index) => {
+                const [p1, p2] = riverSegmentPoints(river.a, river.b, SIZE);
+                return (
+                  <line
+                    key={`river-${index}`}
+                    className={["river", styles.river].filter(Boolean).join(" ")}
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                  />
+                );
+              })}
+              <text
+                className={styles.riverGlyph}
+                x={riverGlyphAnchor(map.rivers, SIZE).x}
+                y={riverGlyphAnchor(map.rivers, SIZE).y + SIZE * 0.5}
+                aria-hidden="true"
+              >
+                {MEDIA_GLYPH}
               </text>
             </CitationTarget>
-          );
-        })}
+          ) : null}
 
-        {units.map((unit) => {
-          const center = hexToPixel(unit.hex, SIZE);
-          const type = unitTypeById(unit.typeId);
-          const style = factionStyle(unit.owner);
-          const selected = unit.id === selectedId;
-          const isAttackTarget =
-            selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
-          const moves = movement[unit.id];
-          const outOfSupply = !unit.supplied;
-          const revealed = selected || hoveredUnitId === unit.id;
-          const showMoves =
-            moves !== undefined && (unit.owner === playerFaction ? moves > 0 : revealed);
-          const toggle = () => {
-            if (moved.current) return;
-            setCited(null);
-            select(selected ? null : unit.id);
-          };
-          const doAttack = () => {
-            if (selectedId !== null && onAttack) onAttack(selectedId, unit.hex);
-          };
-          return (
-            <g
-              key={unit.id}
-              data-unit-id={unit.id}
-              className={styles.token}
-              transform={`translate(${center.x}, ${center.y})`}
-              role="button"
-              tabIndex={0}
-              aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}${outOfSupply ? " — out of supply" : ""}`}
-              aria-pressed={selected}
-              onMouseEnter={() => {
-                setHoveredUnitId(unit.id);
-              }}
-              onMouseLeave={() => {
-                setHoveredUnitId((current) => (current === unit.id ? null : current));
-              }}
-              onFocus={() => {
-                setHoveredUnitId(unit.id);
-              }}
-              onBlur={() => {
-                setHoveredUnitId((current) => (current === unit.id ? null : current));
-              }}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (moved.current) return;
-                if (pointerType.current !== "mouse" && isAttackTarget) doAttack();
-                else toggle();
-              }}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                if (!moved.current && isAttackTarget) doAttack();
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
+          {regions.map((region) => {
+            const labelHex = region.labelHex;
+            if (labelHex === undefined) return null;
+            const center = hexToPixel(labelHex, SIZE);
+            const className = SEA_KINDS.has(region.kind) ? styles.seaLabel : styles.featureLabel;
+            if (!hasPlayableMedia(region.media)) {
+              return (
+                <text key={region.id} className={className} x={center.x} y={center.y}>
+                  {region.name}
+                </text>
+              );
+            }
+            return (
+              <CitationTarget
+                key={region.id}
+                label={region.name}
+                className={styles.citeTarget}
+                onShow={(target) => {
+                  showCitation(region.name, region.citation, target, region.media);
+                }}
+                onHide={() => {
+                  scheduleHide();
+                }}
+              >
+                <text className={className} x={center.x} y={center.y}>
+                  {region.name}
+                  <MediaGlyph />
+                </text>
+              </CitationTarget>
+            );
+          })}
+
+          {units.map((unit) => {
+            const center = hexToPixel(unit.hex, SIZE);
+            const type = unitTypeById(unit.typeId);
+            const style = factionStyle(unit.owner);
+            const selected = unit.id === selectedId;
+            const isAttackTarget =
+              selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
+            const moves = movement[unit.id];
+            const outOfSupply = !unit.supplied;
+            const revealed = selected || hoveredUnitId === unit.id;
+            const showMoves =
+              moves !== undefined && (unit.owner === playerFaction ? moves > 0 : revealed);
+            const toggle = () => {
+              if (moved.current) return;
+              setCited(null);
+              select(selected ? null : unit.id);
+            };
+            const doAttack = () => {
+              if (selectedId !== null && onAttack) onAttack(selectedId, unit.hex);
+            };
+            return (
+              <g
+                key={unit.id}
+                data-unit-id={unit.id}
+                className={styles.token}
+                transform={`translate(${center.x}, ${center.y})`}
+                role="button"
+                tabIndex={0}
+                aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}${outOfSupply ? " — out of supply" : ""}`}
+                aria-pressed={selected}
+                onMouseEnter={() => {
+                  setHoveredUnitId(unit.id);
+                }}
+                onMouseLeave={() => {
+                  setHoveredUnitId((current) => (current === unit.id ? null : current));
+                }}
+                onFocus={() => {
+                  setHoveredUnitId(unit.id);
+                }}
+                onBlur={() => {
+                  setHoveredUnitId((current) => (current === unit.id ? null : current));
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (moved.current) return;
+                  if (pointerType.current !== "mouse" && isAttackTarget) doAttack();
+                  else toggle();
+                }}
+                onContextMenu={(event) => {
                   event.preventDefault();
-                  if (isAttackTarget) doAttack();
-                  else select(selected ? null : unit.id);
-                }
-              }}
-            >
-              {selected ? (
-                <circle className={styles.selectedRing} cx={0} cy={0} r={SIZE * 0.62} />
-              ) : null}
-              <circle
-                cx={0}
-                cy={0}
-                r={SIZE * 0.5}
-                style={{ fill: style.fill, stroke: style.stroke }}
-                strokeWidth={2}
-              />
-              <UnitMark unitClass={type?.class} color={style.text} />
-              {outOfSupply ? (
-                <g
-                  className={styles.supplyBadge}
-                  data-out-of-supply={unit.id}
-                  transform={`translate(${-SIZE * 0.5}, ${-SIZE * 0.5})`}
-                >
-                  <title>Out of supply</title>
-                  <circle className={styles.supplyBadgeDot} cx={0} cy={0} r={SIZE * 0.26} />
-                  <text className={styles.supplyBadgeMark} x={0} y={0}>
-                    ⊘
-                  </text>
-                </g>
-              ) : null}
-              {isAttackTarget ? (
-                <g className={styles.attackMark} data-attack-target={unit.id}>
-                  <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />
-                  <line x1={-SIZE * 0.18} y1={-SIZE * 0.6} x2={SIZE * 0.18} y2={-SIZE * 0.96} />
-                </g>
-              ) : null}
-              {showMoves ? (
-                <g
-                  className={styles.movesBadge}
-                  data-moves={unit.id}
-                  transform={`translate(0, ${SIZE * 0.84})`}
-                >
-                  <rect
-                    className={styles.movesPill}
-                    x={-SIZE * 0.42}
-                    y={-SIZE * 0.28}
-                    width={SIZE * 0.84}
-                    height={SIZE * 0.52}
-                    rx={SIZE * 0.26}
-                  />
-                  <text className={styles.movesText} x={0} y={0}>
-                    {moves}/{type?.movement ?? 0}
-                  </text>
-                </g>
-              ) : null}
-            </g>
-          );
-        })}
+                  if (!moved.current && isAttackTarget) doAttack();
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    if (isAttackTarget) doAttack();
+                    else select(selected ? null : unit.id);
+                  }
+                }}
+              >
+                {selected ? (
+                  <circle className={styles.selectedRing} cx={0} cy={0} r={SIZE * 0.62} />
+                ) : null}
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={SIZE * 0.5}
+                  style={{ fill: style.fill, stroke: style.stroke }}
+                  strokeWidth={2}
+                />
+                <UnitMark unitClass={type?.class} color={style.text} />
+                {outOfSupply ? (
+                  <g
+                    className={styles.supplyBadge}
+                    data-out-of-supply={unit.id}
+                    transform={`translate(${-SIZE * 0.5}, ${-SIZE * 0.5})`}
+                  >
+                    <title>Out of supply</title>
+                    <circle className={styles.supplyBadgeDot} cx={0} cy={0} r={SIZE * 0.26} />
+                    <text className={styles.supplyBadgeMark} x={0} y={0}>
+                      ⊘
+                    </text>
+                  </g>
+                ) : null}
+                {isAttackTarget ? (
+                  <g className={styles.attackMark} data-attack-target={unit.id}>
+                    <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />
+                    <line x1={-SIZE * 0.18} y1={-SIZE * 0.6} x2={SIZE * 0.18} y2={-SIZE * 0.96} />
+                  </g>
+                ) : null}
+                {showMoves ? (
+                  <g
+                    className={styles.movesBadge}
+                    data-moves={unit.id}
+                    transform={`translate(0, ${SIZE * 0.84})`}
+                  >
+                    <rect
+                      className={styles.movesPill}
+                      x={-SIZE * 0.42}
+                      y={-SIZE * 0.28}
+                      width={SIZE * 0.84}
+                      height={SIZE * 0.52}
+                      rx={SIZE * 0.26}
+                    />
+                    <text className={styles.movesText} x={0} y={0}>
+                      {moves}/{type?.movement ?? 0}
+                    </text>
+                  </g>
+                ) : null}
+              </g>
+            );
+          })}
 
-        {fadingUnits.map((unit) => {
-          const center = hexToPixel(unit.hex, SIZE);
-          const type = unitTypeById(unit.typeId);
-          const style = factionStyle(unit.owner);
-          return (
-            <g
-              key={`fade-${unit.id}`}
-              className={styles.fading}
-              data-fading-id={unit.id}
-              transform={`translate(${center.x}, ${center.y})`}
-            >
-              <circle
-                cx={0}
-                cy={0}
-                r={SIZE * 0.5}
-                style={{ fill: style.fill, stroke: style.stroke }}
-                strokeWidth={2}
-              />
-              <UnitMark unitClass={type?.class} color={style.text} />
-            </g>
-          );
-        })}
+          {fadingUnits.map((unit) => {
+            const center = hexToPixel(unit.hex, SIZE);
+            const type = unitTypeById(unit.typeId);
+            const style = factionStyle(unit.owner);
+            return (
+              <g
+                key={`fade-${unit.id}`}
+                className={styles.fading}
+                data-fading-id={unit.id}
+                transform={`translate(${center.x}, ${center.y})`}
+              >
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={SIZE * 0.5}
+                  style={{ fill: style.fill, stroke: style.stroke }}
+                  strokeWidth={2}
+                />
+                <UnitMark unitClass={type?.class} color={style.text} />
+              </g>
+            );
+          })}
 
-        {floaters.map((floater) => {
-          const center = hexToPixel(floater.hex, SIZE);
-          return (
-            <text
-              key={floater.id}
-              className={styles.floater}
-              x={center.x}
-              y={center.y - SIZE * 0.2}
-            >
-              {floater.text}
-            </text>
-          );
-        })}
-      </svg>
+          {floaters.map((floater) => {
+            const center = hexToPixel(floater.hex, SIZE);
+            return (
+              <text
+                key={floater.id}
+                className={styles.floater}
+                x={center.x}
+                y={center.y - SIZE * 0.2}
+              >
+                {floater.text}
+              </text>
+            );
+          })}
+        </svg>
+
+        <div className={styles.legendOverlay}>
+          <Legend />
+        </div>
+        {selectedUnit !== null ? (
+          <div className={styles.infoOverlay}>
+            <InfoPanel unit={selectedUnit} moves={selectedMoves} />
+          </div>
+        ) : null}
+      </div>
 
       <aside className={styles.sidebar}>
-        <Legend />
-        <InfoPanel unit={selectedUnit} moves={selectedMoves} />
         <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
         <MoveLog events={events} cityNames={cityNames} />
       </aside>

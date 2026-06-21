@@ -80,6 +80,11 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect([board.scores?.macedon ?? 0, board.scores?.persia ?? 0].every((s) => s > 0)).toBe(true);
   });
 
+  it("does not flag a freshly seeded match as incompatible", async () => {
+    const board = await newGame();
+    expect(board.incompatible ?? false).toBe(false);
+  });
+
   it("applies a legal move and persists it", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, PHALANX);

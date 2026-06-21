@@ -159,3 +159,35 @@ describe("advanceTurn supply phase", () => {
     expect(macedon?.hp).toBe(90);
   });
 });
+
+describe("advanceTurn loyalty phase", () => {
+  const loyaltyCtx: TurnContext = {
+    movementOf: () => 4,
+    cityMaxHp: () => 100,
+    loyalty: { map: supplyMap, isMilitary: () => true },
+  };
+
+  it("drifts a city's loyalty via the pressure pass", () => {
+    const away: Unit = {
+      id: "per",
+      typeId: "pezhetairos",
+      owner: "persia",
+      hex: { q: 3, r: 0 },
+      hp: 100,
+      morale: 80,
+      supplied: true,
+      hasMovedThisTurn: false,
+    };
+    const base = createMatch({
+      id: "loy",
+      seed: 1,
+      mapId: "supply",
+      turnLimit: 20,
+      units: [away],
+      movementOf: () => 4,
+      cities: [SUPPLY_HOME],
+    });
+    const m: MatchState = { ...base, activeFaction: "persia" };
+    expect(advanceTurn(m, loyaltyCtx).cities[0]?.loyalty).toBe(55);
+  });
+});

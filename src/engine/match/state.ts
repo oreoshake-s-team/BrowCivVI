@@ -4,7 +4,11 @@ import type { CityState } from "./cities";
 import { seedCities } from "./cities";
 import type { MatchEvent } from "./events";
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
+
+export function matchFormatOutdated(schemaVersion: number): boolean {
+  return schemaVersion < CURRENT_SCHEMA_VERSION;
+}
 
 export interface DivergenceRecord {
   readonly choice: string;

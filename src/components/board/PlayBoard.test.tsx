@@ -292,7 +292,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     });
     expect(container.querySelector(".reach")).not.toBeNull();
     expect(container.querySelector(`[data-attack-target="${DEFENDER.id}"]`)).not.toBeNull();
-    expect(screen.queryByText("Select a unit to inspect it.")).toBeNull();
+    expect(screen.queryByLabelText("Selected unit")).not.toBeNull();
   });
 
   it("auto-deselects a unit that spends all movement with no adjacent enemy after moving", async () => {
@@ -314,7 +314,9 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     await selectMover(container);
     fireEvent.contextMenu(container.querySelector('[data-hex="1,0"]')!);
 
-    expect(await screen.findByText("Select a unit to inspect it.")).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Selected unit")).toBeNull();
+    });
     expect(container.querySelector(".reach")).toBeNull();
   });
 
@@ -338,7 +340,9 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     await selectMover(container);
     fireEvent.contextMenu(container.querySelector(`[data-unit-id="${DEFENDER.id}"]`)!);
 
-    expect(await screen.findByText("Select a unit to inspect it.")).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Selected unit")).toBeNull();
+    });
     expect(container.querySelector(".reach")).toBeNull();
   });
 
@@ -359,6 +363,44 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     fireEvent.click(await screen.findByRole("button", { name: "New game" }));
     fireEvent.click(screen.getByRole("button", { name: "Yes" }));
 
+    await waitFor(() => {
+      expect(actions.newGame).toHaveBeenCalled();
+    });
+    expect(pushMock).toHaveBeenCalledWith(`/play/${NEW_MATCH_ID}`);
+  });
+
+  it("prompts a new game for a match saved before city capture, then starts fresh", async () => {
+    vi.mocked(actions.loadBoard).mockResolvedValue({
+      status: "ok",
+      board: {
+        matchId: MATCH_ID,
+        units: SAMPLE_UNITS,
+        movement: NO_MOVEMENT,
+        playerFaction: "macedon",
+        cities: [],
+        turn: 7,
+        activeFaction: "macedon",
+        events: [],
+        scorched: [],
+        incompatible: true,
+      },
+    } satisfies LoadBoardResult);
+    vi.mocked(actions.newGame).mockResolvedValue({
+      matchId: NEW_MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      cities: CITIES_VIEW,
+      turn: 1,
+      activeFaction: "macedon",
+      events: [],
+      scorched: [],
+    } satisfies BoardView);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Start new game" }));
+
+    expect(container.querySelector("svg")).toBeNull();
     await waitFor(() => {
       expect(actions.newGame).toHaveBeenCalled();
     });

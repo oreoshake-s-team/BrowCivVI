@@ -1,0 +1,11 @@
+{
+  "pr": 211,
+  "date": "2026-06-21",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "play-layout.webp",
+    "terrain-legend-expanded.webp",
+    "unit-info-overlay.webp"
+  ],
+  "title": "Play layout redesign"
+}
