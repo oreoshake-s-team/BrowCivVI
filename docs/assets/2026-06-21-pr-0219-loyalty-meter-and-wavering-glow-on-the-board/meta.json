@@ -1,0 +1,11 @@
+{
+  "pr": 219,
+  "date": "2026-06-21",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "loyalty-board.webp",
+    "loyalty-meter-detail.png"
+  ],
+  "issue": 206,
+  "title": "Loyalty meter and wavering glow on the board"
+}
