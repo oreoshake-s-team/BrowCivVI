@@ -69,4 +69,18 @@ describe("applyAttack", () => {
     const river = applyAttack(input({ riverAttack: true })).defenderDamage;
     expect(river < open).toBe(true);
   });
+
+  it("a wounded attacker deals less damage than at full health", () => {
+    const full = applyAttack(input()).defenderDamage;
+    const wounded = applyAttack(
+      input({ units: [{ ...ATTACKER, hp: 30 }, DEFENDER] }),
+    ).defenderDamage;
+    expect(wounded < full).toBe(true);
+  });
+
+  it("a higher-morale attacker deals more damage than a lower-morale one", () => {
+    const high = applyAttack(input({ units: [{ ...ATTACKER, morale: 95 }, DEFENDER] }));
+    const low = applyAttack(input({ units: [{ ...ATTACKER, morale: 60 }, DEFENDER] }));
+    expect(high.defenderDamage > low.defenderDamage).toBe(true);
+  });
 });

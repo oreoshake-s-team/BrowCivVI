@@ -29,6 +29,7 @@ function toAttackUnit(unit: Unit): AttackUnit {
     owner: unit.owner,
     strength: type?.strength ?? 0,
     hp: unit.hp,
+    morale: unit.morale,
     abilities: type?.abilities ?? [],
   };
 }

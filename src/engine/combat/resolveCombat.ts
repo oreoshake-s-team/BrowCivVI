@@ -7,6 +7,24 @@ export const COMBAT_STRENGTH_SCALE = 0.04;
 export const COMBAT_VARIANCE = 0.25;
 export const FLANK_ATTACK_BONUS = 0.5;
 export const RIVER_ATTACK_PENALTY = 5;
+export const WOUNDED_PENALTY_MAX = 10;
+export const FULL_HP = 100;
+export const MORALE_BASELINE = 80;
+export const MORALE_STRENGTH_SCALE = 0.007;
+export const MORALE_STRENGTH_CAP = 0.15;
+
+function woundedPenalty(hp: number): number {
+  return (WOUNDED_PENALTY_MAX * Math.max(0, FULL_HP - Math.min(hp, FULL_HP))) / FULL_HP;
+}
+
+function moraleMultiplier(morale: number): number {
+  const delta = MORALE_STRENGTH_SCALE * (morale - MORALE_BASELINE);
+  return 1 + Math.max(-MORALE_STRENGTH_CAP, Math.min(MORALE_STRENGTH_CAP, delta));
+}
+
+export function effectiveUnitStrength(strength: number, hp: number, morale: number): number {
+  return Math.max(1, (strength - woundedPenalty(hp)) * moraleMultiplier(morale));
+}
 
 export interface CombatSide {
   readonly strength: number;

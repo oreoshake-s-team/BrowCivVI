@@ -3,13 +3,14 @@ import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import type { Rng } from "../rng";
 import { isFlanked } from "./flanking";
 import { PHALANX_ABILITY } from "./phalanx";
-import { resolveCombat, type CombatResult } from "./resolveCombat";
+import { effectiveUnitStrength, resolveCombat, type CombatResult } from "./resolveCombat";
 
 export interface AttackUnit {
   readonly hex: Hex;
   readonly owner: string;
   readonly strength: number;
   readonly hp: number;
+  readonly morale: number;
   readonly abilities: readonly string[];
 }
 
@@ -49,13 +50,21 @@ export function resolveAttack(input: ResolveAttackInput): CombatResult {
   );
   return resolveCombat({
     attacker: {
-      strength: input.attacker.strength,
+      strength: effectiveUnitStrength(
+        input.attacker.strength,
+        input.attacker.hp,
+        input.attacker.morale,
+      ),
       hp: input.attacker.hp,
       abilities: input.attacker.abilities,
       adjacentAllies: adjacentPhalangites(input.attacker.hex, input.attacker.owner, input.others),
     },
     defender: {
-      strength: input.defender.strength,
+      strength: effectiveUnitStrength(
+        input.defender.strength,
+        input.defender.hp,
+        input.defender.morale,
+      ),
       hp: input.defender.hp,
       abilities: input.defender.abilities,
       adjacentAllies: adjacentPhalangites(input.defender.hex, input.defender.owner, input.others),

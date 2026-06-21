@@ -2,7 +2,7 @@ import type { CityState } from "../match/cities";
 import type { Rng } from "../rng";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
-import { resolveCombat } from "./resolveCombat";
+import { effectiveUnitStrength, resolveCombat } from "./resolveCombat";
 
 export interface ApplyCityAttackInput {
   readonly units: readonly Unit[];
@@ -45,7 +45,7 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
   const attackerType = unitTypeById(attacker.typeId);
   const result = resolveCombat({
     attacker: {
-      strength: attackerType?.strength ?? 0,
+      strength: effectiveUnitStrength(attackerType?.strength ?? 0, attacker.hp, attacker.morale),
       hp: attacker.hp,
       abilities: attackerType?.abilities ?? [],
       adjacentAllies: 0,
