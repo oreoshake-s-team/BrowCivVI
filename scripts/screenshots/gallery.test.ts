@@ -50,8 +50,20 @@ describe("renderPrIndexHtml", () => {
     expect(renderPrIndexHtml(baseMeta)).not.toContain("/issues/");
   });
 
-  it("renders one image element per screenshot", () => {
-    expect(renderPrIndexHtml(baseMeta).match(/<img /g)).toHaveLength(2);
+  it("renders one figure per screenshot", () => {
+    expect(renderPrIndexHtml(baseMeta).match(/<figure>/g)).toHaveLength(2);
+  });
+
+  it("links each thumbnail to its fullscreen lightbox target", () => {
+    expect(renderPrIndexHtml(baseMeta)).toContain('<a class="thumb" href="#shot-1">');
+  });
+
+  it("renders a fullscreen lightbox overlay per screenshot", () => {
+    expect(renderPrIndexHtml(baseMeta).match(/<a class="lightbox"/g)).toHaveLength(2);
+  });
+
+  it("closes the lightbox by linking the overlay back to no target", () => {
+    expect(renderPrIndexHtml(baseMeta)).toContain('<a class="lightbox" id="shot-1" href="#">');
   });
 
   it("escapes HTML in the title", () => {
