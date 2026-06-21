@@ -92,6 +92,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         fadingUnits={state.fadingUnits}
         events={state.events}
         panTarget={state.panTarget}
+        defectionPulse={state.defectionPulse}
         onSelect={board.select}
         onMove={board.moveUnit}
         onAttack={board.attackUnit}

@@ -23,6 +23,7 @@ export interface PlayBoardState {
   readonly fadingUnits: readonly Unit[];
   readonly replaying: boolean;
   readonly panTarget: Hex | null;
+  readonly defectionPulse: Hex | null;
   readonly ready: boolean;
   readonly incompatible: boolean;
   readonly loadError: BoardLoadFailure | null;
@@ -51,6 +52,7 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
     fadingUnits: [],
     replaying: false,
     panTarget: null,
+    defectionPulse: null,
     ready: false,
     incompatible: false,
     loadError: null,

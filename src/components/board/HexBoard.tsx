@@ -127,6 +127,7 @@ export interface HexBoardProps {
   readonly fadingUnits?: readonly Unit[];
   readonly events?: readonly MatchEvent[];
   readonly panTarget?: Hex | null;
+  readonly defectionPulse?: Hex | null;
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
   readonly onAttack?: (attackerId: string, target: Hex) => void;
@@ -146,6 +147,7 @@ export function HexBoard({
   deselectSignal = 0,
   floaters = [],
   fadingUnits = [],
+  defectionPulse = null,
   events = [],
   panTarget = null,
   onSelect,
@@ -354,6 +356,7 @@ export function HexBoard({
   };
 
   const panTargetKey = panTarget === null ? null : hexKey(panTarget);
+  const defectionPulseKey = defectionPulse === null ? null : hexKey(defectionPulse);
   useEffect(() => {
     if (panTarget === null) return undefined;
     const center = hexToPixel(panTarget, SIZE);
@@ -501,6 +504,14 @@ export function HexBoard({
                   <polygon
                     className={styles.cityWavering}
                     data-wavering={city.id}
+                    points={hexPolygonPoints(center, SIZE)}
+                    pointerEvents="none"
+                  />
+                ) : null}
+                {defectionPulseKey === key ? (
+                  <polygon
+                    className={styles.defectionPulse}
+                    data-defection-pulse={key}
                     points={hexPolygonPoints(center, SIZE)}
                     pointerEvents="none"
                   />

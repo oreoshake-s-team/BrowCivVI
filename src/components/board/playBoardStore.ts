@@ -38,6 +38,7 @@ export interface PlayBoardStore extends PlayBoardState {
   readonly endTurnFailed: () => void;
   readonly replayStarted: (board: BoardView) => void;
   readonly replayPanned: (hex: Hex) => void;
+  readonly defectionRevealed: (hex: Hex) => void;
   readonly replayFinished: () => void;
   readonly setConfirmEnd: (value: boolean) => void;
   readonly setConfirmNewGame: (value: boolean) => void;
@@ -139,6 +140,7 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
       endingTurn: false,
       replaying: true,
       panTarget: null,
+      defectionPulse: null,
       reachable: [],
       attackable: [],
     });
@@ -146,8 +148,11 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
   replayPanned: (hex) => {
     set({ panTarget: hex });
   },
+  defectionRevealed: (hex) => {
+    set({ panTarget: hex, defectionPulse: hex });
+  },
   replayFinished: () => {
-    set({ replaying: false, panTarget: null });
+    set({ replaying: false, panTarget: null, defectionPulse: null });
   },
   setConfirmEnd: (value) => {
     set({ confirmingEnd: value });

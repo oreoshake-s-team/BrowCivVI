@@ -13,7 +13,13 @@ import type { Hex } from "@/engine/hex";
 import { hexToPixel } from "@/engine/map/layout";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
 import { cityMaxHp, type CityState } from "@/engine/match/cities";
-import type { AttackEvent, CaptureEvent, CityAttackEvent, MatchEvent } from "@/engine/match/events";
+import type {
+  AttackEvent,
+  CaptureEvent,
+  CityAttackEvent,
+  DefectionEvent,
+  MatchEvent,
+} from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
 import { PlayBoard } from "./PlayBoard";
 import { REPLAY_TIMING } from "./usePlayBoard";
@@ -543,6 +549,43 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     expect(await screen.findByText("Turn 2")).not.toBeNull();
     expect(screen.getByRole("button", { name: "End turn" })).toHaveProperty("disabled", false);
     expect(container.querySelector("[data-pan-target]")).toBeNull();
+
+    Object.assign(REPLAY_TIMING, originalTiming);
+  });
+
+  it("replays a city defection and reflects the new owner once it resolves", async () => {
+    const originalTiming = { ...REPLAY_TIMING };
+    REPLAY_TIMING.panMs = 0;
+    REPLAY_TIMING.holdMs = 0;
+    const defection: DefectionEvent = {
+      kind: "defection",
+      seq: 0,
+      turn: 1,
+      faction: "macedon",
+      cityId: CITY_ID,
+      hex: { q: 3, r: 1 },
+      previousOwner: "persia",
+    };
+    vi.mocked(actions.endTurn).mockResolvedValue({
+      matchId: MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      cities: [{ id: CITY_ID, owner: "macedon", hp: cityMaxHp(20) }],
+      turn: 2,
+      activeFaction: "macedon",
+      events: [defection],
+      scorched: [],
+    } satisfies BoardView);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
+    await waitFor(() => {
+      expect(screen.getByText("Turn 2")).not.toBeNull();
+    });
+    expect(
+      container.querySelector('[data-city-tint="dascylium"]')?.getAttribute("style"),
+    ).toContain("--faction-macedon-fill");
 
     Object.assign(REPLAY_TIMING, originalTiming);
   });

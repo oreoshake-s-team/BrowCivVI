@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import type { Hex } from "@/engine/hex";
 import type { AttackEvent, MatchEvent } from "@/engine/match/events";
-import { newAttackEvents, replayAttacks, type AttackReplayDriver } from "./replayAttacks";
+import {
+  newAttackEvents,
+  newDefectionEvents,
+  replayAttacks,
+  type AttackReplayDriver,
+} from "./replayAttacks";
 
 function move(seq: number): MatchEvent {
   return {
@@ -97,5 +102,29 @@ describe("replayAttacks", () => {
     };
     await replayAttacks([], driver, NO_TIMING);
     expect(driver.panTo).not.toHaveBeenCalled();
+  });
+});
+
+function defectionAt(seq: number): MatchEvent {
+  return {
+    kind: "defection",
+    seq,
+    turn: 3,
+    faction: "macedon",
+    cityId: `c${seq}`,
+    hex: { q: seq, r: 0 },
+    previousOwner: "persia",
+  };
+}
+
+describe("newDefectionEvents", () => {
+  it("keeps only defection events newer than the cutoff sequence", () => {
+    const events: MatchEvent[] = [defectionAt(0), move(1), defectionAt(2)];
+    expect(newDefectionEvents(events, 1).map((event) => event.seq)).toEqual([2]);
+  });
+
+  it("ignores non-defection events", () => {
+    const events: MatchEvent[] = [attackAt(0, { q: 1, r: 0 }), move(1)];
+    expect(newDefectionEvents(events, 0)).toHaveLength(0);
   });
 });
