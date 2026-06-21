@@ -96,7 +96,7 @@ From `CLAUDE.md` and design §9:
 - Conventional commits; squash-merge each PR to a single commit.
 - Strict TypeScript, no `any`; ESM (`import`, not `require`).
 - **Typed Next.js Server Actions are the client-server contract** (design §4/§8).
-- Keep app-code diffs **<= 150 lines** per PR; split bigger work into follow-ups.
+- Keep app-code diffs **<= ~300 lines** per PR; split bigger work into follow-ups.
 - All functionality test-covered (happy path + at least one negative case).
 - `pnpm typecheck` and `pnpm test` green before opening a PR.
 
