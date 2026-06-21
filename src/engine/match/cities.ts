@@ -54,10 +54,6 @@ export function healCities(
   });
 }
 
-export function matchLacksCityState(cities: readonly CityState[], mapHasCities: boolean): boolean {
-  return cities.length === 0 && mapHasCities;
-}
-
 export function seedCities(cities: readonly City[]): readonly CityState[] {
   return cities.map((city) => ({
     id: city.id,

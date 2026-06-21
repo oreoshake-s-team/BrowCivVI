@@ -12,7 +12,6 @@ import {
   LOYALTY_MAX,
   LOYALTY_MIN,
   LOYALTY_OWNER_SEED,
-  matchLacksCityState,
   seedCities,
   type CityState,
 } from "./cities";
@@ -29,20 +28,6 @@ const city = (id: string, owner: string | null, defense: number): City => ({
 describe("cityMaxHp", () => {
   it("scales HP from the authored defense", () => {
     expect(cityMaxHp(24)).toBe(24 * CITY_HP_PER_DEFENSE);
-  });
-});
-
-describe("matchLacksCityState", () => {
-  it("flags a match with no city state on a map that has cities", () => {
-    expect(matchLacksCityState([], true)).toBe(true);
-  });
-
-  it("does not flag a match that already carries city state", () => {
-    expect(matchLacksCityState([{ id: "sardis", owner: "persia", hp: 10 }], true)).toBe(false);
-  });
-
-  it("does not flag an empty match on a map that has no cities", () => {
-    expect(matchLacksCityState([], false)).toBe(false);
   });
 });
 

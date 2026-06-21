@@ -17,13 +17,7 @@ import {
 } from "@/engine/divergence/divergence";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
-import {
-  blockingCityHexes,
-  captureCityAt,
-  cityMaxHp,
-  matchLacksCityState,
-  type CityState,
-} from "@/engine/match/cities";
+import { blockingCityHexes, captureCityAt, cityMaxHp, type CityState } from "@/engine/match/cities";
 import {
   appendAttack,
   appendCapture,
@@ -32,7 +26,7 @@ import {
   type MatchEvent,
 } from "@/engine/match/events";
 import { matchCityScores } from "@/engine/match/scoring";
-import type { MatchState } from "@/engine/match/state";
+import { matchFormatOutdated, type MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { domainOf, movementConstraints } from "@/engine/movement/constraints";
 import { riverEdgeKey, riverEdgeSet } from "@/engine/movement/cost";
@@ -160,7 +154,7 @@ function divergenceView(node: DivergenceNode): DivergenceView {
 
 function boardView(match: MatchState): BoardView {
   const pending = pendingDivergence(match, FIRST_SLICE_DIVERGENCE_NODES);
-  const incompatible = matchLacksCityState(match.cities, FIRST_SLICE_MAP.cities.size > 0);
+  const incompatible = matchFormatOutdated(match.schemaVersion);
   return {
     matchId: match.id,
     units: match.units,

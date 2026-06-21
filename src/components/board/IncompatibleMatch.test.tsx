@@ -12,9 +12,9 @@ vi.mock("next/link", () => ({
 afterEach(cleanup);
 
 describe("IncompatibleMatch", () => {
-  it("explains that the saved game predates city capture", () => {
+  it("explains that the saved game uses an older format", () => {
     render(<IncompatibleMatch onStartNewGame={() => undefined} />);
-    expect(screen.getByText(/predates city capture/i)).not.toBeNull();
+    expect(screen.getByText(/older format/i)).not.toBeNull();
   });
 
   it("starts a new game when the button is pressed", () => {
