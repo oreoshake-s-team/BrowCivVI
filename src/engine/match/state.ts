@@ -4,7 +4,7 @@ import type { CityState } from "./cities";
 import { seedCities } from "./cities";
 import type { MatchEvent } from "./events";
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 export interface DivergenceRecord {
   readonly choice: string;
