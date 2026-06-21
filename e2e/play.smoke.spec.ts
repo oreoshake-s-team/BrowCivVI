@@ -8,7 +8,8 @@ async function dismissDivergenceIfPresent(page: Page): Promise<void> {
   await expect(page.getByRole("img", { name: /Hex map of the Granicus/ })).toBeVisible();
   const dialog = page.getByRole("dialog", { name: /The Granicus/ });
   if ((await dialog.count()) === 0) return;
-  await dialog.getByRole("button", { name: /cross at dawn/i }).click();
+  // Reckless keeps the army's move points; the cautious choice forfeits the turn.
+  await dialog.getByRole("button", { name: /attack across the river/i }).click();
   await dialog.getByRole("button", { name: "Continue" }).click();
   await expect(dialog).toBeHidden();
 }
