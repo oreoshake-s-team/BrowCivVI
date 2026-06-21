@@ -346,6 +346,14 @@
   font-weight: 600;
 }
 
+.supplyHint {
+  display: block;
+  margin-top: var(--space-3xs);
+  font-weight: 400;
+  font-size: var(--font-size-ui-sm);
+  color: var(--color-ink-muted);
+}
+
 .sidebar {
   flex: 1 1 220px;
   max-width: 320px;

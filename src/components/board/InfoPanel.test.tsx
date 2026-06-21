@@ -22,9 +22,9 @@ function panel() {
 }
 
 describe("InfoPanel supply", () => {
-  it("labels a supplied unit as Supplied", () => {
+  it("omits the supply row for a supplied unit", () => {
     render(<InfoPanel unit={BASE} />);
-    expect(panel().textContent).toContain("Supplied");
+    expect(panel().textContent).not.toContain("Supply");
   });
 
   it("does not warn about supply for a supplied unit", () => {
@@ -50,6 +50,11 @@ describe("InfoPanel supply", () => {
   it("shows the morale attrition for a cut-off unit", () => {
     render(<InfoPanel unit={{ ...BASE, supplied: false }} />);
     expect(panel().textContent).toContain("5 morale next turn");
+  });
+
+  it("explains what being out of supply does", () => {
+    render(<InfoPanel unit={{ ...BASE, supplied: false }} />);
+    expect(panel().textContent).toContain("until it reconnects");
   });
 
   it("surfaces supply for an enemy unit too", () => {

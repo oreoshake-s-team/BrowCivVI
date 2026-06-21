@@ -27,10 +27,10 @@ test("unit panel surfaces supply status, including a cut-off unit", async ({ pag
   const panel = page.getByRole("region", { name: "Selected unit" });
 
   await suppliedUnit(page).click();
-  await expect(panel).toContainText("Supplied");
-  await captureScreenshot(page, "unit-panel-supplied");
+  await expect(panel).not.toContainText("Out of supply");
 
   await cutOffUnit(page).click();
   await expect(panel).toContainText("Out of supply");
+  await expect(panel).toContainText("until it reconnects");
   await captureScreenshot(page, "unit-panel-out-of-supply");
 });
