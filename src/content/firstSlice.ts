@@ -492,6 +492,8 @@ export const FIRST_SLICE_CITIES: readonly City[] = CITIES;
 
 export const FIRST_SLICE_PLAYER_FACTION = "macedon";
 
+export const SCORCHED_SATRAPIES: readonly string[] = ["8,0", "7,2", "8,2", "8,3", "7,5", "8,5"];
+
 const GRANICUS_NODE: DivergenceNode = {
   id: "granicus",
   trigger: { turn: 1, faction: "macedon" },
@@ -544,7 +546,10 @@ const GRANICUS_NODE: DivergenceNode = {
         "“Burn the crops and fall back. Starve the Macedonian advance; do not stake all here.”",
       outcome:
         "Memnon's counsel prevails — the satrapies are put to the torch, denying Alexander supply, though burning one's own land unsettles the host.",
-      effects: [{ kind: "morale", faction: "persia", delta: -4 }],
+      effects: [
+        { kind: "morale", faction: "persia", delta: -4 },
+        { kind: "scorch", hexes: SCORCHED_SATRAPIES },
+      ],
     },
   ],
   citation: ref(

@@ -82,4 +82,14 @@ describe("decodeMatchState", () => {
     const legacy = { ...STATE, schemaVersion: 3, divergence };
     expect(decodeMatchState(legacy).divergence).toEqual(divergence);
   });
+
+  it("defaults burned hexes to empty when absent", () => {
+    const legacy = { ...STATE, schemaVersion: 4, scorched: undefined };
+    expect(decodeMatchState(legacy).scorched).toEqual([]);
+  });
+
+  it("preserves recorded burned hexes", () => {
+    const stored = { ...STATE, scorched: ["7,2", "8,2"] };
+    expect(decodeMatchState(stored).scorched).toEqual(["7,2", "8,2"]);
+  });
 });

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { FIRST_SLICE_DIVERGENCE_NODES, FIRST_SLICE_UNITS } from "@/content/firstSlice";
+import {
+  FIRST_SLICE_DIVERGENCE_NODES,
+  FIRST_SLICE_UNITS,
+  SCORCHED_SATRAPIES,
+} from "@/content/firstSlice";
 import { createMatch, type MatchState } from "@/engine/match/state";
 import { createRng } from "@/engine/rng";
 import {
@@ -24,6 +28,13 @@ function match(): MatchState {
 
 const macedonMorale = (state: MatchState) =>
   state.units.find((unit) => unit.id === "mac-phalanx")?.morale ?? 0;
+
+function seedFor(optionId: string): number {
+  for (let seed = 0; seed < 200; seed++) {
+    if (seededRivalOption(NODE, createRng(seed))?.id === optionId) return seed;
+  }
+  throw new Error(`no seed rolled the ${optionId} rival option`);
+}
 
 describe("applyDivergenceEffect", () => {
   it("adjusts morale for the targeted faction", () => {
@@ -80,6 +91,17 @@ describe("applyDivergenceEffect", () => {
       delta: -500,
     });
     expect(next.units.find((unit) => unit.id === "mac-companions")?.hp).toBe(1);
+  });
+
+  it("records burned hexes from a scorch effect", () => {
+    const next = applyDivergenceEffect(match(), { kind: "scorch", hexes: ["7,2", "8,2"] });
+    expect(next.scorched).toEqual(["7,2", "8,2"]);
+  });
+
+  it("does not re-record an already-burned hex", () => {
+    const once = applyDivergenceEffect(match(), { kind: "scorch", hexes: ["7,2"] });
+    const twice = applyDivergenceEffect(once, { kind: "scorch", hexes: ["7,2", "8,2"] });
+    expect(twice.scorched).toEqual(["7,2", "8,2"]);
   });
 });
 
@@ -138,5 +160,25 @@ describe("resolveDivergenceNode", () => {
 
   it("rejects a rival-faction option chosen by the player", () => {
     expect(resolveDivergenceNode(match(), NODE, "scorched", createRng(1))).toBeNull();
+  });
+
+  it("burns the satrapies when the rival commits to scorched earth", () => {
+    const resolved = resolveDivergenceNode(
+      match(),
+      NODE,
+      "reckless",
+      createRng(seedFor("scorched")),
+    );
+    expect(resolved!.state.scorched).toEqual([...SCORCHED_SATRAPIES]);
+  });
+
+  it("leaves the land unburned when the rival gives pitched battle", () => {
+    const resolved = resolveDivergenceNode(
+      match(),
+      NODE,
+      "reckless",
+      createRng(seedFor("pitched")),
+    );
+    expect(resolved!.state.scorched).toEqual([]);
   });
 });

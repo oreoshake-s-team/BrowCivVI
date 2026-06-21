@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
+import type { City, MapHex } from "../map/types";
+import { createGameMap } from "../map/types";
 import { createMatch, type MatchState } from "../match/state";
+import { riverEdgeSet } from "../movement/cost";
 import type { Unit } from "../unit/types";
 import { advanceTurn, type TurnContext } from "./turn";
 
@@ -100,5 +103,59 @@ describe("advanceTurn city healing", () => {
       cities: [{ id: "sardis", owner: "macedon", hp: 50 }],
     });
     expect(advanceTurn(m, ctx).cities[0]?.hp).toBe(50);
+  });
+});
+
+const SUPPLY_ROW: readonly MapHex[] = [0, 1, 2, 3].map((q) => ({
+  hex: { q, r: 0 },
+  terrain: "plains",
+}));
+const SUPPLY_HOME: City = {
+  id: "home",
+  name: "Home",
+  hex: { q: 0, r: 0 },
+  owner: "macedon",
+  value: 1,
+  defense: 1,
+};
+const supplyMap = createGameMap(SUPPLY_ROW, [SUPPLY_HOME]);
+const supplyCtx: TurnContext = {
+  movementOf: () => 4,
+  cityMaxHp: () => 100,
+  supply: { map: supplyMap, riverEdges: riverEdgeSet(supplyMap.rivers) },
+};
+
+function cutOffMatch(): MatchState {
+  const macedon: Unit = {
+    id: "mac",
+    typeId: "pezhetairos",
+    owner: "macedon",
+    hex: { q: 2, r: 0 },
+    hp: 100,
+    morale: 80,
+    supplied: true,
+    hasMovedThisTurn: false,
+  };
+  const base = createMatch({
+    id: "m1",
+    seed: 1,
+    mapId: "supply",
+    turnLimit: 20,
+    units: [macedon, unit("per", "persia")],
+    movementOf: () => 4,
+    cities: [SUPPLY_HOME],
+  });
+  return { ...base, activeFaction: "persia", scorched: ["1,0"] };
+}
+
+describe("advanceTurn supply phase", () => {
+  it("marks a cut-off unit out of supply at the start of its turn", () => {
+    const macedon = advanceTurn(cutOffMatch(), supplyCtx).units.find((u) => u.id === "mac");
+    expect(macedon?.supplied).toBe(false);
+  });
+
+  it("attrits the freshly cut-off unit, proving supply runs before attrition", () => {
+    const macedon = advanceTurn(cutOffMatch(), supplyCtx).units.find((u) => u.id === "mac");
+    expect(macedon?.hp).toBe(90);
   });
 });

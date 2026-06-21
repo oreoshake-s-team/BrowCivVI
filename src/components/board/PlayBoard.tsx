@@ -78,6 +78,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         units={state.units}
         cities={state.cities}
         regions={regions}
+        scorched={state.scorched}
         movement={state.movement}
         playerFaction={state.playerFaction}
         reachable={state.reachable}

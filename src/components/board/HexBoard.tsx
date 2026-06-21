@@ -112,6 +112,7 @@ export interface HexBoardProps {
   readonly units: readonly Unit[];
   readonly cities?: readonly CityState[];
   readonly regions?: readonly NamedRegion[];
+  readonly scorched?: readonly string[];
   readonly movement?: Readonly<Record<string, number>>;
   readonly playerFaction?: string;
   readonly reachable?: readonly Hex[];
@@ -132,6 +133,7 @@ export function HexBoard({
   units,
   cities = [],
   regions = [],
+  scorched = [],
   movement = {},
   playerFaction = "",
   reachable = [],
@@ -184,6 +186,7 @@ export function HexBoard({
   const attackableKeys = new Set(attackable.map(hexKey));
   const cityStateById = new Map(cities.map((city) => [city.id, city]));
   const cityNames = new Map(Array.from(map.cities.values()).map((city) => [city.id, city.name]));
+  const scorchedKeys = new Set(scorched);
   const occupiedKeys = new Set(units.map((unit) => hexKey(unit.hex)));
   const labeledHexKeys = new Set(
     regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
@@ -483,6 +486,17 @@ export function HexBoard({
               {labeledHexKeys.has(key) ? null : (
                 <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
               )}
+              {scorchedKeys.has(key) ? (
+                <text
+                  className={styles.scorch}
+                  data-scorched={key}
+                  x={center.x + SIZE * 0.5}
+                  y={center.y - SIZE * 0.42}
+                >
+                  <title>Burned land — supply denied</title>
+                  🔥
+                </text>
+              ) : null}
               {showQandR && (
                 <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
                   {mapHex.hex.q}, {mapHex.hex.r}
@@ -652,6 +666,7 @@ export function HexBoard({
           const isAttackTarget =
             selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
           const moves = movement[unit.id];
+          const outOfSupply = !unit.supplied;
           const revealed = selected || hoveredUnitId === unit.id;
           const showMoves =
             moves !== undefined && (unit.owner === playerFaction ? moves > 0 : revealed);
@@ -671,7 +686,7 @@ export function HexBoard({
               transform={`translate(${center.x}, ${center.y})`}
               role="button"
               tabIndex={0}
-              aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}`}
+              aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}${outOfSupply ? " — out of supply" : ""}`}
               aria-pressed={selected}
               onMouseEnter={() => {
                 setHoveredUnitId(unit.id);
@@ -714,6 +729,19 @@ export function HexBoard({
                 strokeWidth={2}
               />
               <UnitMark unitClass={type?.class} color={style.text} />
+              {outOfSupply ? (
+                <g
+                  className={styles.supplyBadge}
+                  data-out-of-supply={unit.id}
+                  transform={`translate(${-SIZE * 0.5}, ${-SIZE * 0.5})`}
+                >
+                  <title>Out of supply</title>
+                  <circle className={styles.supplyBadgeDot} cx={0} cy={0} r={SIZE * 0.26} />
+                  <text className={styles.supplyBadgeMark} x={0} y={0}>
+                    ⊘
+                  </text>
+                </g>
+              ) : null}
               {isAttackTarget ? (
                 <g className={styles.attackMark} data-attack-target={unit.id}>
                   <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />

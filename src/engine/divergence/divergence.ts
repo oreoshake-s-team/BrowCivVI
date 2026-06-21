@@ -21,7 +21,12 @@ export interface HpEffect {
   readonly delta: number;
 }
 
-export type DivergenceEffect = MoraleEffect | MovementEffect | HpEffect;
+export interface ScorchEffect {
+  readonly kind: "scorch";
+  readonly hexes: readonly string[];
+}
+
+export type DivergenceEffect = MoraleEffect | MovementEffect | HpEffect | ScorchEffect;
 
 export interface DivergenceOption {
   readonly id: string;
@@ -87,6 +92,9 @@ export function applyDivergenceEffect(state: MatchState, effect: DivergenceEffec
       if (unit.owner === effect.faction) movement[unit.id] = effect.remaining;
     }
     return { ...state, movement };
+  }
+  if (effect.kind === "scorch") {
+    return { ...state, scorched: [...new Set([...state.scorched, ...effect.hexes])] };
   }
   return {
     ...state,

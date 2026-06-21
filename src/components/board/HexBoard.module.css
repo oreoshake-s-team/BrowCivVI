@@ -278,6 +278,31 @@
   pointer-events: none;
 }
 
+.scorch {
+  font-size: var(--font-size-label-md);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.supplyBadge {
+  pointer-events: none;
+}
+
+.supplyBadgeDot {
+  fill: var(--color-danger-surface);
+  stroke: var(--color-on-danger);
+  stroke-width: 1.5;
+}
+
+.supplyBadgeMark {
+  font-size: var(--font-size-label-sm);
+  font-weight: 700;
+  fill: var(--color-on-danger);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
 .statSpent {
   color: var(--color-ink-subtle);
 }
