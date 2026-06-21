@@ -1,11 +1,24 @@
 import { randomUUID } from "node:crypto";
 import { FIRST_SLICE_CITIES, FIRST_SLICE_UNITS } from "@/content/firstSlice";
+import type { City } from "@/engine/map/types";
+import { seedCities } from "@/engine/match/cities";
 import type { MatchState } from "@/engine/match/state";
 import { createMatch } from "@/engine/match/state";
 import type { MatchStore } from "@/engine/match/store";
 import { unitTypeById } from "@/engine/unit/catalog";
 
 const TURN_LIMIT = 20;
+
+const AUTHORED_CITIES: Readonly<Record<string, readonly City[]>> = {
+  "first-slice": FIRST_SLICE_CITIES,
+};
+
+export function backfillCities(match: MatchState): MatchState {
+  if (match.cities.length > 0) return match;
+  const authored = AUTHORED_CITIES[match.mapId];
+  if (authored === undefined) return match;
+  return { ...match, cities: seedCities(authored) };
+}
 
 const movementOf = (typeId: string): number => unitTypeById(typeId)?.movement ?? 0;
 
@@ -31,7 +44,7 @@ export function newMatchState(id: string, owner: string): MatchState {
 export async function getOrCreateDefault(store: MatchStore, owner: string): Promise<MatchState> {
   const id = `default-${seedFrom(owner).toString(36)}`;
   const existing = await store.load(id);
-  if (existing !== null) return existing;
+  if (existing !== null) return backfillCities(existing);
   const state = newMatchState(id, owner);
   await store.create(state);
   return state;
@@ -49,5 +62,5 @@ export async function loadOwned(
   id: string,
 ): Promise<MatchState | null> {
   const match = await store.load(id);
-  return match !== null && match.owner === owner ? match : null;
+  return match !== null && match.owner === owner ? backfillCities(match) : null;
 }
