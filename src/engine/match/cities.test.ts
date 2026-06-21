@@ -6,7 +6,12 @@ import {
   CITY_HEAL_RATE,
   CITY_HP_PER_DEFENSE,
   cityMaxHp,
+  clampLoyalty,
   healCities,
+  LOYALTY_AFFINITY_SEED,
+  LOYALTY_MAX,
+  LOYALTY_MIN,
+  LOYALTY_OWNER_SEED,
   matchLacksCityState,
   seedCities,
   type CityState,
@@ -52,6 +57,33 @@ describe("seedCities", () => {
 
   it("returns one entry per authored city", () => {
     expect(seedCities([city("a", "macedon", 20), city("b", "persia", 18)])).toHaveLength(2);
+  });
+
+  it("seeds loyalty positive for a Macedon-owned city", () => {
+    expect(seedCities([city("amphipolis", "macedon", 20)])[0]?.loyalty).toBe(LOYALTY_OWNER_SEED);
+  });
+
+  it("seeds loyalty negative for a Persia-owned city", () => {
+    expect(seedCities([city("sardis", "persia", 20)])[0]?.loyalty).toBe(-LOYALTY_OWNER_SEED);
+  });
+
+  it("seeds neutral, unowned land at zero loyalty", () => {
+    expect(seedCities([city("sparta", null, 20)])[0]?.loyalty).toBe(0);
+  });
+
+  it("adds the authored affinity to the owner pull", () => {
+    const contested: City = { ...city("ilium", null, 20), affinity: "macedon" };
+    expect(seedCities([contested])[0]?.loyalty).toBe(LOYALTY_AFFINITY_SEED);
+  });
+});
+
+describe("clampLoyalty", () => {
+  it("clamps above the maximum", () => {
+    expect(clampLoyalty(LOYALTY_MAX + 40)).toBe(LOYALTY_MAX);
+  });
+
+  it("clamps below the minimum", () => {
+    expect(clampLoyalty(LOYALTY_MIN - 40)).toBe(LOYALTY_MIN);
   });
 });
 

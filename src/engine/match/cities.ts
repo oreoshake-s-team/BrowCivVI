@@ -6,6 +6,7 @@ export interface CityState {
   readonly id: string;
   readonly owner: string | null;
   readonly hp: number;
+  readonly loyalty?: number;
   readonly attackedThisTurn?: boolean;
   readonly sacked?: boolean;
 }
@@ -14,8 +15,30 @@ export const CITY_HP_PER_DEFENSE = 8;
 export const CITY_CAPTURE_HP_FRACTION = 0.5;
 export const CITY_HEAL_RATE = 20;
 
+export const LOYALTY_MIN = -100;
+export const LOYALTY_MAX = 100;
+export const LOYALTY_OWNER_SEED = 50;
+export const LOYALTY_AFFINITY_SEED = 30;
+
 export function cityMaxHp(defense: number): number {
   return defense * CITY_HP_PER_DEFENSE;
+}
+
+export function clampLoyalty(value: number): number {
+  return Math.max(LOYALTY_MIN, Math.min(LOYALTY_MAX, value));
+}
+
+export function factionPolarity(faction: string | null | undefined): number {
+  if (faction === "macedon") return 1;
+  if (faction === "persia") return -1;
+  return 0;
+}
+
+function seedLoyalty(city: City): number {
+  return clampLoyalty(
+    LOYALTY_OWNER_SEED * factionPolarity(city.owner) +
+      LOYALTY_AFFINITY_SEED * factionPolarity(city.affinity),
+  );
 }
 
 export function healCities(
@@ -40,6 +63,7 @@ export function seedCities(cities: readonly City[]): readonly CityState[] {
     id: city.id,
     owner: city.owner,
     hp: cityMaxHp(city.defense),
+    loyalty: seedLoyalty(city),
   }));
 }
 

@@ -4,6 +4,8 @@ import { createRng } from "../rng";
 import type { Unit } from "../unit/types";
 import { applyCityAttack } from "./applyCityAttack";
 
+const CITY_HEX = { q: 2, r: 1 };
+
 const attacker = (hp = 100): Unit => ({
   id: "m1",
   typeId: "pezhetairos",
@@ -15,14 +17,26 @@ const attacker = (hp = 100): Unit => ({
   hasMovedThisTurn: false,
 });
 
-function strike(cityHp: number, attackerHp = 100) {
+const onCity = (id: string, owner: string): Unit => ({
+  id,
+  typeId: "persian-cavalry",
+  owner,
+  hex: CITY_HEX,
+  hp: 100,
+  morale: 80,
+  supplied: true,
+  hasMovedThisTurn: false,
+});
+
+function strike(cityHp: number, attackerHp = 100, extraUnits: readonly Unit[] = []) {
   const cities: CityState[] = [{ id: "c1", owner: "persia", hp: cityHp }];
   return applyCityAttack({
-    units: [attacker(attackerHp)],
+    units: [attacker(attackerHp), ...extraUnits],
     cities,
     movement: { m1: 4 },
     attackerId: "m1",
     cityId: "c1",
+    cityHex: CITY_HEX,
     cityDefense: 20,
     cityTerrainDefense: 0,
     cityTerrainMoveCost: 1,
@@ -67,5 +81,20 @@ describe("applyCityAttack", () => {
 
   it("flags the besieged city as attacked this turn", () => {
     expect(strike(200).cities.find((c) => c.id === "c1")?.attackedThisTurn).toBe(true);
+  });
+
+  it("a garrisoned city takes less damage than an ungarrisoned one", () => {
+    const garrisoned = strike(200, 100, [onCity("g1", "persia")]).cityDamage;
+    expect(garrisoned).toBeLessThan(strike(200).cityDamage);
+  });
+
+  it("a garrisoned city deals more retaliation than an ungarrisoned one", () => {
+    const garrisoned = strike(200, 100, [onCity("g1", "persia")]).attackerDamage;
+    expect(garrisoned).toBeGreaterThan(strike(200).attackerDamage);
+  });
+
+  it("only a unit of the city's owner garrisons it", () => {
+    const enemyOnCity = strike(200, 100, [onCity("x1", "macedon")]).cityDamage;
+    expect(enemyOnCity).toBe(strike(200).cityDamage);
   });
 });

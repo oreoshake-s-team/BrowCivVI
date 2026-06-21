@@ -135,6 +135,7 @@ function siege(
     movement: state.movement,
     attackerId: attacker.id,
     cityId,
+    cityHex: cityData.hex,
     cityDefense: cityData.defense,
     cityTerrainDefense: terrain?.defenseModifier ?? 0,
     cityTerrainMoveCost: terrain?.moveCost ?? 1,
