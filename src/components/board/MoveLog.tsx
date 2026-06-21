@@ -62,7 +62,18 @@ export function MoveLog({ events }: { readonly events: readonly MatchEvent[] }) 
           {events.map((event) => (
             <li key={event.seq} className={styles.entry}>
               <span className={styles.turn}>Turn {event.turn}</span>{" "}
-              {event.kind === "move" ? <MoveEntry event={event} /> : <AttackEntry event={event} />}
+              {event.kind === "move" ? (
+                <MoveEntry event={event} />
+              ) : event.kind === "attack" ? (
+                <AttackEntry event={event} />
+              ) : (
+                <>
+                  <span className={styles.icon} aria-hidden="true">
+                    ⚔
+                  </span>{" "}
+                  {unitName(event.unitTypeId)} struck a city — dealt {event.cityDamage}
+                </>
+              )}
             </li>
           ))}
         </ol>

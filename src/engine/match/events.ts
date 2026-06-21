@@ -27,12 +27,31 @@ export interface AttackEvent {
   readonly defeated: readonly string[];
 }
 
-export type MatchEvent = MoveEvent | AttackEvent;
+export interface CityAttackEvent {
+  readonly kind: "cityAttack";
+  readonly seq: number;
+  readonly turn: number;
+  readonly faction: string;
+  readonly unitId: string;
+  readonly unitTypeId: string;
+  readonly cityId: string;
+  readonly cityDamage: number;
+  readonly retaliation: number;
+  readonly cityFell: boolean;
+}
+
+export type MatchEvent = MoveEvent | AttackEvent | CityAttackEvent;
 
 export interface AttackOutcomeSummary {
   readonly attackerDamage: number;
   readonly defenderDamage: number;
   readonly defeated: readonly string[];
+}
+
+export interface CityAttackOutcomeSummary {
+  readonly cityDamage: number;
+  readonly attackerDamage: number;
+  readonly cityFell: boolean;
 }
 
 export function appendMove(
@@ -79,6 +98,30 @@ export function appendAttack(
       attackerDamage: outcome.attackerDamage,
       defenderDamage: outcome.defenderDamage,
       defeated: outcome.defeated,
+    },
+  ];
+}
+
+export function appendCityAttack(
+  events: readonly MatchEvent[],
+  turn: number,
+  attacker: Unit,
+  cityId: string,
+  outcome: CityAttackOutcomeSummary,
+): readonly MatchEvent[] {
+  return [
+    ...events,
+    {
+      kind: "cityAttack",
+      seq: events.length,
+      turn,
+      faction: attacker.owner,
+      unitId: attacker.id,
+      unitTypeId: attacker.typeId,
+      cityId,
+      cityDamage: outcome.cityDamage,
+      retaliation: outcome.attackerDamage,
+      cityFell: outcome.cityFell,
     },
   ];
 }
