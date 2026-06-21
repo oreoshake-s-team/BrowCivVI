@@ -573,6 +573,10 @@ export function HexBoard({
                     }
                   }}
                 >
+                  <polygon
+                    className={styles.cityAttackHit}
+                    points={hexPolygonPoints({ x: 0, y: 0 }, SIZE)}
+                  />
                   <g className={styles.attackMark}>
                     <line x1={-SIZE * 0.2} y1={-SIZE * 0.2} x2={SIZE * 0.2} y2={SIZE * 0.2} />
                     <line x1={-SIZE * 0.2} y1={SIZE * 0.2} x2={SIZE * 0.2} y2={-SIZE * 0.2} />

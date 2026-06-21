@@ -120,6 +120,19 @@
   outline: none;
 }
 
+.cityAttackHit {
+  fill: var(--color-danger-surface);
+  fill-opacity: 0;
+  stroke: none;
+  pointer-events: all;
+}
+
+.cityAttack:hover .cityAttackHit,
+.cityAttack:active .cityAttackHit,
+.cityAttack:focus-visible .cityAttackHit {
+  fill-opacity: 0.3;
+}
+
 .river {
   stroke: var(--color-water-river);
   stroke-width: 5;

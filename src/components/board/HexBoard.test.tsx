@@ -785,4 +785,22 @@ describe("HexBoard city rendering", () => {
     fireEvent.click(container.querySelector('[data-city-attack="sardis"]')!);
     expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
   });
+
+  it("covers the whole city hex with an interactive hit area, not just the X strokes", () => {
+    const onAttackCity = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[ADJACENT_MAC]}
+        cities={persiaSardis(SARDIS_MAX)}
+        attackable={[SARDIS_HEX]}
+        onAttackCity={onAttackCity}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: MACEDON }));
+    const hitArea = container.querySelector('[data-city-attack="sardis"] polygon');
+    expect(hitArea).not.toBeNull();
+    fireEvent.click(hitArea!);
+    expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
+  });
 });
