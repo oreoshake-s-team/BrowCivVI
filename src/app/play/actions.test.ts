@@ -38,7 +38,7 @@ const PER_CAVALRY = "per-cavalry";
 const PER_IMMORTALS = "per-immortals";
 const PHALANX_START: Hex = { q: 5, r: 1 };
 const COMPANIONS_START: Hex = { q: 6, r: 1 };
-const ABYDOS: Hex = { q: 5, r: 0 };
+const ILIUM: Hex = { q: 5, r: 2 };
 const WEST_MID: Hex = { q: 6, r: 2 };
 const WEST_DEEP: Hex = { q: 6, r: 3 };
 const OFF_MAP: Hex = { q: 99, r: 99 };
@@ -104,12 +104,12 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(reloaded.events.at(-1)).toMatchObject({ kind: "move", unitId: PHALANX });
   });
 
-  it("cannot move onto an enemy city that still has HP", async () => {
+  it("cannot move onto an unowned city that still has HP", async () => {
     const board = await newGame();
     const targets = await targetsFor(board.matchId, COMPANIONS);
-    const outcome = await move(board.matchId, COMPANIONS, ABYDOS);
+    const outcome = await move(board.matchId, COMPANIONS, ILIUM);
     const reloaded = await loadOk(board.matchId);
-    expect(targets.reachable.some((hex) => hexKey(hex) === hexKey(ABYDOS))).toBe(false);
+    expect(targets.reachable.some((hex) => hexKey(hex) === hexKey(ILIUM))).toBe(false);
     expect(outcome.ok).toBe(false);
     expect(hexKey(unitHex(reloaded.units, COMPANIONS)!)).toBe(hexKey(COMPANIONS_START));
   });
