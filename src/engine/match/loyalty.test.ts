@@ -92,3 +92,58 @@ describe("applyLoyaltyPressure", () => {
     expect(applyLoyaltyPressure(state, ctxFor(town()))).toBe(state);
   });
 });
+
+function applyOnce(city: City, cityState: CityState, units: readonly Unit[] = []): CityState {
+  const next = applyLoyaltyPressure(stateWith(cityState, units), ctxFor(city)).cities[0];
+  if (next === undefined) throw new Error("city missing after pressure");
+  return next;
+}
+
+function repeatPressure(
+  city: City,
+  seed: CityState,
+  units: readonly Unit[],
+  turns: number,
+): CityState {
+  let cityState = seed;
+  for (let i = 0; i < turns; i += 1) cityState = applyOnce(city, cityState, units);
+  return cityState;
+}
+
+const HELD_MAC = town({ owner: "macedon" });
+const HELD_MAC_SEED: CityState = { id: "town", owner: "macedon", hp: 8, loyalty: 0 };
+const UNOWNED_SEED: CityState = { id: "town", owner: null, hp: 8, loyalty: 0 };
+const MAC_UNIT: readonly Unit[] = [unit("macedon", 0)];
+const PER_UNIT: readonly Unit[] = [unit("persia", 0)];
+
+describe("applyLoyaltyPressure streak weighting", () => {
+  it("compounds consecutive same-direction turns beyond a flat per-turn step", () => {
+    expect(repeatPressure(HELD_MAC, HELD_MAC_SEED, [], 3).loyalty).toBe(23);
+  });
+
+  it("caps the per-turn gain once the streak multiplier maxes out", () => {
+    const fifth = repeatPressure(HELD_MAC, HELD_MAC_SEED, [], 5).loyalty ?? 0;
+    const sixth = repeatPressure(HELD_MAC, HELD_MAC_SEED, [], 6).loyalty ?? 0;
+    expect(sixth - fifth).toBe(15);
+  });
+
+  it("erodes but does not reset the streak on a single opposite turn", () => {
+    const built = repeatPressure(town(), UNOWNED_SEED, MAC_UNIT, 3);
+    expect((applyOnce(town(), built, PER_UNIT).loyaltyStreak ?? 0) > 0).toBe(true);
+  });
+
+  it("flips the streak's direction only under sustained opposite pressure", () => {
+    const built = repeatPressure(town(), UNOWNED_SEED, MAC_UNIT, 3);
+    expect((repeatPressure(town(), built, PER_UNIT, 5).loyaltyStreak ?? 0) < 0).toBe(true);
+  });
+
+  it("leaves loyalty unchanged on an idle turn with no net pressure", () => {
+    const built = repeatPressure(town(), UNOWNED_SEED, MAC_UNIT, 2);
+    expect(applyOnce(town(), built, []).loyalty).toBe(built.loyalty);
+  });
+
+  it("bleeds the streak toward zero on an idle turn", () => {
+    const built = repeatPressure(town(), UNOWNED_SEED, MAC_UNIT, 2);
+    expect(applyOnce(town(), built, []).loyaltyStreak).toBe(1);
+  });
+});

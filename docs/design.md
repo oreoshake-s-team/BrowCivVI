@@ -384,6 +384,7 @@ The forks below were resolved in review. **Balance numbers are provisional** —
 ### Loyalty & scoring
 
 - **Pressure weights: momentum 50 / proximity 30 / affinity 20** on a meter from −100 (Darius) to +100 (Macedon); a city **defects at sustained ±50** (held for one full turn, and not under-threat per §5).
+- **Streak-weighted drift (not flat attrition).** Each turn's weighted step is scaled by a per-city **streak** (signed momentum): the first turn in a direction applies the base step, and each further consecutive same-direction turn ramps the step (linear `+0.5×` per streak length, capped at `×3`). A reversal — or an idle turn with no net pressure — **decays** the streak toward zero by one rather than hard-resetting it, so a single opposite turn dents but doesn't erase built-up momentum (it takes sustained opposite pressure to grind a streak down and rebuild it the other way). All parameters are tunable (§14).
 - **City value by condition: defection 100% / sacked 60% / scorched 30%** of base `value` (§5 Scoring).
 - **Scorched earth costs −20 region loyalty** (drift toward the enemy).
 - **`incite`: one per turn**, targeting a city **within 3 hexes of a friendly unit or city**, with a **2-turn per-city cooldown** and a fixed pressure bump toward the inciting side.
