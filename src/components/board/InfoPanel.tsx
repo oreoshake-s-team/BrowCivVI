@@ -1,3 +1,4 @@
+import { attritionRate, OUT_OF_SUPPLY_MORALE } from "@/engine/supply/attrition";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
 import styles from "./HexBoard.module.css";
@@ -6,6 +7,23 @@ import { FACTION_NAMES } from "./palette";
 export interface MovesInfo {
   readonly remaining: number;
   readonly max: number;
+}
+
+function SupplyRow({ unit }: { unit: Unit }) {
+  if (unit.supplied) return null;
+  const hpLoss = attritionRate((unit.outOfSupplyTurns ?? 0) + 1);
+  return (
+    <>
+      <dt>Supply</dt>
+      <dd className={styles.statOutOfSupply}>
+        <span aria-hidden="true">⊘</span> Out of supply — −{hpLoss} HP, −{OUT_OF_SUPPLY_MORALE}{" "}
+        morale next turn
+        <span className={styles.supplyHint}>
+          Cut off from supply — it keeps losing HP and morale every turn until it reconnects.
+        </span>
+      </dd>
+    </>
+  );
 }
 
 export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: MovesInfo | null }) {
@@ -29,6 +47,7 @@ export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: M
         <dd>{unit.hp}</dd>
         <dt>Morale</dt>
         <dd>{unit.morale}</dd>
+        <SupplyRow unit={unit} />
         {moves !== null ? (
           <>
             <dt>Moves</dt>
