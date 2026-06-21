@@ -56,4 +56,12 @@ describe("applyCityAttack", () => {
   it("defeats the attacker when retaliation exceeds its HP", () => {
     expect(strike(200, 1).defeated).toContain("m1");
   });
+
+  it("a city's defending strength does not weaken as its HP drops", () => {
+    expect(strike(200).attackerDamage).toBe(strike(50).attackerDamage);
+  });
+
+  it("a wounded attacker still deals less damage to a city", () => {
+    expect(strike(200, 30).cityDamage).toBeLessThan(strike(200, 100).cityDamage);
+  });
 });

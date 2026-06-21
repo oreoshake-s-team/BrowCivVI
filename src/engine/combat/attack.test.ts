@@ -7,7 +7,7 @@ const unit = (
   r: number,
   owner: string,
   abilities: readonly string[] = [],
-): AttackUnit => ({ hex: { q, r }, owner, strength: 30, hp: 100, abilities });
+): AttackUnit => ({ hex: { q, r }, owner, strength: 30, hp: 100, morale: 80, abilities });
 
 function input(rng: Rng, over: Partial<ResolveAttackInput> = {}): ResolveAttackInput {
   return {

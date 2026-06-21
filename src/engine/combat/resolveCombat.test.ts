@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { createRng, type Rng } from "../rng";
-import { resolveCombat, type CombatInput, type CombatSide } from "./resolveCombat";
+import {
+  effectiveUnitStrength,
+  resolveCombat,
+  type CombatInput,
+  type CombatSide,
+} from "./resolveCombat";
 
 const side = (
   strength: number,
@@ -21,6 +26,36 @@ function makeInput(rng: Rng, over: Partial<CombatInput> = {}): CombatInput {
     ...over,
   };
 }
+
+describe("effectiveUnitStrength", () => {
+  it("is unchanged at full HP and baseline morale", () => {
+    expect(effectiveUnitStrength(35, 100, 80)).toBe(35);
+  });
+
+  it("applies the Civ 6 wounded penalty of -5 at half HP", () => {
+    expect(effectiveUnitStrength(35, 50, 80)).toBe(30);
+  });
+
+  it("approaches the -10 wounded penalty near death", () => {
+    expect(effectiveUnitStrength(35, 10, 80)).toBeCloseTo(26);
+  });
+
+  it("boosts strength above the baseline morale", () => {
+    expect(effectiveUnitStrength(100, 100, 90)).toBeCloseTo(107);
+  });
+
+  it("weakens strength below the baseline morale", () => {
+    expect(effectiveUnitStrength(100, 100, 70)).toBeCloseTo(93);
+  });
+
+  it("floors the morale penalty at -15% for very low morale", () => {
+    expect(effectiveUnitStrength(100, 100, 0)).toBeCloseTo(85);
+  });
+
+  it("never drops below 1", () => {
+    expect(effectiveUnitStrength(2, 0, 0)).toBe(1);
+  });
+});
 
 describe("resolveCombat", () => {
   it("is deterministic for a given seed", () => {
