@@ -27,9 +27,10 @@ export function movementConstraints(
   units: readonly Unit[],
   unit: Unit,
   riverEdges: ReadonlySet<string>,
+  blockedCityHexes: ReadonlySet<string> = NO_ZONE_OF_CONTROL,
 ): MovementConstraints {
   const moverLayer = layerOf(unit.typeId);
-  const blocked = new Set<string>();
+  const blocked = new Set<string>(blockedCityHexes);
   const blockedDestinations = new Set<string>();
   for (const other of units) {
     if (other.id === unit.id) continue;

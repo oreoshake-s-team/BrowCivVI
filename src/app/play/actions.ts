@@ -17,8 +17,14 @@ import {
 } from "@/engine/divergence/divergence";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
-import type { CityState } from "@/engine/match/cities";
-import { appendAttack, appendCityAttack, appendMove, type MatchEvent } from "@/engine/match/events";
+import { blockingCityHexes, captureCityAt, type CityState } from "@/engine/match/cities";
+import {
+  appendAttack,
+  appendCapture,
+  appendCityAttack,
+  appendMove,
+  type MatchEvent,
+} from "@/engine/match/events";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { domainOf, movementConstraints } from "@/engine/movement/constraints";
@@ -73,6 +79,7 @@ export type LoadBoardResult =
 export interface MoveOutcome {
   readonly ok: boolean;
   readonly units: readonly Unit[];
+  readonly cities?: readonly CityState[];
   readonly reachable: readonly Hex[];
   readonly movement: Readonly<Record<string, number>>;
   readonly events?: readonly MatchEvent[];
@@ -86,7 +93,12 @@ async function currentOwner(): Promise<string> {
 const RIVER_EDGES = riverEdgeSet(FIRST_SLICE_MAP.rivers);
 
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
-  const constraints = movementConstraints(match.units, unit, RIVER_EDGES);
+  const constraints = movementConstraints(
+    match.units,
+    unit,
+    RIVER_EDGES,
+    blockingCityHexes(match.cities, FIRST_SLICE_MAP, unit.owner),
+  );
   if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex))) return [];
   return availableMoves({
     from: unit.hex,
@@ -237,7 +249,12 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
   if (unit === undefined)
     return { ok: false, units: match.units, reachable: [], movement: match.movement };
 
-  const constraints = movementConstraints(match.units, unit, RIVER_EDGES);
+  const constraints = movementConstraints(
+    match.units,
+    unit,
+    RIVER_EDGES,
+    blockingCityHexes(match.cities, FIRST_SLICE_MAP, unit.owner),
+  );
   if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex)))
     return {
       ok: false,
@@ -265,13 +282,25 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
       movement: match.movement,
     };
 
+  const capture = captureCityAt(match.cities, FIRST_SLICE_MAP, result.hex, unit.owner);
+  const movedEvents = appendMove(match.events, match.turn, unit, unit.hex, result.hex);
   const next: MatchState = {
     ...match,
     units: match.units.map((u) =>
       u.id === unitId ? { ...u, hex: result.hex, hasMovedThisTurn: true } : u,
     ),
     movement: { ...match.movement, [unitId]: result.remaining },
-    events: appendMove(match.events, match.turn, unit, unit.hex, result.hex),
+    cities: capture.cities,
+    events:
+      capture.captured === null
+        ? movedEvents
+        : appendCapture(
+            movedEvents,
+            match.turn,
+            unit,
+            capture.captured.cityId,
+            capture.captured.previousOwner,
+          ),
   };
 
   try {
@@ -280,6 +309,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
     return {
       ok: true,
       units: saved.units,
+      cities: saved.cities,
       reachable: movedUnit === undefined ? [] : reachableForUnit(saved, movedUnit),
       movement: saved.movement,
       events: saved.events,

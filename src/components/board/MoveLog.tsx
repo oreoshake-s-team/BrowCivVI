@@ -66,12 +66,19 @@ export function MoveLog({ events }: { readonly events: readonly MatchEvent[] }) 
                 <MoveEntry event={event} />
               ) : event.kind === "attack" ? (
                 <AttackEntry event={event} />
-              ) : (
+              ) : event.kind === "cityAttack" ? (
                 <>
                   <span className={styles.icon} aria-hidden="true">
                     ⚔
                   </span>{" "}
                   {unitName(event.unitTypeId)} struck a city — dealt {event.cityDamage}
+                </>
+              ) : (
+                <>
+                  <span className={styles.icon} aria-hidden="true">
+                    ★
+                  </span>{" "}
+                  {unitName(event.unitTypeId)} captured a city
                 </>
               )}
             </li>
