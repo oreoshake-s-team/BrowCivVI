@@ -6,6 +6,7 @@ import type {
   AttackEvent,
   CaptureEvent,
   CityAttackEvent,
+  DefectionEvent,
   MatchEvent,
   MoveEvent,
 } from "@/engine/match/events";
@@ -93,12 +94,44 @@ function CaptureEntry({
   );
 }
 
+function DefectionEntry({
+  event,
+  cityName,
+  playerFaction,
+}: {
+  readonly event: DefectionEvent;
+  readonly cityName: string;
+  readonly playerFaction: string | undefined;
+}) {
+  const gained = playerFaction !== undefined && event.faction === playerFaction;
+  const lost = playerFaction !== undefined && event.previousOwner === playerFaction;
+  return (
+    <>
+      <span className={styles.icon} aria-hidden="true">
+        ⚑
+      </span>
+      <span className={styles.actor} data-faction={event.faction}>
+        {factionName(event.faction)}
+      </span>{" "}
+      won over{" "}
+      <span
+        className={styles.defectedCity}
+        data-defection={gained ? "gain" : lost ? "loss" : undefined}
+      >
+        {cityName}
+      </span>
+    </>
+  );
+}
+
 export function MoveLog({
   events,
   cityNames,
+  playerFaction,
 }: {
   readonly events: readonly MatchEvent[];
   readonly cityNames?: ReadonlyMap<string, string>;
+  readonly playerFaction?: string;
 }) {
   const listRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
@@ -124,8 +157,14 @@ export function MoveLog({
                 <AttackEntry event={event} />
               ) : event.kind === "cityAttack" ? (
                 <CityAttackEntry event={event} cityName={cityName(event.cityId)} />
-              ) : (
+              ) : event.kind === "capture" ? (
                 <CaptureEntry event={event} cityName={cityName(event.cityId)} />
+              ) : (
+                <DefectionEntry
+                  event={event}
+                  cityName={cityName(event.cityId)}
+                  playerFaction={playerFaction}
+                />
               )}
             </li>
           ))}

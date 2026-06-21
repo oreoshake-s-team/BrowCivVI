@@ -72,3 +72,15 @@
   font-weight: 600;
   color: var(--color-danger-surface);
 }
+
+.defectedCity {
+  font-weight: 600;
+}
+
+.defectedCity[data-defection="gain"] {
+  color: var(--color-city-hp-fill);
+}
+
+.defectedCity[data-defection="loss"] {
+  color: var(--color-danger-surface);
+}
