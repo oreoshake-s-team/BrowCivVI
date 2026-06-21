@@ -1,4 +1,5 @@
 import { healCities } from "../match/cities";
+import { applyDefections } from "../match/defection";
 import { applyLoyaltyPressure, type LoyaltyContext } from "../match/loyalty";
 import type { MatchState } from "../match/state";
 import { applyOutOfSupplyAttrition } from "../supply/attrition";
@@ -19,6 +20,10 @@ function supplyPropagation(state: MatchState, _faction: string, ctx: TurnContext
 
 function loyaltyPressure(state: MatchState, _faction: string, ctx: TurnContext): MatchState {
   return ctx.loyalty === undefined ? state : applyLoyaltyPressure(state, ctx.loyalty);
+}
+
+function defection(state: MatchState, _faction: string, ctx: TurnContext): MatchState {
+  return ctx.loyalty === undefined ? state : applyDefections(state, ctx.loyalty);
 }
 
 function outOfSupplyAttrition(state: MatchState, faction: string): MatchState {
@@ -46,6 +51,7 @@ export const TURN_START_PHASES: readonly TurnPhase[] = [
   supplyPropagation,
   outOfSupplyAttrition,
   loyaltyPressure,
+  defection,
 ];
 export const TURN_END_PHASES: readonly TurnPhase[] = [];
 

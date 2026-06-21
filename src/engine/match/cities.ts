@@ -8,6 +8,7 @@ export interface CityState {
   readonly hp: number;
   readonly loyalty?: number;
   readonly loyaltyStreak?: number;
+  readonly defecting?: boolean;
   readonly attackedThisTurn?: boolean;
   readonly sacked?: boolean;
 }
