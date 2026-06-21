@@ -71,4 +71,15 @@ describe("decodeMatchState", () => {
     const stored = { ...STATE, cities: [city] };
     expect(decodeMatchState(stored).cities).toEqual([city]);
   });
+
+  it("defaults divergence choices to empty when absent", () => {
+    const legacy = { ...STATE, schemaVersion: 3, divergence: undefined };
+    expect(decodeMatchState(legacy).divergence).toEqual({});
+  });
+
+  it("preserves recorded divergence choices", () => {
+    const divergence = { granicus: { choice: "reckless", rival: "scorched" } };
+    const legacy = { ...STATE, schemaVersion: 3, divergence };
+    expect(decodeMatchState(legacy).divergence).toEqual(divergence);
+  });
 });
