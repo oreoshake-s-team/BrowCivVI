@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { createGameMap } from "../map/types";
+import type { CityState } from "../match/cities";
 import type { Unit } from "../unit/types";
-import { attackableHexes, reachableAttacks } from "./targets";
+import {
+  attackableCityHexes,
+  attackableHexes,
+  reachableAttacks,
+  reachableCityAttacks,
+} from "./targets";
 
 const unit = (id: string, typeId: string, owner: string, q: number, r: number): Unit => ({
   id,
@@ -67,5 +73,54 @@ describe("reachableAttacks", () => {
     expect(reachableAttacks([spent, persia], { m1: 2 }, spent, FLAT_MAP, NO_RIVERS)).toHaveLength(
       0,
     );
+  });
+});
+
+const CITY_MAP = createGameMap(
+  [
+    { hex: { q: 1, r: 1 }, terrain: "plains" },
+    { hex: { q: 2, r: 1 }, terrain: "plains", cityId: "c1" },
+    { hex: { q: 3, r: 1 }, terrain: "plains", cityId: "c2" },
+  ],
+  [],
+);
+const ENEMY_CITY: CityState = { id: "c1", owner: "persia", hp: 50 };
+
+describe("attackableCityHexes", () => {
+  it("lists an adjacent enemy city hex", () => {
+    expect(attackableCityHexes(MACEDON, CITY_MAP, [ENEMY_CITY])).toContainEqual({ q: 2, r: 1 });
+  });
+
+  it("excludes the attacker's own city", () => {
+    expect(
+      attackableCityHexes(MACEDON, CITY_MAP, [{ id: "c1", owner: "macedon", hp: 50 }]),
+    ).toHaveLength(0);
+  });
+
+  it("excludes a fallen city", () => {
+    expect(
+      attackableCityHexes(MACEDON, CITY_MAP, [{ id: "c1", owner: "persia", hp: 0 }]),
+    ).toHaveLength(0);
+  });
+
+  it("excludes a city more than one hex away", () => {
+    expect(
+      attackableCityHexes(MACEDON, CITY_MAP, [{ id: "c2", owner: "persia", hp: 50 }]),
+    ).toHaveLength(0);
+  });
+});
+
+describe("reachableCityAttacks", () => {
+  it("includes a reachable adjacent enemy city", () => {
+    expect(
+      reachableCityAttacks({ m1: 4 }, MACEDON, CITY_MAP, new Set<string>(), [ENEMY_CITY]),
+    ).toContainEqual({ q: 2, r: 1 });
+  });
+
+  it("excludes a city once the attacker has already attacked", () => {
+    const spent = { ...MACEDON, hasAttackedThisTurn: true };
+    expect(
+      reachableCityAttacks({ m1: 4 }, spent, CITY_MAP, new Set<string>(), [ENEMY_CITY]),
+    ).toHaveLength(0);
   });
 });

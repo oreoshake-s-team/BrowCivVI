@@ -7,6 +7,7 @@ import {
   newGame,
   move,
   attack,
+  attackCity,
   targetsFor,
   endTurn,
   resolveDivergence,
@@ -252,6 +253,22 @@ describe("divergence resolution", () => {
   it("rejects an unknown option", async () => {
     const board = await newGame();
     const outcome = await resolveDivergence(board.matchId, "granicus", "flee");
+    expect(outcome.ok).toBe(false);
+  });
+});
+
+describe("attackCity", () => {
+  it("rejects attacking your own city", async () => {
+    const board = await newGame();
+    const macedonUnit = board.units.find((unit) => unit.owner === "macedon");
+    const outcome = await attackCity(board.matchId, macedonUnit?.id ?? "", "pella");
+    expect(outcome.ok).toBe(false);
+  });
+
+  it("rejects attacking an enemy city out of range", async () => {
+    const board = await newGame();
+    const macedonUnit = board.units.find((unit) => unit.owner === "macedon");
+    const outcome = await attackCity(board.matchId, macedonUnit?.id ?? "", "sardis");
     expect(outcome.ok).toBe(false);
   });
 });

@@ -7,7 +7,8 @@ import {
 } from "@/content/firstSlice";
 import { runFactionTurn } from "@/engine/ai/greedyTurn";
 import { applyAttack } from "@/engine/combat/applyAttack";
-import { reachableAttacks } from "@/engine/combat/targets";
+import { applyCityAttack } from "@/engine/combat/applyCityAttack";
+import { reachableAttacks, reachableCityAttacks } from "@/engine/combat/targets";
 import {
   pendingDivergence,
   playerOptions,
@@ -16,7 +17,8 @@ import {
 } from "@/engine/divergence/divergence";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
-import { appendAttack, appendMove, type MatchEvent } from "@/engine/match/events";
+import type { CityState } from "@/engine/match/cities";
+import { appendAttack, appendCityAttack, appendMove, type MatchEvent } from "@/engine/match/events";
 import type { MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
 import { domainOf, movementConstraints } from "@/engine/movement/constraints";
@@ -98,7 +100,10 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
 }
 
 function attackTargets(match: MatchState, attacker: Unit): readonly Hex[] {
-  return reachableAttacks(match.units, match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES);
+  return [
+    ...reachableAttacks(match.units, match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES),
+    ...reachableCityAttacks(match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES, match.cities),
+  ];
 }
 
 async function resolveMatch(matchId?: string): Promise<MatchState> {
@@ -310,6 +315,21 @@ export interface AttackOutcome {
   readonly rateLimited?: boolean;
 }
 
+export interface CityAttackOutcome {
+  readonly ok: boolean;
+  readonly units: readonly Unit[];
+  readonly cities?: readonly CityState[];
+  readonly attackerHex?: Hex;
+  readonly cityHex?: Hex;
+  readonly cityDamage?: number;
+  readonly attackerDamage?: number;
+  readonly cityFell?: boolean;
+  readonly defeated?: readonly string[];
+  readonly movement?: Readonly<Record<string, number>>;
+  readonly events?: readonly MatchEvent[];
+  readonly rateLimited?: boolean;
+}
+
 export async function targetsFor(matchId: string, unitId: string): Promise<SelectionTargets> {
   const match = await resolveMatch(matchId);
   const unit = match.units.find((candidate) => candidate.id === unitId);
@@ -366,6 +386,69 @@ export async function attack(
       defenderHex: defender.hex,
       attackerDamage: application.attackerDamage,
       defenderDamage: application.defenderDamage,
+      defeated: application.defeated,
+      movement: saved.movement,
+      events: saved.events,
+    };
+  } catch (error) {
+    if (error instanceof StaleMatchError) return { ok: false, units: match.units };
+    throw error;
+  }
+}
+
+export async function attackCity(
+  matchId: string,
+  attackerId: string,
+  cityId: string,
+): Promise<CityAttackOutcome> {
+  const owner = await currentOwner();
+  if (!(await intentAllowed(owner))) return { ok: false, units: [], rateLimited: true };
+  const store = getStore();
+  const match = await loadOwned(store, owner, matchId);
+  if (match === null) return { ok: false, units: [] };
+
+  const attacker = match.units.find((u) => u.id === attackerId);
+  const cityData = FIRST_SLICE_MAP.cities.get(cityId);
+  const city = match.cities.find((c) => c.id === cityId);
+  if (attacker === undefined || cityData === undefined || city === undefined) {
+    return { ok: false, units: match.units };
+  }
+  if (city.owner === attacker.owner || city.hp <= 0) return { ok: false, units: match.units };
+  if (!attackTargets(match, attacker).some((hex) => hexKey(hex) === hexKey(cityData.hex))) {
+    return { ok: false, units: match.units };
+  }
+
+  const terrain = terrainAt(FIRST_SLICE_MAP, cityData.hex);
+  const application = applyCityAttack({
+    units: match.units,
+    cities: match.cities,
+    movement: match.movement,
+    attackerId,
+    cityId,
+    cityDefense: cityData.defense,
+    cityTerrainDefense: terrain?.defenseModifier ?? 0,
+    cityTerrainMoveCost: terrain?.moveCost ?? 1,
+    riverAttack: RIVER_EDGES.has(riverEdgeKey(attacker.hex, cityData.hex)),
+    rng: createRng((match.seed ^ (match.version + 1)) >>> 0),
+  });
+
+  try {
+    const saved = await store.save({
+      ...match,
+      units: application.units,
+      cities: application.cities,
+      movement: application.movement,
+      events: appendCityAttack(match.events, match.turn, attacker, cityId, application),
+    });
+    return {
+      ok: true,
+      units: saved.units,
+      cities: saved.cities,
+      attackerHex: attacker.hex,
+      cityHex: cityData.hex,
+      cityDamage: application.cityDamage,
+      attackerDamage: application.attackerDamage,
+      cityFell: application.cityFell,
       defeated: application.defeated,
       movement: saved.movement,
       events: saved.events,
