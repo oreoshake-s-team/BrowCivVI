@@ -63,6 +63,11 @@ describe("captureCityAt", () => {
     expect(result.captured?.previousOwner).toBe("persia");
   });
 
+  it("marks a force-captured city as sacked", () => {
+    const result = captureCityAt([fallen], CAPTURE_MAP, CITY_HEX, "macedon");
+    expect(result.cities[0]?.sacked).toBe(true);
+  });
+
   it("does not capture a city that still has HP", () => {
     const result = captureCityAt(
       [{ id: "sardis", owner: "persia", hp: 50 }],

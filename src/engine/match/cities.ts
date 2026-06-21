@@ -7,6 +7,7 @@ export interface CityState {
   readonly owner: string | null;
   readonly hp: number;
   readonly attackedThisTurn?: boolean;
+  readonly sacked?: boolean;
 }
 
 export const CITY_HP_PER_DEFENSE = 8;
@@ -72,7 +73,9 @@ export function captureCityAt(
   const resetHp = Math.max(1, Math.round(cityMaxHp(defense) * CITY_CAPTURE_HP_FRACTION));
   return {
     cities: cities.map((candidate) =>
-      candidate.id === cityId ? { ...candidate, owner: capturer, hp: resetHp } : candidate,
+      candidate.id === cityId
+        ? { ...candidate, owner: capturer, hp: resetHp, sacked: true }
+        : candidate,
     ),
     captured: { cityId, previousOwner: city.owner },
   };
