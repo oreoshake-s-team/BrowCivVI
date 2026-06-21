@@ -12,6 +12,7 @@ import type { GameMap } from "@/engine/map/types";
 import { cityMaxHp, type CityState } from "@/engine/match/cities";
 import type { MatchEvent } from "@/engine/match/events";
 import { unitTypeById } from "@/engine/unit/catalog";
+import type { UnitClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { CitationCard } from "./CitationCard";
 import { CitationTarget } from "./CitationTarget";
@@ -21,8 +22,10 @@ import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
 import { MoveLog } from "./MoveLog";
-import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
+import { TERRAIN_COLORS, factionStyle } from "./palette";
 import { TerrainMotif } from "./TerrainMotif";
+import { UnitSpriteDefs } from "./UnitSpriteDefs";
+import { hasUnitSprite, spriteIdForClass } from "./unitSprites";
 import {
   fitView,
   panView,
@@ -45,6 +48,26 @@ const MEDIA_GLYPH = "▶";
 
 function hasPlayableMedia(media: readonly MediaLink[] | undefined): boolean {
   return media?.some((item) => item.kind === "podcast" || item.kind === "video") ?? false;
+}
+
+function UnitMark({ unitClass, color }: { unitClass: UnitClass | undefined; color: string }) {
+  if (!hasUnitSprite(unitClass)) {
+    return (
+      <text className={styles.glyph} x={0} y={0} style={{ fill: color }}>
+        ?
+      </text>
+    );
+  }
+  return (
+    <use
+      href={`#${spriteIdForClass(unitClass)}`}
+      x={-SIZE * 0.45}
+      y={-SIZE * 0.45}
+      width={SIZE * 0.9}
+      height={SIZE * 0.9}
+      style={{ color, pointerEvents: "none" }}
+    />
+  );
 }
 
 function MediaGlyph() {
@@ -358,6 +381,7 @@ export function HexBoard({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        <UnitSpriteDefs />
         {Array.from(map.hexes.values()).map((mapHex) => {
           const key = hexKey(mapHex.hex);
           const center = hexToPixel(mapHex.hex, SIZE);
@@ -689,9 +713,7 @@ export function HexBoard({
                 style={{ fill: style.fill, stroke: style.stroke }}
                 strokeWidth={2}
               />
-              <text className={styles.glyph} x={0} y={0} style={{ fill: style.text }}>
-                {type ? CLASS_GLYPHS[type.class] : "?"}
-              </text>
+              <UnitMark unitClass={type?.class} color={style.text} />
               {isAttackTarget ? (
                 <g className={styles.attackMark} data-attack-target={unit.id}>
                   <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />
@@ -739,9 +761,7 @@ export function HexBoard({
                 style={{ fill: style.fill, stroke: style.stroke }}
                 strokeWidth={2}
               />
-              <text className={styles.glyph} x={0} y={0} style={{ fill: style.text }}>
-                {type ? CLASS_GLYPHS[type.class] : "?"}
-              </text>
+              <UnitMark unitClass={type?.class} color={style.text} />
             </g>
           );
         })}

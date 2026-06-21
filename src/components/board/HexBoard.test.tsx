@@ -45,6 +45,13 @@ describe("HexBoard", () => {
     expect(container.querySelectorAll("[data-unit-id]")).toHaveLength(SAMPLE_UNITS.length);
   });
 
+  it("renders each unit as a faction-tinted sprite symbol", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelectorAll('use[href^="#unit-sprite-"]')).toHaveLength(
+      SAMPLE_UNITS.length,
+    );
+  });
+
   it("labels the city on the map", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(screen.getByText("Dascylium")).toBeTruthy();
