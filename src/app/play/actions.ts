@@ -464,6 +464,7 @@ export async function attackCity(
     movement: match.movement,
     attackerId,
     cityId,
+    cityHex: cityData.hex,
     cityDefense: cityData.defense,
     cityTerrainDefense: terrain?.defenseModifier ?? 0,
     cityTerrainMoveCost: terrain?.moveCost ?? 1,
