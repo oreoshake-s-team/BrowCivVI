@@ -5,6 +5,7 @@ import type { GameMap } from "@/engine/map/types";
 import { BoardLoadError } from "./BoardLoadError";
 import { DivergenceModal } from "./DivergenceModal";
 import { HexBoard } from "./HexBoard";
+import { IncompatibleMatch } from "./IncompatibleMatch";
 import styles from "./PlayBoard.module.css";
 import { Toast } from "./Toast";
 import { usePlayBoard } from "./usePlayBoard";
@@ -27,6 +28,9 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
     return <BoardLoadError reason={state.loadError} onRetry={board.retry} />;
   }
   if (!state.ready) return <p role="status">Loading the campaign…</p>;
+  if (state.incompatible) {
+    return <IncompatibleMatch onStartNewGame={board.confirmNewGame} />;
+  }
 
   return (
     <>

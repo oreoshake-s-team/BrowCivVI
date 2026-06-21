@@ -17,7 +17,13 @@ import {
 } from "@/engine/divergence/divergence";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
-import { blockingCityHexes, captureCityAt, cityMaxHp, type CityState } from "@/engine/match/cities";
+import {
+  blockingCityHexes,
+  captureCityAt,
+  cityMaxHp,
+  matchLacksCityState,
+  type CityState,
+} from "@/engine/match/cities";
 import {
   appendAttack,
   appendCapture,
@@ -69,6 +75,7 @@ export interface BoardView {
   readonly scorched: readonly string[];
   readonly scores?: Readonly<Record<string, number>>;
   readonly pendingDivergence?: DivergenceView;
+  readonly incompatible?: boolean;
 }
 
 export interface DivergenceOutcome {
@@ -152,6 +159,7 @@ function divergenceView(node: DivergenceNode): DivergenceView {
 
 function boardView(match: MatchState): BoardView {
   const pending = pendingDivergence(match, FIRST_SLICE_DIVERGENCE_NODES);
+  const incompatible = matchLacksCityState(match.cities, FIRST_SLICE_MAP.cities.size > 0);
   return {
     matchId: match.id,
     units: match.units,
@@ -164,6 +172,7 @@ function boardView(match: MatchState): BoardView {
     scorched: match.scorched,
     scores: matchCityScores(match, (id) => FIRST_SLICE_MAP.cities.get(id)?.value ?? 0),
     ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
+    ...(incompatible ? { incompatible: true } : {}),
   };
 }
 
