@@ -17,7 +17,7 @@ import {
 } from "@/engine/divergence/divergence";
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
-import { blockingCityHexes, captureCityAt, type CityState } from "@/engine/match/cities";
+import { blockingCityHexes, captureCityAt, cityMaxHp, type CityState } from "@/engine/match/cities";
 import {
   appendAttack,
   appendCapture,
@@ -164,6 +164,7 @@ function boardView(match: MatchState): BoardView {
 
 const TURN_CONTEXT: TurnContext = {
   movementOf: (typeId) => unitTypeById(typeId)?.movement ?? 0,
+  cityMaxHp: (cityId) => cityMaxHp(FIRST_SLICE_MAP.cities.get(cityId)?.defense ?? 0),
 };
 
 export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {
