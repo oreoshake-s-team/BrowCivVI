@@ -1,8 +1,12 @@
+import type { Hex } from "../hex";
+import { hexKey } from "../map/types";
 import type { CityState } from "../match/cities";
 import type { Rng } from "../rng";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
 import { effectiveUnitStrength, resolveCombat } from "./resolveCombat";
+
+export const GARRISON_BUFF_FRACTION = 0.5;
 
 export interface ApplyCityAttackInput {
   readonly units: readonly Unit[];
@@ -10,11 +14,20 @@ export interface ApplyCityAttackInput {
   readonly movement: Readonly<Record<string, number>>;
   readonly attackerId: string;
   readonly cityId: string;
+  readonly cityHex: Hex;
   readonly cityDefense: number;
   readonly cityTerrainDefense: number;
   readonly cityTerrainMoveCost: number;
   readonly riverAttack: boolean;
   readonly rng: Rng;
+}
+
+function garrisonBuff(input: ApplyCityAttackInput, cityOwner: string | null): number {
+  const garrison = input.units.find(
+    (unit) => hexKey(unit.hex) === hexKey(input.cityHex) && unit.owner === cityOwner,
+  );
+  if (garrison === undefined) return 0;
+  return GARRISON_BUFF_FRACTION * (unitTypeById(garrison.typeId)?.strength ?? 0);
 }
 
 export interface CityAttackApplication {
@@ -50,7 +63,12 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
       abilities: attackerType?.abilities ?? [],
       adjacentAllies: 0,
     },
-    defender: { strength: input.cityDefense, hp: city.hp, abilities: [], adjacentAllies: 0 },
+    defender: {
+      strength: input.cityDefense + garrisonBuff(input, city.owner),
+      hp: city.hp,
+      abilities: [],
+      adjacentAllies: 0,
+    },
     defenderTerrainDefense: input.cityTerrainDefense,
     defenderTerrainMoveCost: input.cityTerrainMoveCost,
     flanked: false,
