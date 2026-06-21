@@ -7,6 +7,7 @@ export interface CityState {
   readonly owner: string | null;
   readonly hp: number;
   readonly loyalty?: number;
+  readonly loyaltyStreak?: number;
   readonly attackedThisTurn?: boolean;
   readonly sacked?: boolean;
 }
