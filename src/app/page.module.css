@@ -1,0 +1,25 @@
+.main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.heading {
+  margin-bottom: var(--space-xs);
+}
+
+.cta {
+  color: var(--color-ink);
+  font-size: var(--font-size-ui-md);
+  text-decoration: none;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.cta:hover {
+  background: var(--color-surface-board);
+}

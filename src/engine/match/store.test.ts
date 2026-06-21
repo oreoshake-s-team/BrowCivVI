@@ -14,9 +14,10 @@ const UNIT: Unit = {
   hasMovedThisTurn: false,
 };
 
-const make = () =>
+const make = (id = "m1", owner: string | null = null) =>
   createMatch({
-    id: "m1",
+    id,
+    owner,
     seed: 7,
     mapId: "first-slice",
     turnLimit: 20,
@@ -48,5 +49,31 @@ describe("InMemoryMatchStore", () => {
     await store.create(state);
     await store.save(state);
     await expect(store.save(state)).rejects.toBeInstanceOf(StaleMatchError);
+  });
+});
+
+describe("InMemoryMatchStore listByOwner", () => {
+  it("returns every match owned by the visitor", async () => {
+    const store = new InMemoryMatchStore();
+    await store.create(make("a", "owner-1"));
+    await store.create(make("b", "owner-1"));
+    expect((await store.listByOwner("owner-1")).length).toBe(2);
+  });
+
+  it("excludes matches owned by someone else", async () => {
+    const store = new InMemoryMatchStore();
+    await store.create(make("a", "owner-1"));
+    await store.create(make("b", "owner-2"));
+    const ids = (await store.listByOwner("owner-1")).map((m) => m.state.id);
+    expect(ids).toEqual(["a"]);
+  });
+
+  it("advances updatedAt when a match is saved", async () => {
+    const store = new InMemoryMatchStore();
+    const state = make("a", "owner-1");
+    await store.create(state);
+    const before = (await store.listByOwner("owner-1"))[0]!.updatedAt;
+    await store.save(state);
+    expect((await store.listByOwner("owner-1"))[0]!.updatedAt).toBeGreaterThan(before);
   });
 });
