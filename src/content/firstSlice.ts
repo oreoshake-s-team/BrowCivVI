@@ -507,8 +507,11 @@ const GRANICUS_NODE: DivergenceNode = {
       quote:
         "“The banks are steep and the enemy waits in order. I would not hazard a crossing now, King.”",
       outcome:
-        "Alexander charges anyway and is nearly cut down — Cleitus the Black severs the arm of the satrap about to kill him. The army, seeing their king survive, is emboldened.",
-      effect: { kind: "morale", faction: "macedon", delta: 8 },
+        "Alexander charges anyway and is nearly cut down — Cleitus the Black severs the arm of the satrap about to kill him. The Companions are bloodied saving their king, but the army, seeing him survive, is emboldened.",
+      effects: [
+        { kind: "morale", faction: "macedon", delta: 8 },
+        { kind: "hp", unitId: "mac-companions", delta: -40 },
+      ],
     },
     {
       id: "cautious",
@@ -516,8 +519,12 @@ const GRANICUS_NODE: DivergenceNode = {
       advisor: "Parmenion",
       label: "Camp, and cross at dawn",
       quote: "“Let us camp by the river and force the crossing at first light, in good order.”",
-      outcome: "The army crosses in order at dawn — steadier, if less glorious.",
-      effect: { kind: "morale", faction: "macedon", delta: 3 },
+      outcome:
+        "The army camps and crosses in good order at dawn — steadier, but the day is spent: no advance this turn.",
+      effects: [
+        { kind: "morale", faction: "macedon", delta: 3 },
+        { kind: "movement", faction: "macedon", remaining: 0 },
+      ],
     },
     {
       id: "pitched",
@@ -526,7 +533,7 @@ const GRANICUS_NODE: DivergenceNode = {
       label: "Stand and give pitched battle",
       quote: "“The satraps will not yield their lands without a fight at the river.”",
       outcome: "The satraps reject Memnon and commit to the river line.",
-      effect: { kind: "morale", faction: "persia", delta: 5 },
+      effects: [{ kind: "morale", faction: "persia", delta: 5 }],
     },
     {
       id: "scorched",
@@ -537,7 +544,7 @@ const GRANICUS_NODE: DivergenceNode = {
         "“Burn the crops and fall back. Starve the Macedonian advance; do not stake all here.”",
       outcome:
         "Memnon's counsel prevails — the satrapies are put to the torch, denying Alexander supply, though burning one's own land unsettles the host.",
-      effect: { kind: "morale", faction: "persia", delta: -4 },
+      effects: [{ kind: "morale", faction: "persia", delta: -4 }],
     },
   ],
   citation: ref(

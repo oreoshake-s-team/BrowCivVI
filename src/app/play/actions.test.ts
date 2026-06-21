@@ -243,6 +243,18 @@ describe("divergence resolution", () => {
     expect(outcome.board.units.find((unit) => unit.id === PHALANX)?.morale).toBe(93);
   });
 
+  it("forfeits the turn's movement when crossing cautiously", async () => {
+    const board = await newGame();
+    const outcome = await resolveDivergence(board.matchId, "granicus", "cautious");
+    expect(outcome.board.movement[PHALANX]).toBe(0);
+  });
+
+  it("wounds the Companions on the reckless charge", async () => {
+    const board = await newGame();
+    const outcome = await resolveDivergence(board.matchId, "granicus", "reckless");
+    expect(outcome.board.units.find((unit) => unit.id === "mac-companions")?.hp).toBe(60);
+  });
+
   it("cannot be resolved a second time", async () => {
     const board = await newGame();
     await resolveDivergence(board.matchId, "granicus", "reckless");

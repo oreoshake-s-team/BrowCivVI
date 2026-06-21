@@ -45,6 +45,42 @@ describe("applyDivergenceEffect", () => {
     const next = applyDivergenceEffect(match(), { kind: "morale", faction: "macedon", delta: 50 });
     expect(macedonMorale(next)).toBe(100);
   });
+
+  it("sets a faction's remaining movement", () => {
+    const next = applyDivergenceEffect(match(), {
+      kind: "movement",
+      faction: "macedon",
+      remaining: 0,
+    });
+    expect(next.movement["mac-phalanx"]).toBe(0);
+  });
+
+  it("leaves another faction's movement untouched", () => {
+    const next = applyDivergenceEffect(match(), {
+      kind: "movement",
+      faction: "macedon",
+      remaining: 0,
+    });
+    expect(next.movement["per-cavalry"]).toBe(4);
+  });
+
+  it("wounds a targeted unit", () => {
+    const next = applyDivergenceEffect(match(), {
+      kind: "hp",
+      unitId: "mac-companions",
+      delta: -40,
+    });
+    expect(next.units.find((unit) => unit.id === "mac-companions")?.hp).toBe(60);
+  });
+
+  it("never reduces a wounded unit below one hit point", () => {
+    const next = applyDivergenceEffect(match(), {
+      kind: "hp",
+      unitId: "mac-companions",
+      delta: -500,
+    });
+    expect(next.units.find((unit) => unit.id === "mac-companions")?.hp).toBe(1);
+  });
 });
 
 describe("pendingDivergence", () => {
@@ -84,6 +120,16 @@ describe("resolveDivergenceNode", () => {
   it("applies the chosen option's morale effect", () => {
     const resolved = resolveDivergenceNode(match(), NODE, "reckless", createRng(1));
     expect(macedonMorale(resolved!.state) - macedonMorale(match())).toBe(8);
+  });
+
+  it("forfeits the turn's movement on the cautious choice", () => {
+    const resolved = resolveDivergenceNode(match(), NODE, "cautious", createRng(1));
+    expect(resolved!.state.movement["mac-phalanx"]).toBe(0);
+  });
+
+  it("wounds the Companions on the reckless choice", () => {
+    const resolved = resolveDivergenceNode(match(), NODE, "reckless", createRng(1));
+    expect(resolved!.state.units.find((unit) => unit.id === "mac-companions")?.hp).toBe(60);
   });
 
   it("rejects an unknown option", () => {
