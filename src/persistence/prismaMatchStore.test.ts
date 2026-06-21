@@ -79,4 +79,17 @@ describe("PrismaMatchStore", () => {
     await store.create(STATE);
     expect(prisma.match.create).toHaveBeenCalledOnce();
   });
+
+  it("decodes each owned row's state on listByOwner", async () => {
+    const { prisma, store } = storeWith();
+    prisma.match.findMany.mockResolvedValue([storedRow(3)]);
+    expect((await store.listByOwner("owner-1"))[0]!.state.id).toBe("m1");
+  });
+
+  it("surfaces the row's updatedAt as epoch milliseconds", async () => {
+    const { prisma, store } = storeWith();
+    const row = { ...storedRow(3), updatedAt: new Date(1_700_000_000_000) };
+    prisma.match.findMany.mockResolvedValue([row]);
+    expect((await store.listByOwner("owner-1"))[0]!.updatedAt).toBe(1_700_000_000_000);
+  });
 });

@@ -7,31 +7,48 @@ export class StaleMatchError extends Error {
   }
 }
 
+export interface OwnedMatch {
+  readonly state: MatchState;
+  readonly updatedAt: number;
+}
+
 export interface MatchStore {
   create(state: MatchState): Promise<void>;
   load(id: string): Promise<MatchState | null>;
   save(state: MatchState): Promise<MatchState>;
+  listByOwner(owner: string): Promise<readonly OwnedMatch[]>;
 }
 
 export class InMemoryMatchStore implements MatchStore {
-  private readonly matches = new Map<string, MatchState>();
+  private readonly matches = new Map<string, OwnedMatch>();
+  private lastNow = 0;
+
+  private now(): number {
+    this.lastNow = Math.max(Date.now(), this.lastNow + 1);
+    return this.lastNow;
+  }
 
   create(state: MatchState): Promise<void> {
-    this.matches.set(state.id, state);
+    this.matches.set(state.id, { state, updatedAt: this.now() });
     return Promise.resolve();
   }
 
   load(id: string): Promise<MatchState | null> {
-    return Promise.resolve(this.matches.get(id) ?? null);
+    return Promise.resolve(this.matches.get(id)?.state ?? null);
   }
 
   save(state: MatchState): Promise<MatchState> {
     const current = this.matches.get(state.id);
-    if (current?.version !== state.version) {
+    if (current?.state.version !== state.version) {
       return Promise.reject(new StaleMatchError(state.id));
     }
     const next: MatchState = { ...state, version: state.version + 1 };
-    this.matches.set(state.id, next);
+    this.matches.set(state.id, { state: next, updatedAt: this.now() });
     return Promise.resolve(next);
+  }
+
+  listByOwner(owner: string): Promise<readonly OwnedMatch[]> {
+    const owned = [...this.matches.values()].filter((match) => match.state.owner === owner);
+    return Promise.resolve(owned);
   }
 }

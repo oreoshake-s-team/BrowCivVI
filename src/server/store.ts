@@ -4,7 +4,9 @@ import type { MatchStore } from "@/engine/match/store";
 import { InMemoryMatchStore } from "@/engine/match/store";
 import { PrismaMatchStore } from "@/persistence/prismaMatchStore";
 
-let cached: MatchStore | undefined;
+const globalForStore = globalThis as typeof globalThis & {
+  __browCivViMatchStore?: MatchStore;
+};
 
 export function selectDatabaseUrl(env: Record<string, string | undefined>): string | undefined {
   const keys =
@@ -19,14 +21,14 @@ export function selectDatabaseUrl(env: Record<string, string | undefined>): stri
 }
 
 export function getStore(): MatchStore {
-  if (cached === undefined) {
+  if (globalForStore.__browCivViMatchStore === undefined) {
     const url = selectDatabaseUrl(process.env);
     if (url === undefined) {
-      cached = new InMemoryMatchStore();
+      globalForStore.__browCivViMatchStore = new InMemoryMatchStore();
     } else {
       const adapter = new PrismaNeon({ connectionString: url });
-      cached = new PrismaMatchStore(new PrismaClient({ adapter }));
+      globalForStore.__browCivViMatchStore = new PrismaMatchStore(new PrismaClient({ adapter }));
     }
   }
-  return cached;
+  return globalForStore.__browCivViMatchStore;
 }

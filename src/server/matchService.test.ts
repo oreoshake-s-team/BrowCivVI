@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { InMemoryMatchStore } from "@/engine/match/store";
-import { getOrCreateDefault, createNewMatch, loadOwned, newMatchState } from "./matchService";
+import {
+  getOrCreateDefault,
+  createNewMatch,
+  listOwnedSummaries,
+  loadOwned,
+  newMatchState,
+} from "./matchService";
 
 describe("getOrCreateDefault", () => {
   it("creates a default match owned by a new visitor", async () => {
@@ -36,6 +42,36 @@ describe("loadOwned", () => {
     const store = new InMemoryMatchStore();
     const created = await createNewMatch(store, "owner-1");
     expect(await loadOwned(store, "intruder", created.id)).toBeNull();
+  });
+});
+
+describe("listOwnedSummaries", () => {
+  it("summarises a match with its turn progress", async () => {
+    const store = new InMemoryMatchStore();
+    const created = await createNewMatch(store, "owner-1");
+    const summary = (await listOwnedSummaries(store, "owner-1"))[0]!;
+    expect(summary.turnLimit).toBe(created.turnLimit);
+  });
+
+  it("scores the player's held cities from the authored values", async () => {
+    const store = new InMemoryMatchStore();
+    await createNewMatch(store, "owner-1");
+    expect((await listOwnedSummaries(store, "owner-1"))[0]!.score).toBeGreaterThan(0);
+  });
+
+  it("orders games newest-played first", async () => {
+    const store = new InMemoryMatchStore();
+    const first = await createNewMatch(store, "owner-1");
+    const second = await createNewMatch(store, "owner-1");
+    const ids = (await listOwnedSummaries(store, "owner-1")).map((summary) => summary.id);
+    expect(ids).toEqual([second.id, first.id]);
+  });
+
+  it("omits games owned by another visitor", async () => {
+    const store = new InMemoryMatchStore();
+    await createNewMatch(store, "owner-1");
+    await createNewMatch(store, "intruder");
+    expect((await listOwnedSummaries(store, "owner-1")).length).toBe(1);
   });
 });
 
