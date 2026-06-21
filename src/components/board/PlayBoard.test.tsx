@@ -12,8 +12,10 @@ import type {
 import type { Hex } from "@/engine/hex";
 import { hexToPixel } from "@/engine/map/layout";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
+import type { AttackEvent, MatchEvent } from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
 import { PlayBoard } from "./PlayBoard";
+import { REPLAY_TIMING } from "./usePlayBoard";
 
 const { pushMock, replaceMock } = vi.hoisted(() => ({ pushMock: vi.fn(), replaceMock: vi.fn() }));
 
@@ -329,6 +331,83 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
     expect(actions.endTurn).toHaveBeenCalledWith(MATCH_ID);
     expect(await screen.findByText("Turn 2")).not.toBeNull();
+  });
+
+  it("replays the AI's attacks and returns control once the sequence finishes", async () => {
+    const originalTiming = { ...REPLAY_TIMING };
+    REPLAY_TIMING.panMs = 0;
+    REPLAY_TIMING.holdMs = 0;
+    const aiAttack: AttackEvent = {
+      kind: "attack",
+      seq: 0,
+      turn: 1,
+      faction: "persia",
+      unitId: DEFENDER.id,
+      unitTypeId: DEFENDER.typeId,
+      attackerHex: ENEMY_HEX,
+      targetId: MOVER.id,
+      targetTypeId: MOVER.typeId,
+      targetHex: ORIGIN,
+      attackerDamage: 7,
+      defenderDamage: 30,
+      defeated: [],
+    };
+    vi.mocked(actions.endTurn).mockResolvedValue({
+      matchId: MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      turn: 2,
+      activeFaction: "macedon",
+      events: [aiAttack],
+    } satisfies BoardView);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
+    expect(screen.getByRole("button", { name: "Ending…" })).toHaveProperty("disabled", true);
+
+    expect(await screen.findByText("-30")).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.getByText("Turn 2")).not.toBeNull();
+    });
+    expect(screen.getByRole("button", { name: "End turn" })).toHaveProperty("disabled", false);
+    expect(container.querySelector("[data-pan-target]")).toBeNull();
+
+    Object.assign(REPLAY_TIMING, originalTiming);
+  });
+
+  it("returns control immediately when the AI's turn produced no attacks", async () => {
+    const originalTiming = { ...REPLAY_TIMING };
+    REPLAY_TIMING.panMs = 0;
+    REPLAY_TIMING.holdMs = 0;
+    const aiMove: MatchEvent = {
+      kind: "move",
+      seq: 0,
+      turn: 1,
+      faction: "persia",
+      unitId: DEFENDER.id,
+      unitTypeId: DEFENDER.typeId,
+      from: ENEMY_HEX,
+      to: { q: ENEMY_HEX.q, r: ENEMY_HEX.r + 1 },
+    };
+    vi.mocked(actions.endTurn).mockResolvedValue({
+      matchId: MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      turn: 2,
+      activeFaction: "macedon",
+      events: [aiMove],
+    } satisfies BoardView);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
+
+    expect(await screen.findByText("Turn 2")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "End turn" })).toHaveProperty("disabled", false);
+    expect(container.querySelector("[data-pan-target]")).toBeNull();
+
+    Object.assign(REPLAY_TIMING, originalTiming);
   });
 
   it("asks to confirm before ending the turn with a unit that still has moves", async () => {

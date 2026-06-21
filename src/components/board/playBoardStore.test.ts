@@ -98,6 +98,24 @@ describe("playBoardStore", () => {
     expect([store().turn, store().endingTurn]).toEqual([4, false]);
   });
 
+  it("enters the replay by projecting the final board while staying locked", () => {
+    store().endTurnStarted();
+    store().replayStarted({ ...BOARD, turn: 4 });
+    expect([store().turn, store().replaying, store().endingTurn]).toEqual([4, true, false]);
+  });
+
+  it("records the current replay pan target", () => {
+    store().replayPanned({ q: 7, r: 2 });
+    expect(store().panTarget).toEqual({ q: 7, r: 2 });
+  });
+
+  it("clears the replay flag and pan target when the replay finishes", () => {
+    store().replayStarted(BOARD);
+    store().replayPanned({ q: 1, r: 1 });
+    store().replayFinished();
+    expect([store().replaying, store().panTarget]).toEqual([false, null]);
+  });
+
   it("returns to the initial state on reset", () => {
     store().boardLoaded(BOARD);
     store().reset();

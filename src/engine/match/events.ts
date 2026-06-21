@@ -19,6 +19,7 @@ export interface AttackEvent {
   readonly faction: string;
   readonly unitId: string;
   readonly unitTypeId: string;
+  readonly attackerHex: Hex;
   readonly targetId: string;
   readonly targetTypeId: string;
   readonly targetHex: Hex;
@@ -92,6 +93,7 @@ export function appendAttack(
       faction: attacker.owner,
       unitId: attacker.id,
       unitTypeId: attacker.typeId,
+      attackerHex: attacker.hex,
       targetId: defender.id,
       targetTypeId: defender.typeId,
       targetHex: defender.hex,

@@ -22,12 +22,21 @@ import { Legend } from "./Legend";
 import { MoveLog } from "./MoveLog";
 import { TERRAIN_COLORS, CLASS_GLYPHS, factionStyle } from "./palette";
 import { TerrainMotif } from "./TerrainMotif";
-import { fitView, panView, zoomView, viewBoxString } from "./viewport";
+import {
+  fitView,
+  panView,
+  zoomView,
+  viewBoxString,
+  centerViewOn,
+  lerpView,
+  easeInOut,
+} from "./viewport";
 
 const SIZE = 36;
 const PAD = SIZE;
 const PAN_THRESHOLD = 4;
 const CITATION_HIDE_MS = 700;
+const REPLAY_PAN_MS = 280;
 
 const SEA_KINDS: ReadonlySet<NamedRegion["kind"]> = new Set(["sea", "strait"]);
 const WATER_TERRAINS: ReadonlySet<TerrainType> = new Set(["coast", "deepSea"]);
@@ -86,6 +95,7 @@ export interface HexBoardProps {
   readonly floaters?: readonly DamageFloater[];
   readonly fadingUnits?: readonly Unit[];
   readonly events?: readonly MatchEvent[];
+  readonly panTarget?: Hex | null;
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
   readonly onAttack?: (attackerId: string, target: Hex) => void;
@@ -103,6 +113,7 @@ export function HexBoard({
   floaters = [],
   fadingUnits = [],
   events = [],
+  panTarget = null,
   onSelect,
   onMove,
   onAttack,
@@ -304,12 +315,35 @@ export function HexBoard({
     event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
+  const panTargetKey = panTarget === null ? null : hexKey(panTarget);
+  useEffect(() => {
+    if (panTarget === null) return undefined;
+    const center = hexToPixel(panTarget, SIZE);
+    let frame = 0;
+    let from: { x: number; y: number; w: number; h: number } | null = null;
+    let startedAt: number | null = null;
+    const tick = (now: number) => {
+      startedAt ??= now;
+      const progress = Math.min((now - startedAt) / REPLAY_PAN_MS, 1);
+      setView((current) => {
+        from ??= current;
+        return lerpView(from, centerViewOn(from, center.x, center.y), easeInOut(progress));
+      });
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [panTarget]);
+
   return (
     <div className={styles.layout} ref={containerRef}>
       <svg
         ref={svgRef}
         className={styles.board}
         viewBox={viewBoxString(view)}
+        data-pan-target={panTargetKey ?? undefined}
         role="img"
         aria-label="Hex map of the Granicus crossing"
         onPointerDown={onPointerDown}

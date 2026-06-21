@@ -43,6 +43,10 @@ describe("derived selectors", () => {
     expect(inputLocked(READY)).toBe(false);
   });
 
+  it("locks input while the AI attack replay is playing", () => {
+    expect(inputLocked({ ...READY, replaying: true })).toBe(true);
+  });
+
   it("reports actions remaining when a player unit still has movement", () => {
     expect(playerHasActions(READY)).toBe(true);
   });

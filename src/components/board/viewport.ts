@@ -39,6 +39,23 @@ export function zoomView(
   };
 }
 
+export function centerViewOn(view: ViewBox, cx: number, cy: number): ViewBox {
+  return { ...view, x: cx - view.w / 2, y: cy - view.h / 2 };
+}
+
+export function lerpView(from: ViewBox, to: ViewBox, t: number): ViewBox {
+  return {
+    x: from.x + (to.x - from.x) * t,
+    y: from.y + (to.y - from.y) * t,
+    w: from.w + (to.w - from.w) * t,
+    h: from.h + (to.h - from.h) * t,
+  };
+}
+
+export function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+}
+
 export function viewBoxString(view: ViewBox): string {
   return `${view.x} ${view.y} ${view.w} ${view.h}`;
 }

@@ -24,6 +24,7 @@ const attackEvent = (seq: number, defeated: boolean): AttackEvent => ({
   faction: "persia",
   unitId: "p1",
   unitTypeId: "persian-cavalry",
+  attackerHex: { q: 5, r: 1 },
   targetId: "m1",
   targetTypeId: "pezhetairos",
   targetHex: { q: 6, r: 1 },
