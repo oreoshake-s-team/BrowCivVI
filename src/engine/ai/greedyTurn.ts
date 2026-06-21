@@ -4,7 +4,8 @@ import type { Hex } from "../hex";
 import { hexDistance } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
-import { appendAttack, appendMove } from "../match/events";
+import { blockingCityHexes, captureCityAt } from "../match/cities";
+import { appendAttack, appendCapture, appendMove } from "../match/events";
 import type { MatchState } from "../match/state";
 import { domainOf, movementConstraints } from "../movement/constraints";
 import { riverEdgeKey } from "../movement/cost";
@@ -84,6 +85,44 @@ function attack(
   };
 }
 
+function isCapturableCityHex(state: MatchState, map: GameMap, faction: string, hex: Hex): boolean {
+  const cityId = map.hexes.get(hexKey(hex))?.cityId;
+  if (cityId === undefined) return false;
+  const city = state.cities.find((candidate) => candidate.id === cityId);
+  return city !== undefined && city.owner !== faction && city.hp <= 0;
+}
+
+function chooseDestination(
+  state: MatchState,
+  unit: Unit,
+  faction: string,
+  map: GameMap,
+  moves: readonly Hex[],
+): Hex | undefined {
+  let capture: Hex | undefined;
+  for (const hex of moves) {
+    if (
+      isCapturableCityHex(state, map, faction, hex) &&
+      (capture === undefined || hexKey(hex) < hexKey(capture))
+    ) {
+      capture = hex;
+    }
+  }
+  if (capture !== undefined) return capture;
+  const target = nearestEnemy(unit, faction, state.units);
+  if (target === undefined) return undefined;
+  let best: Hex | undefined;
+  let bestDist = hexDistance(unit.hex, target.hex);
+  for (const hex of moves) {
+    const d = hexDistance(hex, target.hex);
+    if (d < bestDist || (d === bestDist && best !== undefined && hexKey(hex) < hexKey(best))) {
+      best = hex;
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
 function stepToward(
   state: MatchState,
   unit: Unit,
@@ -91,9 +130,12 @@ function stepToward(
   map: GameMap,
   riverEdges: ReadonlySet<string>,
 ): MatchState {
-  const target = nearestEnemy(unit, faction, state.units);
-  if (target === undefined) return state;
-  const constraints = movementConstraints(state.units, unit, riverEdges);
+  const constraints = movementConstraints(
+    state.units,
+    unit,
+    riverEdges,
+    blockingCityHexes(state.cities, map, faction),
+  );
   if (unit.hasMovedThisTurn && constraints.zoneOfControl.has(hexKey(unit.hex))) return state;
   const query = {
     from: unit.hex,
@@ -104,25 +146,29 @@ function stepToward(
     atFullMovement: !unit.hasMovedThisTurn,
     ...constraints,
   };
-  let best: Hex | undefined;
-  let bestDist = hexDistance(unit.hex, target.hex);
-  for (const hex of availableMoves(query)) {
-    const d = hexDistance(hex, target.hex);
-    if (d < bestDist || (d === bestDist && best !== undefined && hexKey(hex) < hexKey(best))) {
-      best = hex;
-      bestDist = d;
-    }
-  }
+  const best = chooseDestination(state, unit, faction, map, availableMoves(query));
   if (best === undefined) return state;
   const result = resolveMove({ unitId: unit.id, to: best, ...query });
   if (!result.ok) return state;
+  const capture = captureCityAt(state.cities, map, result.hex, faction);
+  const moved = appendMove(state.events, state.turn, unit, unit.hex, result.hex);
   return {
     ...state,
     units: state.units.map((current) =>
       current.id === unit.id ? { ...current, hex: result.hex, hasMovedThisTurn: true } : current,
     ),
     movement: { ...state.movement, [unit.id]: result.remaining },
-    events: appendMove(state.events, state.turn, unit, unit.hex, result.hex),
+    cities: capture.cities,
+    events:
+      capture.captured === null
+        ? moved
+        : appendCapture(
+            moved,
+            state.turn,
+            unit,
+            capture.captured.cityId,
+            capture.captured.previousOwner,
+          ),
   };
 }
 

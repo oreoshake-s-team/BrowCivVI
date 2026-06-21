@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { hexDistance } from "../hex";
-import { createGameMap, type MapHex } from "../map/types";
+import { hexDistance, type Hex } from "../hex";
+import { createGameMap, type City, type GameMap, type MapHex } from "../map/types";
+import type { CityState } from "../match/cities";
 import type { MatchState } from "../match/state";
 import { riverEdgeSet } from "../movement/cost";
 import { createRng } from "../rng";
@@ -60,6 +61,62 @@ function run(state: MatchState): MatchState {
     rng: createRng((state.seed ^ (state.version + 1) ^ state.turn) >>> 0),
   });
 }
+
+function cityMap(cityId: string, cityHex: Hex): GameMap {
+  const hexes: MapHex[] = [];
+  for (let r = 0; r < 6; r++)
+    for (let q = 0; q < 12; q++)
+      hexes.push(
+        q === cityHex.q && r === cityHex.r
+          ? { hex: { q, r }, terrain: "plains", cityId }
+          : { hex: { q, r }, terrain: "plains" },
+      );
+  const city: City = {
+    id: cityId,
+    name: cityId,
+    hex: cityHex,
+    owner: "macedon",
+    value: 100,
+    defense: 24,
+  };
+  return createGameMap(hexes, [city]);
+}
+
+function runOn(state: MatchState, map: GameMap): MatchState {
+  return runFactionTurn({
+    state,
+    faction: "persia",
+    map,
+    riverEdges: NO_RIVERS,
+    rng: createRng((state.seed ^ (state.version + 1) ^ state.turn) >>> 0),
+  });
+}
+
+function withCities(units: readonly Unit[], cities: readonly CityState[]): MatchState {
+  return { ...match(units), cities };
+}
+
+describe("runFactionTurn city capture", () => {
+  const CITY_HEX: Hex = { q: 5, r: 2 };
+  const map = cityMap("sardis", CITY_HEX);
+  const mover = unit("p1", "persian-cavalry", "persia", 4, 2);
+
+  it("captures a reachable fallen enemy city", () => {
+    const after = runOn(withCities([mover], [{ id: "sardis", owner: "macedon", hp: 0 }]), map);
+    expect(after.cities.find((c) => c.id === "sardis")?.owner).toBe("persia");
+  });
+
+  it("records a capture event for the fallen city", () => {
+    const after = runOn(withCities([mover], [{ id: "sardis", owner: "macedon", hp: 0 }]), map);
+    const captured = after.events.find((event) => event.kind === "capture");
+    expect(captured?.kind === "capture" ? captured.cityId : null).toBe("sardis");
+  });
+
+  it("never captures an enemy city that still has HP", () => {
+    const after = runOn(withCities([mover], [{ id: "sardis", owner: "macedon", hp: 120 }]), map);
+    expect(after.cities.find((c) => c.id === "sardis")?.owner).toBe("macedon");
+  });
+});
 
 describe("runFactionTurn attacks", () => {
   const WEAK = unit("m-weak", "pezhetairos", "macedon", 3, 1, 90);
