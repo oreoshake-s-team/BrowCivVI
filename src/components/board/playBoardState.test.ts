@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { DivergenceView } from "@/app/play/actions";
 import type { Unit } from "@/engine/unit/types";
 import {
   initialPlayBoardState,
@@ -45,6 +46,11 @@ describe("derived selectors", () => {
 
   it("locks input while the AI attack replay is playing", () => {
     expect(inputLocked({ ...READY, replaying: true })).toBe(true);
+  });
+
+  it("locks input while a divergence node is pending", () => {
+    const pending = { id: "granicus" } as unknown as DivergenceView;
+    expect(inputLocked({ ...READY, pendingDivergence: pending })).toBe(true);
   });
 
   it("reports actions remaining when a player unit still has movement", () => {

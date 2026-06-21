@@ -1,3 +1,4 @@
+import type { DivergenceView } from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
 import type { MatchEvent } from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
@@ -25,6 +26,7 @@ export interface PlayBoardState {
   readonly confirmingEnd: boolean;
   readonly confirmingNewGame: boolean;
   readonly toast: string | null;
+  readonly pendingDivergence: DivergenceView | null;
 }
 
 export function initialPlayBoardState(matchId: string | null): PlayBoardState {
@@ -49,6 +51,7 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
     confirmingEnd: false,
     confirmingNewGame: false,
     toast: null,
+    pendingDivergence: null,
   };
 }
 
@@ -57,7 +60,9 @@ export function isPlayerTurn(state: PlayBoardState): boolean {
 }
 
 export function inputLocked(state: PlayBoardState): boolean {
-  return !isPlayerTurn(state) || state.endingTurn || state.replaying;
+  return (
+    !isPlayerTurn(state) || state.endingTurn || state.replaying || state.pendingDivergence !== null
+  );
 }
 
 export function playerHasActions(state: PlayBoardState): boolean {

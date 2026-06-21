@@ -32,6 +32,7 @@ vi.mock("@/app/play/actions", () => ({
   move: vi.fn(),
   attack: vi.fn(),
   endTurn: vi.fn(),
+  resolveDivergence: vi.fn(),
 }));
 
 const SIZE = 36;
@@ -427,5 +428,78 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
     expect(await screen.findByText(/units still to act/)).not.toBeNull();
     expect(actions.endTurn).not.toHaveBeenCalled();
+  });
+});
+
+describe("PlayBoard divergence node", () => {
+  const NODE = {
+    id: "granicus",
+    title: "The Granicus, 334 BC",
+    prompt: "The Persian horse line the far bank.",
+    advisor: "Parmenion",
+    options: [
+      {
+        id: "reckless",
+        label: "Attack at once",
+        quote: "I would not hazard the crossing.",
+        outcome: "Cleitus the Black saves Alexander.",
+      },
+      {
+        id: "cautious",
+        label: "Cross at dawn",
+        quote: "Cross at first light, in order.",
+        outcome: "The army crosses in order.",
+      },
+    ],
+    citation: {
+      claim: "Arrian I.13-16.",
+      source: { title: "Arrian, Anabasis", url: "https://example.test", type: "primary" as const },
+      confidence: "high" as const,
+    },
+    media: [
+      {
+        id: "g1",
+        title: "Granicus (Kings and Generals)",
+        url: "https://example.test/v",
+        kind: "video" as const,
+      },
+    ],
+  };
+  const BOARD = {
+    matchId: MATCH_ID,
+    units: SAMPLE_UNITS,
+    movement: NO_MOVEMENT,
+    playerFaction: "macedon",
+    turn: 1,
+    activeFaction: "macedon",
+    events: [],
+  };
+
+  beforeEach(() => {
+    vi.mocked(actions.loadBoard).mockResolvedValue({
+      status: "ok",
+      board: { ...BOARD, pendingDivergence: NODE },
+    } satisfies LoadBoardResult);
+    vi.mocked(actions.resolveDivergence).mockResolvedValue({ ok: true, board: BOARD });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it("presents the dilemma as a modal dialog", async () => {
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    expect(await screen.findByRole("dialog", { name: /The Granicus/ })).not.toBeNull();
+  });
+
+  it("reveals the outcome on choosing, then resolves on continue", async () => {
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Attack at once/ }));
+    expect(await screen.findByText(/Cleitus the Black saves Alexander/)).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => {
+      expect(actions.resolveDivergence).toHaveBeenCalledWith(MATCH_ID, "granicus", "reckless");
+    });
   });
 });

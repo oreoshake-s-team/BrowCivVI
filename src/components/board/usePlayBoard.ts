@@ -7,6 +7,7 @@ import {
   attack,
   newGame,
   endTurn,
+  resolveDivergence,
   type BoardView,
 } from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
@@ -41,6 +42,7 @@ export interface PlayBoardController {
   readonly cancelNewGame: () => void;
   readonly retry: () => void;
   readonly dismissToast: () => void;
+  readonly resolveChoice: (optionId: string) => void;
 }
 
 export function usePlayBoard(initialMatchId?: string): PlayBoardController {
@@ -215,6 +217,13 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     }
   };
 
+  const resolveChoice = async (optionId: string) => {
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null || store.pendingDivergence === null) return;
+    const outcome = await resolveDivergence(store.matchId, store.pendingDivergence.id, optionId);
+    if (outcome.ok) usePlayBoardStore.getState().divergenceResolved(outcome.board);
+  };
+
   return {
     state,
     canEndTurn: !inputLocked(state),
@@ -248,6 +257,9 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     },
     dismissToast: () => {
       usePlayBoardStore.getState().setToast(null);
+    },
+    resolveChoice: (optionId) => {
+      void resolveChoice(optionId);
     },
   };
 }
