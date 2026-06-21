@@ -1,5 +1,6 @@
 import type { DivergenceView } from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
+import type { CityState } from "@/engine/match/cities";
 import type { MatchEvent } from "@/engine/match/events";
 import type { Unit } from "@/engine/unit/types";
 import type { BoardLoadFailure } from "./BoardLoadError";
@@ -8,6 +9,7 @@ import type { DamageFloater } from "./HexBoard";
 export interface PlayBoardState {
   readonly matchId: string | null;
   readonly units: readonly Unit[];
+  readonly cities: readonly CityState[];
   readonly movement: Readonly<Record<string, number>>;
   readonly playerFaction: string;
   readonly turn: number;
@@ -33,6 +35,7 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
   return {
     matchId,
     units: [],
+    cities: [],
     movement: {},
     playerFaction: "",
     turn: 1,

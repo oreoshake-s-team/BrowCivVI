@@ -2,9 +2,16 @@
 
 import { useEffect, useRef } from "react";
 import type { Hex } from "@/engine/hex";
-import type { AttackEvent, MatchEvent, MoveEvent } from "@/engine/match/events";
+import type {
+  AttackEvent,
+  CaptureEvent,
+  CityAttackEvent,
+  MatchEvent,
+  MoveEvent,
+} from "@/engine/match/events";
 import { unitTypeById } from "@/engine/unit/catalog";
 import styles from "./MoveLog.module.css";
+import { factionName } from "./palette";
 
 function unitName(typeId: string): string {
   return unitTypeById(typeId)?.name ?? typeId;
@@ -45,12 +52,61 @@ function AttackEntry({ event }: { readonly event: AttackEvent }) {
   );
 }
 
-export function MoveLog({ events }: { readonly events: readonly MatchEvent[] }) {
+function CityAttackEntry({
+  event,
+  cityName,
+}: {
+  readonly event: CityAttackEvent;
+  readonly cityName: string;
+}) {
+  return (
+    <>
+      <span className={styles.icon} aria-hidden="true">
+        ⚔
+      </span>
+      <span className={styles.actor} data-faction={event.faction}>
+        {unitName(event.unitTypeId)}
+      </span>{" "}
+      besieged {cityName} — dealt {event.cityDamage}, took {event.retaliation}
+      {event.cityFell ? <span className={styles.defeated}> (walls breached)</span> : null}
+    </>
+  );
+}
+
+function CaptureEntry({
+  event,
+  cityName,
+}: {
+  readonly event: CaptureEvent;
+  readonly cityName: string;
+}) {
+  return (
+    <>
+      <span className={styles.icon} aria-hidden="true">
+        ★
+      </span>
+      <span className={styles.actor} data-faction={event.faction}>
+        {factionName(event.faction)}
+      </span>{" "}
+      captured {cityName} from {factionName(event.previousOwner)}
+    </>
+  );
+}
+
+export function MoveLog({
+  events,
+  cityNames,
+}: {
+  readonly events: readonly MatchEvent[];
+  readonly cityNames?: ReadonlyMap<string, string>;
+}) {
   const listRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
     const el = listRef.current;
     if (el !== null) el.scrollTop = el.scrollHeight;
   }, [events.length]);
+
+  const cityName = (id: string): string => cityNames?.get(id) ?? id;
 
   return (
     <section className={styles.panel} aria-label="Move and attack log">
@@ -67,19 +123,9 @@ export function MoveLog({ events }: { readonly events: readonly MatchEvent[] }) 
               ) : event.kind === "attack" ? (
                 <AttackEntry event={event} />
               ) : event.kind === "cityAttack" ? (
-                <>
-                  <span className={styles.icon} aria-hidden="true">
-                    ⚔
-                  </span>{" "}
-                  {unitName(event.unitTypeId)} struck a city — dealt {event.cityDamage}
-                </>
+                <CityAttackEntry event={event} cityName={cityName(event.cityId)} />
               ) : (
-                <>
-                  <span className={styles.icon} aria-hidden="true">
-                    ★
-                  </span>{" "}
-                  {unitName(event.unitTypeId)} captured a city
-                </>
+                <CaptureEntry event={event} cityName={cityName(event.cityId)} />
               )}
             </li>
           ))}

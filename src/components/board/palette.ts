@@ -38,6 +38,16 @@ export const CLASS_GLYPHS: Readonly<Record<UnitClass, string>> = {
   support: "H",
 };
 
+export const FACTION_NAMES: Readonly<Record<string, string>> = {
+  macedon: "Macedon",
+  persia: "Persia",
+};
+
+export function factionName(owner: string | null): string {
+  if (owner === null) return "an independent city";
+  return FACTION_NAMES[owner] ?? owner;
+}
+
 export interface FactionStyle {
   readonly fill: string;
   readonly stroke: string;

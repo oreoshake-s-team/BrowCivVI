@@ -9,6 +9,7 @@ import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layou
 import { blocksLand, type TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
+import { cityMaxHp, type CityState } from "@/engine/match/cities";
 import type { MatchEvent } from "@/engine/match/events";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
@@ -86,6 +87,7 @@ export interface DamageFloater {
 export interface HexBoardProps {
   readonly map: GameMap;
   readonly units: readonly Unit[];
+  readonly cities?: readonly CityState[];
   readonly regions?: readonly NamedRegion[];
   readonly movement?: Readonly<Record<string, number>>;
   readonly playerFaction?: string;
@@ -99,11 +101,13 @@ export interface HexBoardProps {
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
   readonly onAttack?: (attackerId: string, target: Hex) => void;
+  readonly onAttackCity?: (attackerId: string, cityId: string) => void;
 }
 
 export function HexBoard({
   map,
   units,
+  cities = [],
   regions = [],
   movement = {},
   playerFaction = "",
@@ -117,6 +121,7 @@ export function HexBoard({
   onSelect,
   onMove,
   onAttack,
+  onAttackCity,
 }: HexBoardProps) {
   const bounds = mapPixelBounds(map, SIZE);
   const fitW = bounds.maxX - bounds.minX + PAD * 2;
@@ -154,6 +159,8 @@ export function HexBoard({
   const granicus = river !== undefined && hasPlayableMedia(river.media) ? river : undefined;
   const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
+  const cityStateById = new Map(cities.map((city) => [city.id, city]));
+  const cityNames = new Map(Array.from(map.cities.values()).map((city) => [city.id, city.name]));
   const occupiedKeys = new Set(units.map((unit) => hexKey(unit.hex)));
   const labeledHexKeys = new Set(
     regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
@@ -356,6 +363,16 @@ export function HexBoard({
           const center = hexToPixel(mapHex.hex, SIZE);
           const city = mapHex.cityId ? map.cities.get(mapHex.cityId) : undefined;
           const cityCitation = city?.citation;
+          const cityState = city ? cityStateById.get(city.id) : undefined;
+          const cityOwner = cityState?.owner ?? city?.owner ?? null;
+          const cityMax = city ? cityMaxHp(city.defense) : 0;
+          const cityHp = cityState?.hp ?? cityMax;
+          const cityHpFrac = cityMax > 0 ? Math.max(0, Math.min(1, cityHp / cityMax)) : 0;
+          const isCityTarget = city !== undefined && selectedId !== null && attackableKeys.has(key);
+          const attackCity = () => {
+            if (city !== undefined && selectedId !== null && onAttackCity)
+              onAttackCity(selectedId, city.id);
+          };
           const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
           const isBank = bankRegion !== undefined;
           const landBlocked = blocksLand(mapHex.terrain);
@@ -414,6 +431,24 @@ export function HexBoard({
                   if (!moved.current) tryMove(mapHex.hex);
                 }}
               />
+              {city ? (
+                <polygon
+                  className={styles.cityTint}
+                  data-city-tint={city.id}
+                  points={hexPolygonPoints(center, SIZE)}
+                  style={{ fill: factionStyle(cityOwner).fill }}
+                  pointerEvents="none"
+                />
+              ) : null}
+              {city ? (
+                <polygon
+                  className={styles.cityBorder}
+                  data-city-border={city.id}
+                  points={hexPolygonPoints(center, SIZE)}
+                  style={{ stroke: factionStyle(cityOwner).stroke }}
+                  pointerEvents="none"
+                />
+              ) : null}
               {isBank ? (
                 <polygon
                   className={["bank", styles.bank].filter(Boolean).join(" ")}
@@ -449,6 +484,62 @@ export function HexBoard({
                 <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
                   {city.name}
                 </text>
+              ) : null}
+              {city ? (
+                <g
+                  className={styles.cityHp}
+                  data-city-hp={city.id}
+                  role="img"
+                  aria-label={`${city.name}: ${cityHp} of ${cityMax} HP`}
+                  pointerEvents="none"
+                >
+                  <rect
+                    className={styles.cityHpTrack}
+                    x={center.x - SIZE * 0.5}
+                    y={center.y - SIZE * 0.98}
+                    width={SIZE}
+                    height={SIZE * 0.16}
+                    rx={SIZE * 0.08}
+                  />
+                  <rect
+                    className={styles.cityHpFill}
+                    data-low={cityHpFrac <= 0.34 || undefined}
+                    x={center.x - SIZE * 0.5}
+                    y={center.y - SIZE * 0.98}
+                    width={SIZE * cityHpFrac}
+                    height={SIZE * 0.16}
+                    rx={SIZE * 0.08}
+                  />
+                </g>
+              ) : null}
+              {isCityTarget ? (
+                <g
+                  className={styles.cityAttack}
+                  data-city-attack={city.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${city.name} — attackable`}
+                  transform={`translate(${center.x}, ${center.y})`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (!moved.current) attackCity();
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    if (!moved.current) attackCity();
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      attackCity();
+                    }
+                  }}
+                >
+                  <g className={styles.attackMark}>
+                    <line x1={-SIZE * 0.2} y1={-SIZE * 0.2} x2={SIZE * 0.2} y2={SIZE * 0.2} />
+                    <line x1={-SIZE * 0.2} y1={SIZE * 0.2} x2={SIZE * 0.2} y2={-SIZE * 0.2} />
+                  </g>
+                </g>
               ) : null}
             </g>
           );
@@ -674,7 +765,7 @@ export function HexBoard({
         <Legend />
         <InfoPanel unit={selectedUnit} moves={selectedMoves} />
         <DebugPanel onToggleQR={setShowQandR} showQandR={showQandR} />
-        <MoveLog events={events} />
+        <MoveLog events={events} cityNames={cityNames} />
       </aside>
 
       {cited !== null ? (

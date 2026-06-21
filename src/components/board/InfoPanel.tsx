@@ -1,11 +1,7 @@
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
 import styles from "./HexBoard.module.css";
-
-const FACTION_NAMES: Readonly<Record<string, string>> = {
-  macedon: "Macedon",
-  persia: "Persia",
-};
+import { FACTION_NAMES } from "./palette";
 
 export interface MovesInfo {
   readonly remaining: number;

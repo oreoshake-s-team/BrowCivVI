@@ -76,6 +76,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
       <HexBoard
         map={map}
         units={state.units}
+        cities={state.cities}
         regions={regions}
         movement={state.movement}
         playerFaction={state.playerFaction}
@@ -89,6 +90,7 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         onSelect={board.select}
         onMove={board.moveUnit}
         onAttack={board.attackUnit}
+        onAttackCity={board.attackCity}
       />
       {state.toast !== null ? <Toast message={state.toast} onDismiss={board.dismissToast} /> : null}
       {state.pendingDivergence !== null ? (

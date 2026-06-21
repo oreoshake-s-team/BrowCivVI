@@ -1,10 +1,42 @@
 // @vitest-environment jsdom
 import { render, screen, cleanup } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
-import type { AttackEvent, MatchEvent, MoveEvent } from "@/engine/match/events";
+import type {
+  AttackEvent,
+  CaptureEvent,
+  CityAttackEvent,
+  MatchEvent,
+  MoveEvent,
+} from "@/engine/match/events";
 import { MoveLog } from "./MoveLog";
 
 afterEach(cleanup);
+
+const CITY_NAMES: ReadonlyMap<string, string> = new Map([["sardis", "Sardis"]]);
+
+const cityAttackEvent = (seq: number, cityFell: boolean): CityAttackEvent => ({
+  kind: "cityAttack",
+  seq,
+  turn: 4,
+  faction: "macedon",
+  unitId: "m1",
+  unitTypeId: "pezhetairos",
+  cityId: "sardis",
+  cityDamage: 30,
+  retaliation: 8,
+  cityFell,
+});
+
+const captureEvent = (seq: number): CaptureEvent => ({
+  kind: "capture",
+  seq,
+  turn: 5,
+  faction: "macedon",
+  unitId: "m1",
+  unitTypeId: "pezhetairos",
+  cityId: "sardis",
+  previousOwner: "persia",
+});
 
 const moveEvent = (seq: number, faction: string): MoveEvent => ({
   kind: "move",
@@ -69,5 +101,30 @@ describe("MoveLog", () => {
   it("labels the panel as a log region for assistive tech", () => {
     render(<MoveLog events={[]} />);
     expect(screen.getByRole("region", { name: "Move and attack log" })).not.toBeNull();
+  });
+
+  it("renders a city-attack entry naming the city and the damage", () => {
+    render(<MoveLog events={[cityAttackEvent(0, false)]} cityNames={CITY_NAMES} />);
+    expect(screen.getByText(/besieged Sardis — dealt 30, took 8/)).not.toBeNull();
+  });
+
+  it("marks a breached city in the siege entry", () => {
+    render(<MoveLog events={[cityAttackEvent(0, true)]} cityNames={CITY_NAMES} />);
+    expect(screen.getByText("(walls breached)")).not.toBeNull();
+  });
+
+  it("renders a capture entry naming the capturer, city, and previous owner", () => {
+    render(<MoveLog events={[captureEvent(0)]} cityNames={CITY_NAMES} />);
+    expect(screen.getByText(/captured Sardis from Persia/)).not.toBeNull();
+  });
+
+  it("color-codes the capturer by faction", () => {
+    render(<MoveLog events={[captureEvent(0)]} cityNames={CITY_NAMES} />);
+    expect(screen.getByText("Macedon").getAttribute("data-faction")).toBe("macedon");
+  });
+
+  it("falls back to the city id when no name is supplied", () => {
+    render(<MoveLog events={[captureEvent(0)]} />);
+    expect(screen.getByText(/captured sardis from Persia/)).not.toBeNull();
   });
 });

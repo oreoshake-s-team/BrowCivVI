@@ -21,6 +21,7 @@ function unit(id: string, owner: string): Unit {
 const BOARD: BoardView = {
   matchId: "m1",
   units: [unit("mac", "macedon"), unit("per", "persia")],
+  cities: [{ id: "dascylium", owner: "persia", hp: 160 }],
   movement: { mac: 2, per: 4 },
   playerFaction: "macedon",
   turn: 3,

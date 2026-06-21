@@ -89,6 +89,37 @@
   stroke-width: 3px;
 }
 
+.cityTint {
+  fill-opacity: 0.4;
+  pointer-events: none;
+}
+
+.cityBorder {
+  fill: none;
+  stroke-width: 4;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.cityHpTrack {
+  fill: var(--color-city-hp-track);
+  stroke: var(--color-hex-stroke);
+  stroke-width: 1;
+}
+
+.cityHpFill {
+  fill: var(--color-city-hp-fill);
+}
+
+.cityHpFill[data-low] {
+  fill: var(--color-city-hp-low);
+}
+
+.cityAttack {
+  cursor: pointer;
+  outline: none;
+}
+
 .river {
   stroke: var(--color-water-river);
   stroke-width: 5;
@@ -163,6 +194,11 @@
   stroke-width: 4;
   stroke-linecap: round;
   pointer-events: none;
+}
+
+.cityAttack:focus-visible .attackMark line {
+  stroke: var(--color-outline-emphasis);
+  stroke-width: 5;
 }
 
 .fading {
