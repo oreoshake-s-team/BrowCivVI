@@ -118,6 +118,36 @@ describe("runFactionTurn city capture", () => {
   });
 });
 
+describe("runFactionTurn city siege", () => {
+  const CITY_HEX: Hex = { q: 5, r: 2 };
+  const map = cityMap("sardis", CITY_HEX);
+
+  it("sieges an adjacent enemy city, reducing its HP", () => {
+    const besieger = unit("p1", "persian-cavalry", "persia", 4, 2);
+    const after = runOn(withCities([besieger], [{ id: "sardis", owner: "macedon", hp: 120 }]), map);
+    expect(after.cities.find((c) => c.id === "sardis")!.hp).toBeLessThan(120);
+  });
+
+  it("records a city-attack event for the besieged city", () => {
+    const besieger = unit("p1", "persian-cavalry", "persia", 4, 2);
+    const after = runOn(withCities([besieger], [{ id: "sardis", owner: "macedon", hp: 120 }]), map);
+    expect(after.events.some((event) => event.kind === "cityAttack")).toBe(true);
+  });
+
+  it("advances toward an enemy city when none is adjacent", () => {
+    const far = unit("p1", "persian-cavalry", "persia", 1, 2);
+    const after = runOn(withCities([far], [{ id: "sardis", owner: "macedon", hp: 120 }]), map);
+    const moved = after.units.find((u) => u.id === "p1")!;
+    expect(hexDistance(moved.hex, CITY_HEX)).toBeLessThan(hexDistance(far.hex, CITY_HEX));
+  });
+
+  it("never sieges a friendly city", () => {
+    const besieger = unit("p1", "persian-cavalry", "persia", 4, 2);
+    const after = runOn(withCities([besieger], [{ id: "sardis", owner: "persia", hp: 120 }]), map);
+    expect(after.cities.find((c) => c.id === "sardis")!.hp).toBe(120);
+  });
+});
+
 describe("runFactionTurn attacks", () => {
   const WEAK = unit("m-weak", "pezhetairos", "macedon", 3, 1, 90);
   const STRONG = unit("m-strong", "pezhetairos", "macedon", 3, 3, 100);

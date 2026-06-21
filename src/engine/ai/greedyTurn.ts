@@ -1,11 +1,12 @@
 import { applyAttack } from "../combat/applyAttack";
-import { reachableAttacks } from "../combat/targets";
+import { applyCityAttack } from "../combat/applyCityAttack";
+import { reachableAttacks, reachableCityAttacks } from "../combat/targets";
 import type { Hex } from "../hex";
 import { hexDistance } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
 import { blockingCityHexes, captureCityAt } from "../match/cities";
-import { appendAttack, appendCapture, appendMove } from "../match/events";
+import { appendAttack, appendCapture, appendCityAttack, appendMove } from "../match/events";
 import type { MatchState } from "../match/state";
 import { domainOf, movementConstraints } from "../movement/constraints";
 import { riverEdgeKey } from "../movement/cost";
@@ -21,17 +22,28 @@ export interface FactionTurnInput {
   readonly rng: Rng;
 }
 
-function nearestEnemy(unit: Unit, faction: string, units: readonly Unit[]): Unit | undefined {
-  let best: Unit | undefined;
-  for (const enemy of units) {
-    if (enemy.owner === faction) continue;
+function enemyTargetHexes(state: MatchState, faction: string, map: GameMap): readonly Hex[] {
+  const hexes: Hex[] = state.units.filter((unit) => unit.owner !== faction).map((unit) => unit.hex);
+  for (const city of state.cities) {
+    if (city.owner === faction) continue;
+    const hex = map.cities.get(city.id)?.hex;
+    if (hex !== undefined) hexes.push(hex);
+  }
+  return hexes;
+}
+
+function nearestHex(from: Hex, targets: readonly Hex[]): Hex | undefined {
+  let best: Hex | undefined;
+  for (const hex of targets) {
     if (best === undefined) {
-      best = enemy;
+      best = hex;
       continue;
     }
-    const d = hexDistance(unit.hex, enemy.hex);
-    const bd = hexDistance(unit.hex, best.hex);
-    if (d < bd || (d === bd && hexKey(enemy.hex) < hexKey(best.hex))) best = enemy;
+    if (
+      hexDistance(from, hex) < hexDistance(from, best) ||
+      (hexDistance(from, hex) === hexDistance(from, best) && hexKey(hex) < hexKey(best))
+    )
+      best = hex;
   }
   return best;
 }
@@ -85,6 +97,59 @@ function attack(
   };
 }
 
+function weakestCity(
+  state: MatchState,
+  attacker: Unit,
+  map: GameMap,
+  riverEdges: ReadonlySet<string>,
+): string | undefined {
+  let best: string | undefined;
+  let bestHp = Infinity;
+  for (const hex of reachableCityAttacks(state.movement, attacker, map, riverEdges, state.cities)) {
+    const cityId = map.hexes.get(hexKey(hex))?.cityId;
+    if (cityId === undefined) continue;
+    const city = state.cities.find((candidate) => candidate.id === cityId);
+    if (city === undefined) continue;
+    if (city.hp < bestHp || (city.hp === bestHp && best !== undefined && cityId < best)) {
+      best = cityId;
+      bestHp = city.hp;
+    }
+  }
+  return best;
+}
+
+function siege(
+  state: MatchState,
+  attacker: Unit,
+  cityId: string,
+  map: GameMap,
+  riverEdges: ReadonlySet<string>,
+  rng: Rng,
+): MatchState {
+  const cityData = map.cities.get(cityId);
+  if (cityData === undefined) return state;
+  const terrain = terrainAt(map, cityData.hex);
+  const application = applyCityAttack({
+    units: state.units,
+    cities: state.cities,
+    movement: state.movement,
+    attackerId: attacker.id,
+    cityId,
+    cityDefense: cityData.defense,
+    cityTerrainDefense: terrain?.defenseModifier ?? 0,
+    cityTerrainMoveCost: terrain?.moveCost ?? 1,
+    riverAttack: riverEdges.has(riverEdgeKey(attacker.hex, cityData.hex)),
+    rng,
+  });
+  return {
+    ...state,
+    units: application.units,
+    cities: application.cities,
+    movement: application.movement,
+    events: appendCityAttack(state.events, state.turn, attacker, cityId, application),
+  };
+}
+
 function isCapturableCityHex(state: MatchState, map: GameMap, faction: string, hex: Hex): boolean {
   const cityId = map.hexes.get(hexKey(hex))?.cityId;
   if (cityId === undefined) return false;
@@ -109,12 +174,12 @@ function chooseDestination(
     }
   }
   if (capture !== undefined) return capture;
-  const target = nearestEnemy(unit, faction, state.units);
+  const target = nearestHex(unit.hex, enemyTargetHexes(state, faction, map));
   if (target === undefined) return undefined;
   let best: Hex | undefined;
-  let bestDist = hexDistance(unit.hex, target.hex);
+  let bestDist = hexDistance(unit.hex, target);
   for (const hex of moves) {
-    const d = hexDistance(hex, target.hex);
+    const d = hexDistance(hex, target);
     if (d < bestDist || (d === bestDist && best !== undefined && hexKey(hex) < hexKey(best))) {
       best = hex;
       bestDist = d;
@@ -172,6 +237,20 @@ function stepToward(
   };
 }
 
+function unitAct(
+  state: MatchState,
+  unit: Unit,
+  map: GameMap,
+  riverEdges: ReadonlySet<string>,
+  rng: Rng,
+): MatchState {
+  const defender = weakestTarget(state, unit, map, riverEdges);
+  if (defender !== undefined) return attack(state, unit, defender, map, riverEdges, rng);
+  const cityId = weakestCity(state, unit, map, riverEdges);
+  if (cityId !== undefined) return siege(state, unit, cityId, map, riverEdges, rng);
+  return state;
+}
+
 export function runFactionTurn(input: FactionTurnInput): MatchState {
   const { faction, map, riverEdges, rng } = input;
   const unitIds = input.state.units.filter((unit) => unit.owner === faction).map((unit) => unit.id);
@@ -179,14 +258,15 @@ export function runFactionTurn(input: FactionTurnInput): MatchState {
   for (const id of unitIds) {
     let unit = state.units.find((candidate) => candidate.id === id);
     if (unit === undefined) continue;
-    let defender = weakestTarget(state, unit, map, riverEdges);
-    if (defender === undefined) {
-      state = stepToward(state, unit, faction, map, riverEdges);
-      unit = state.units.find((candidate) => candidate.id === id);
-      if (unit === undefined) continue;
-      defender = weakestTarget(state, unit, map, riverEdges);
+    const acted = unitAct(state, unit, map, riverEdges, rng);
+    if (acted !== state) {
+      state = acted;
+      continue;
     }
-    if (defender !== undefined) state = attack(state, unit, defender, map, riverEdges, rng);
+    state = stepToward(state, unit, faction, map, riverEdges);
+    unit = state.units.find((candidate) => candidate.id === id);
+    if (unit === undefined) continue;
+    state = unitAct(state, unit, map, riverEdges, rng);
   }
   return state;
 }
