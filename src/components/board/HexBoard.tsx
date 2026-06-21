@@ -9,7 +9,12 @@ import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layou
 import { blocksLand, type TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
-import { cityMaxHp, type CityState } from "@/engine/match/cities";
+import {
+  cityMaxHp,
+  LOYALTY_DEFECT_THRESHOLD,
+  LOYALTY_MAX,
+  type CityState,
+} from "@/engine/match/cities";
 import type { MatchEvent } from "@/engine/match/events";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { UnitClass } from "@/engine/unit/classes";
@@ -396,6 +401,20 @@ export function HexBoard({
             const cityMax = city ? cityMaxHp(city.defense) : 0;
             const cityHp = cityState?.hp ?? cityMax;
             const cityHpFrac = cityMax > 0 ? Math.max(0, Math.min(1, cityHp / cityMax)) : 0;
+            const loyalty = cityState?.loyalty ?? 0;
+            const loyaltyLeaning = loyalty > 0 ? "macedon" : loyalty < 0 ? "persia" : null;
+            const citySettled =
+              cityOwner !== null &&
+              loyaltyLeaning === cityOwner &&
+              Math.abs(loyalty) >= LOYALTY_DEFECT_THRESHOLD;
+            const cityContested = city !== undefined && !citySettled;
+            const cityWavering =
+              city !== undefined &&
+              loyaltyLeaning !== null &&
+              loyaltyLeaning !== cityOwner &&
+              Math.abs(loyalty) >= LOYALTY_DEFECT_THRESHOLD;
+            const loyaltyFrac = Math.max(-1, Math.min(1, loyalty / LOYALTY_MAX));
+            const loyaltyFillWidth = Math.abs(loyaltyFrac) * SIZE * 0.5;
             const isCityTarget =
               city !== undefined && selectedId !== null && attackableKeys.has(key);
             const attackCity = () => {
@@ -478,6 +497,14 @@ export function HexBoard({
                     pointerEvents="none"
                   />
                 ) : null}
+                {cityWavering ? (
+                  <polygon
+                    className={styles.cityWavering}
+                    data-wavering={city.id}
+                    points={hexPolygonPoints(center, SIZE)}
+                    pointerEvents="none"
+                  />
+                ) : null}
                 {isBank ? (
                   <polygon
                     className={["bank", styles.bank].filter(Boolean).join(" ")}
@@ -549,6 +576,42 @@ export function HexBoard({
                       width={SIZE * cityHpFrac}
                       height={SIZE * 0.16}
                       rx={SIZE * 0.08}
+                    />
+                  </g>
+                ) : null}
+                {cityContested ? (
+                  <g
+                    className={styles.cityLoyalty}
+                    data-city-loyalty={city.id}
+                    role="img"
+                    aria-label={`${city.name} loyalty: ${loyalty > 0 ? `+${loyalty}` : loyalty}`}
+                    pointerEvents="none"
+                  >
+                    <rect
+                      className={styles.cityLoyaltyTrack}
+                      x={center.x - SIZE * 0.5}
+                      y={center.y - SIZE * 0.78}
+                      width={SIZE}
+                      height={SIZE * 0.12}
+                      rx={SIZE * 0.06}
+                    />
+                    {loyalty !== 0 ? (
+                      <rect
+                        className={styles.cityLoyaltyFill}
+                        data-leaning={loyaltyFrac >= 0 ? "macedon" : "persia"}
+                        x={loyaltyFrac >= 0 ? center.x : center.x - loyaltyFillWidth}
+                        y={center.y - SIZE * 0.78}
+                        width={loyaltyFillWidth}
+                        height={SIZE * 0.12}
+                        style={{ fill: factionStyle(loyaltyFrac >= 0 ? "macedon" : "persia").fill }}
+                      />
+                    ) : null}
+                    <rect
+                      className={styles.cityLoyaltyCenter}
+                      x={center.x - 0.5}
+                      y={center.y - SIZE * 0.82}
+                      width={1}
+                      height={SIZE * 0.2}
                     />
                   </g>
                 ) : null}
