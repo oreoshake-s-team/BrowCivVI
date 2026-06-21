@@ -24,8 +24,17 @@ const STATE = createMatch({
 });
 
 describe("decodeMatchState", () => {
-  it("returns the state at the current schema version", () => {
+  it("returns the decoded match", () => {
     expect(decodeMatchState(STATE).id).toBe("m1");
+  });
+
+  it("preserves the stored schema version so an outdated save is detectable", () => {
+    const legacy = { ...STATE, schemaVersion: 2 };
+    expect(decodeMatchState(legacy).schemaVersion).toBe(2);
+  });
+
+  it("keeps a current-version save at the current schema version", () => {
+    expect(decodeMatchState(STATE).schemaVersion).toBe(STATE.schemaVersion);
   });
 
   it("throws for a schema version newer than the engine understands", () => {

@@ -24,6 +24,7 @@ export interface PlayBoardState {
   readonly replaying: boolean;
   readonly panTarget: Hex | null;
   readonly ready: boolean;
+  readonly incompatible: boolean;
   readonly loadError: BoardLoadFailure | null;
   readonly endingTurn: boolean;
   readonly confirmingEnd: boolean;
@@ -51,6 +52,7 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
     replaying: false,
     panTarget: null,
     ready: false,
+    incompatible: false,
     loadError: null,
     endingTurn: false,
     confirmingEnd: false,
