@@ -1,11 +1,19 @@
 .panel {
   display: flex;
   flex-direction: column;
-  max-height: 24rem;
+  flex: 1 1 0;
+  min-height: 0;
   padding: var(--space-md) var(--space-lg);
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border-muted);
   border-radius: var(--radius-md);
+}
+
+@media (width <= 720px) {
+  .panel {
+    flex: 0 1 auto;
+    max-height: 24rem;
+  }
 }
 
 .heading {
