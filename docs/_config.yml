@@ -1,0 +1,5 @@
+title: BrowCivVI
+description: Design documentation and the per-PR screenshot gallery for BrowCivVI.
+theme: jekyll-theme-cayman
+exclude:
+  - assets/**/meta.json
