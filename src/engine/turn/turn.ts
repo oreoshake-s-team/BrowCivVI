@@ -1,10 +1,15 @@
 import type { MatchState } from "../match/state";
+import { applyOutOfSupplyAttrition } from "../supply/attrition";
 
 export interface TurnContext {
   readonly movementOf: (typeId: string) => number;
 }
 
 export type TurnPhase = (state: MatchState, faction: string, ctx: TurnContext) => MatchState;
+
+function outOfSupplyAttrition(state: MatchState, faction: string): MatchState {
+  return applyOutOfSupplyAttrition(state, faction);
+}
 
 function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): MatchState {
   const movement: Record<string, number> = { ...state.movement };
@@ -17,7 +22,7 @@ function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): 
   return { ...state, units, movement };
 }
 
-export const TURN_START_PHASES: readonly TurnPhase[] = [restoreMovement];
+export const TURN_START_PHASES: readonly TurnPhase[] = [restoreMovement, outOfSupplyAttrition];
 export const TURN_END_PHASES: readonly TurnPhase[] = [];
 
 function runPhases(
