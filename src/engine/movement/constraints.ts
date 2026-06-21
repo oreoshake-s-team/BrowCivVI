@@ -1,9 +1,11 @@
 import { hexKey } from "../map/types";
 import { unitTypeById } from "../unit/catalog";
 import type { MovementDomain, StackingLayer } from "../unit/classes";
-import { domainForClass, stackingLayerForClass } from "../unit/classes";
+import { domainForClass, ignoresZoneOfControl, stackingLayerForClass } from "../unit/classes";
 import type { Unit } from "../unit/types";
 import { enemyZoneOfControl } from "./zoneOfControl";
+
+const NO_ZONE_OF_CONTROL: ReadonlySet<string> = new Set<string>();
 
 export interface MovementConstraints {
   readonly blocked: ReadonlySet<string>;
@@ -34,11 +36,15 @@ export function movementConstraints(
     if (other.owner !== unit.owner) blocked.add(hexKey(other.hex));
     else if (layerOf(other.typeId) === moverLayer) blockedDestinations.add(hexKey(other.hex));
   }
-  const zoneOfControl = enemyZoneOfControl(
-    units,
-    unit.owner,
-    (typeId) => layerOf(typeId) === "military",
-    riverEdges,
-  );
+  const moverClass = unitTypeById(unit.typeId)?.class;
+  const zoneOfControl =
+    moverClass !== undefined && ignoresZoneOfControl(moverClass)
+      ? NO_ZONE_OF_CONTROL
+      : enemyZoneOfControl(
+          units,
+          unit.owner,
+          (typeId) => layerOf(typeId) === "military",
+          riverEdges,
+        );
   return { blocked, blockedDestinations, zoneOfControl };
 }

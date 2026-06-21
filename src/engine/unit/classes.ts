@@ -29,3 +29,12 @@ export type StackingLayer = "military" | "civilian";
 export function stackingLayerForClass(unitClass: UnitClass): StackingLayer {
   return unitClass === "civilian" ? "civilian" : "military";
 }
+
+const CAVALRY_CLASSES: ReadonlySet<UnitClass> = new Set<UnitClass>([
+  "lightCavalry",
+  "heavyCavalry",
+]);
+
+export function ignoresZoneOfControl(unitClass: UnitClass): boolean {
+  return CAVALRY_CLASSES.has(unitClass);
+}
