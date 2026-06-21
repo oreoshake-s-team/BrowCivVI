@@ -1,0 +1,12 @@
+{
+  "pr": 197,
+  "date": "2026-06-21",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "board-sprite-detail.webp",
+    "board-units-as-sprites.webp",
+    "selected-unit-with-reachable-hexes.webp"
+  ],
+  "issue": 191,
+  "title": "Board unit sprites"
+}
