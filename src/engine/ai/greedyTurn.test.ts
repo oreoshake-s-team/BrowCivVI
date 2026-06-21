@@ -47,6 +47,7 @@ function match(units: readonly Unit[]): MatchState {
     units,
     movement,
     events: [],
+    scorched: [],
     cities: [],
     divergence: {},
   };

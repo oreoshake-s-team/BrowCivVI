@@ -65,6 +65,7 @@ export interface BoardView {
   readonly turn: number;
   readonly activeFaction: string;
   readonly events: readonly MatchEvent[];
+  readonly scorched: readonly string[];
   readonly pendingDivergence?: DivergenceView;
 }
 
@@ -158,6 +159,7 @@ function boardView(match: MatchState): BoardView {
     turn: match.turn,
     activeFaction: match.activeFaction,
     events: match.events,
+    scorched: match.scorched,
     ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
   };
 }
@@ -165,6 +167,7 @@ function boardView(match: MatchState): BoardView {
 const TURN_CONTEXT: TurnContext = {
   movementOf: (typeId) => unitTypeById(typeId)?.movement ?? 0,
   cityMaxHp: (cityId) => cityMaxHp(FIRST_SLICE_MAP.cities.get(cityId)?.defense ?? 0),
+  supply: { map: FIRST_SLICE_MAP, riverEdges: RIVER_EDGES },
 };
 
 export async function loadBoard(matchId?: string): Promise<LoadBoardResult> {

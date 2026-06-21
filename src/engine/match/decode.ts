@@ -36,6 +36,7 @@ export function decodeMatchState(raw: unknown): MatchState {
     events: Array.isArray(raw.events) ? (raw.events as readonly MatchEvent[]) : [],
     cities: Array.isArray(raw.cities) ? (raw.cities as readonly CityState[]) : [],
     divergence: isRecord(raw.divergence) ? (raw.divergence as MatchState["divergence"]) : {},
+    scorched: Array.isArray(raw.scorched) ? (raw.scorched as readonly string[]) : [],
     schemaVersion: CURRENT_SCHEMA_VERSION,
   } as MatchState;
 }

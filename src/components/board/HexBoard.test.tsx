@@ -646,6 +646,35 @@ describe("HexBoard terrain motifs", () => {
     const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(container.querySelector('[data-hex="1,0"][data-blocked]')).toBeNull();
   });
+
+  it("marks a burned hex with a scorch glyph", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} scorched={["1,0"]} />,
+    );
+    expect(container.querySelector('[data-scorched="1,0"]')).toBeTruthy();
+  });
+
+  it("leaves an unburned hex without a scorch glyph", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector("[data-scorched]")).toBeNull();
+  });
+
+  it("badges an out-of-supply unit", () => {
+    const units = SAMPLE_UNITS.map((u) => (u.id === MAC_ID ? { ...u, supplied: false } : u));
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={units} />);
+    expect(container.querySelector(`[data-out-of-supply="${MAC_ID}"]`)).toBeTruthy();
+  });
+
+  it("announces an out-of-supply unit to assistive tech", () => {
+    const units = SAMPLE_UNITS.map((u) => (u.id === MAC_ID ? { ...u, supplied: false } : u));
+    render(<HexBoard map={SAMPLE_MAP} units={units} />);
+    expect(screen.getByRole("button", { name: `${MACEDON} — out of supply` })).toBeTruthy();
+  });
+
+  it("leaves a supplied unit without an out-of-supply badge", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector("[data-out-of-supply]")).toBeNull();
+  });
 });
 
 const SARDIS_HEX = { q: 0, r: 0 };

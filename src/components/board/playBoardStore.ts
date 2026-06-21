@@ -55,6 +55,7 @@ function projectBoard(board: BoardView): Partial<PlayBoardState> {
     turn: board.turn,
     activeFaction: board.activeFaction,
     events: board.events,
+    scorched: board.scorched,
     pendingDivergence: board.pendingDivergence ?? null,
   };
 }

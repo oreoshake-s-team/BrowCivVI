@@ -87,6 +87,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         turn: 1,
         activeFaction: "macedon",
         events: [],
+        scorched: [],
       },
     } satisfies LoadBoardResult);
     vi.mocked(actions.targetsFor).mockResolvedValue({
@@ -351,6 +352,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       turn: 1,
       activeFaction: "macedon",
       events: [],
+      scorched: [],
     } satisfies BoardView);
 
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -378,6 +380,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
           turn: 1,
           activeFaction: "macedon",
           events: [],
+          scorched: [],
         },
       } satisfies LoadBoardResult);
 
@@ -413,6 +416,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       turn: 2,
       activeFaction: "macedon",
       events: [],
+      scorched: [],
     } satisfies BoardView);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
     fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
@@ -448,6 +452,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       turn: 2,
       activeFaction: "macedon",
       events: [aiAttack],
+      scorched: [],
     } satisfies BoardView);
 
     const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -487,6 +492,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       turn: 2,
       activeFaction: "macedon",
       events: [aiMove],
+      scorched: [],
     } satisfies BoardView);
 
     const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -511,6 +517,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         turn: 1,
         activeFaction: "macedon",
         events: [],
+        scorched: [],
       },
     } satisfies LoadBoardResult);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -563,6 +570,7 @@ describe("PlayBoard divergence node", () => {
     turn: 1,
     activeFaction: "macedon",
     events: [],
+    scorched: [],
   };
 
   beforeEach(() => {
