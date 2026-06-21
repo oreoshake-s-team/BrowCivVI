@@ -35,6 +35,7 @@
   --color-media-accent: var(--gold-700);
   --color-danger-surface: var(--faction-persia-stroke);
   --color-on-danger: var(--faction-persia-text);
+  --color-scrim: rgb(0 0 0 / 55%);
   --radius-sm: 3px;
   --radius-md: 8px;
   --shadow-raised: 0 6px 20px rgb(0 0 0 / 25%);

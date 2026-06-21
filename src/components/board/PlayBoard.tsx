@@ -3,6 +3,7 @@
 import type { NamedRegion } from "@/engine/content/region";
 import type { GameMap } from "@/engine/map/types";
 import { BoardLoadError } from "./BoardLoadError";
+import { DivergenceModal } from "./DivergenceModal";
 import { HexBoard } from "./HexBoard";
 import styles from "./PlayBoard.module.css";
 import { Toast } from "./Toast";
@@ -90,6 +91,9 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         onAttack={board.attackUnit}
       />
       {state.toast !== null ? <Toast message={state.toast} onDismiss={board.dismissToast} /> : null}
+      {state.pendingDivergence !== null ? (
+        <DivergenceModal node={state.pendingDivergence} onResolve={board.resolveChoice} />
+      ) : null}
     </>
   );
 }

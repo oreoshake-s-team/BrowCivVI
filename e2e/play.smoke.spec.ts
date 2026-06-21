@@ -1,11 +1,23 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+// The default match is shared across these smoke tests, so the one-shot Granicus
+// divergence node is only pending for whichever test reaches /play first. Resolve
+// it when present so the board underneath is interactive; the modal's own
+// behaviour is covered by the PlayBoard component tests.
+async function dismissDivergenceIfPresent(page: Page): Promise<void> {
+  await expect(page.getByRole("img", { name: /Hex map of the Granicus/ })).toBeVisible();
+  const dialog = page.getByRole("dialog", { name: /The Granicus/ });
+  if ((await dialog.count()) === 0) return;
+  await dialog.getByRole("button", { name: /cross at dawn/i }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await expect(dialog).toBeHidden();
+}
 
 test("the Granicus board renders and selecting a unit reveals its reachable hexes", async ({
   page,
 }) => {
   await page.goto("/play");
-
-  await expect(page.getByRole("img", { name: /Hex map of the Granicus/ })).toBeVisible();
+  await dismissDivergenceIfPresent(page);
 
   const unit = page.locator("[data-unit-id]").first();
   await expect(unit).toBeVisible();
@@ -16,6 +28,7 @@ test("the Granicus board renders and selecting a unit reveals its reachable hexe
 
 test("the Granicus river surfaces its related media links", async ({ page }) => {
   await page.goto("/play");
+  await dismissDivergenceIfPresent(page);
 
   const card = page.getByRole("dialog", { name: "Granicus historical reference" });
   await expect(async () => {
@@ -30,6 +43,7 @@ test("the Granicus river surfaces its related media links", async ({ page }) => 
 
 test("Pella surfaces its pre-Granicus media reference", async ({ page }) => {
   await page.goto("/play");
+  await dismissDivergenceIfPresent(page);
 
   const card = page.getByRole("dialog", { name: "Pella historical reference" });
   await expect(async () => {
