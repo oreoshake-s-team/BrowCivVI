@@ -58,8 +58,12 @@ const PAGE_STYLE = [
   ".meta a{margin-right:1rem}",
   ".grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}",
   "figure{margin:0;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}",
+  ".thumb{display:block;cursor:zoom-in}",
   "figure img{display:block;width:100%;height:auto}",
   "figcaption{padding:.5rem .75rem;font-size:.85rem;color:#8b949e;word-break:break-all}",
+  ".lightbox{display:none}",
+  ".lightbox:target{display:flex;position:fixed;inset:0;z-index:10;align-items:center;justify-content:center;padding:1.5rem;background:rgba(1,4,9,.92);cursor:zoom-out}",
+  ".lightbox img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;box-shadow:0 0 0 1px #30363d}",
   ".card{display:block;text-decoration:none;color:inherit;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}",
   ".card img{display:block;width:100%;height:auto;border-bottom:1px solid #30363d}",
   ".card .body{padding:.75rem}",
@@ -93,17 +97,30 @@ function metaLinks(meta: PrScreenshotMeta): string {
   return links.join("");
 }
 
+function lightboxId(index: number): string {
+  return `shot-${String(index + 1)}`;
+}
+
 export function renderPrIndexHtml(meta: PrScreenshotMeta): string {
   const figures = meta.images
-    .map(
-      (image) =>
-        `<figure><img src="./${encodeURI(image)}" alt="${escapeHtml(image)}"><figcaption>${escapeHtml(image)}</figcaption></figure>`,
-    )
+    .map((image, index) => {
+      const src = `./${encodeURI(image)}`;
+      const alt = escapeHtml(image);
+      return `<figure><a class="thumb" href="#${lightboxId(index)}"><img src="${src}" alt="${alt}"></a><figcaption>${alt}</figcaption></figure>`;
+    })
+    .join("");
+  const lightboxes = meta.images
+    .map((image, index) => {
+      const src = `./${encodeURI(image)}`;
+      const alt = escapeHtml(image);
+      return `<a class="lightbox" id="${lightboxId(index)}" href="#"><img src="${src}" alt="${alt}"></a>`;
+    })
     .join("");
   const body = [
     `<h1>${headingFor(meta)}</h1>`,
     `<p class="meta">${escapeHtml(meta.date)}${metaLinks(meta)}</p>`,
     `<div class="grid">${figures}</div>`,
+    lightboxes,
   ].join("\n");
   return page(`${headingFor(meta)} screenshots`, body);
 }
