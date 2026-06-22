@@ -11,6 +11,7 @@ export interface CityState {
   readonly defecting?: boolean;
   readonly attackedThisTurn?: boolean;
   readonly sacked?: boolean;
+  readonly scorched?: boolean;
 }
 
 export const CITY_HP_PER_DEFENSE = 8;

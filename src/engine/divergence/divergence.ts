@@ -130,7 +130,7 @@ export function applyDivergenceEffect(
       scorched,
       cities: state.cities.map((city) =>
         region.has(city.id)
-          ? { ...city, loyalty: clampLoyalty((city.loyalty ?? 0) + drift) }
+          ? { ...city, loyalty: clampLoyalty((city.loyalty ?? 0) + drift), scorched: true }
           : city,
       ),
     };
