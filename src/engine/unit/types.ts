@@ -9,6 +9,7 @@ export interface UnitType {
   readonly class: UnitClass;
   readonly movement: number;
   readonly strength: number;
+  readonly range?: number;
   readonly capabilities?: readonly UnitCapability[];
   readonly abilities?: readonly string[];
   readonly hitAndRun?: boolean;

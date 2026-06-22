@@ -2,6 +2,7 @@ import type { Rng } from "../rng";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
 import { resolveAttack, type AttackUnit } from "./attack";
+import { isRangedAttacker } from "./range";
 
 export interface ApplyAttackInput {
   readonly units: readonly Unit[];
@@ -47,6 +48,7 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
     };
   }
 
+  const attackerType = unitTypeById(attacker.typeId);
   const result = resolveAttack({
     attacker: toAttackUnit(attacker),
     defender: toAttackUnit(defender),
@@ -56,6 +58,7 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
     defenderTerrainDefense: input.defenderTerrainDefense,
     defenderTerrainMoveCost: input.defenderTerrainMoveCost,
     riverAttack: input.riverAttack,
+    ranged: attackerType !== undefined && isRangedAttacker(attackerType),
     rng: input.rng,
   });
 

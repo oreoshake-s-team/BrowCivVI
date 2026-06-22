@@ -1,12 +1,12 @@
-import type { Hex, HexDirection } from "../hex";
-import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
+import type { Hex } from "../hex";
+import { hexDistance } from "../hex";
 import type { GameMap } from "../map/types";
-import { hexKey } from "../map/types";
 import type { CityState } from "../match/cities";
 import { entryCost } from "../movement/cost";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
 import { effectiveCapabilities } from "../unit/types";
+import { attackRange, isRangedAttacker } from "./range";
 
 export function canAttack(unit: Unit): boolean {
   const type = unitTypeById(unit.typeId);
@@ -15,18 +15,20 @@ export function canAttack(unit: Unit): boolean {
   return caps.has("meleeAttack") || caps.has("rangedAttack") || caps.has("bombard");
 }
 
+function inRange(from: Hex, to: Hex, range: number): boolean {
+  const distance = hexDistance(from, to);
+  return distance >= 1 && distance <= range;
+}
+
 export function attackableHexes(units: readonly Unit[], attackerId: string): readonly Hex[] {
   const attacker = units.find((unit) => unit.id === attackerId);
   if (attacker === undefined || !canAttack(attacker)) return [];
-  const targets: Hex[] = [];
-  for (let dir = 0; dir < HEX_DIRECTION_COUNT; dir++) {
-    const step = neighbor(attacker.hex, dir as HexDirection);
-    const enemy = units.find(
-      (unit) => hexKey(unit.hex) === hexKey(step) && unit.owner !== attacker.owner,
-    );
-    if (enemy !== undefined) targets.push(step);
-  }
-  return targets;
+  const type = unitTypeById(attacker.typeId);
+  if (type === undefined) return [];
+  const range = attackRange(type);
+  return units
+    .filter((unit) => unit.owner !== attacker.owner && inRange(attacker.hex, unit.hex, range))
+    .map((unit) => unit.hex);
 }
 
 export function reachableAttacks(
@@ -37,8 +39,12 @@ export function reachableAttacks(
   riverEdges: ReadonlySet<string>,
 ): readonly Hex[] {
   if (attacker.hasAttackedThisTurn === true) return [];
+  const type = unitTypeById(attacker.typeId);
+  if (type === undefined) return [];
   const mp = movement[attacker.id] ?? 0;
-  return attackableHexes(units, attacker.id).filter((hex) => {
+  const targets = attackableHexes(units, attacker.id);
+  if (isRangedAttacker(type)) return mp > 0 ? targets : [];
+  return targets.filter((hex) => {
     const cost = entryCost(map, riverEdges, attacker.hex, hex);
     return cost !== null && mp >= cost;
   });
@@ -49,14 +55,16 @@ export function attackableCityHexes(
   map: GameMap,
   cities: readonly CityState[],
 ): readonly Hex[] {
-  if (!canAttack(attacker)) return [];
+  const type = unitTypeById(attacker.typeId);
+  if (type === undefined || !canAttack(attacker)) return [];
+  const range = attackRange(type);
+  const cityById = new Map(cities.map((city) => [city.id, city] as const));
   const targets: Hex[] = [];
-  for (let dir = 0; dir < HEX_DIRECTION_COUNT; dir++) {
-    const step = neighbor(attacker.hex, dir as HexDirection);
-    const cityId = map.hexes.get(hexKey(step))?.cityId;
-    if (cityId === undefined) continue;
-    const city = cities.find((candidate) => candidate.id === cityId);
-    if (city !== undefined && city.owner !== attacker.owner && city.hp > 0) targets.push(step);
+  for (const mapHex of map.hexes.values()) {
+    if (mapHex.cityId === undefined || !inRange(attacker.hex, mapHex.hex, range)) continue;
+    const city = cityById.get(mapHex.cityId);
+    if (city !== undefined && city.owner !== attacker.owner && city.hp > 0)
+      targets.push(mapHex.hex);
   }
   return targets;
 }
@@ -69,8 +77,12 @@ export function reachableCityAttacks(
   cities: readonly CityState[],
 ): readonly Hex[] {
   if (attacker.hasAttackedThisTurn === true) return [];
+  const type = unitTypeById(attacker.typeId);
+  if (type === undefined) return [];
   const mp = movement[attacker.id] ?? 0;
-  return attackableCityHexes(attacker, map, cities).filter((hex) => {
+  const targets = attackableCityHexes(attacker, map, cities);
+  if (isRangedAttacker(type)) return mp > 0 ? targets : [];
+  return targets.filter((hex) => {
     const cost = entryCost(map, riverEdges, attacker.hex, hex);
     return cost !== null && mp >= cost;
   });

@@ -40,6 +40,7 @@ export interface CombatInput {
   readonly defenderTerrainMoveCost: number;
   readonly flanked: boolean;
   readonly riverAttack: boolean;
+  readonly ranged?: boolean;
   readonly rng: Rng;
 }
 
@@ -83,10 +84,9 @@ export function resolveCombat(input: CombatInput): CombatResult {
     damage(attackerStrength, defenderStrength, input.rng),
     input.defender.hp,
   );
-  const attackerDamage = Math.min(
-    damage(defenderStrength, attackerStrength, input.rng),
-    input.attacker.hp,
-  );
+  const attackerDamage = input.ranged
+    ? 0
+    : Math.min(damage(defenderStrength, attackerStrength, input.rng), input.attacker.hp);
 
   return {
     defenderDamage,

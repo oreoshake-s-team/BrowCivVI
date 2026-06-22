@@ -38,6 +38,27 @@ export const UNIT_TYPES: Readonly<Record<string, UnitType>> = {
     movement: 2,
     strength: 36,
   },
+  "cretan-archers": {
+    id: "cretan-archers",
+    name: "Cretan Archers",
+    class: "ranged",
+    movement: 2,
+    strength: 25,
+  },
+  "persian-archers": {
+    id: "persian-archers",
+    name: "Persian Archers",
+    class: "ranged",
+    movement: 2,
+    strength: 22,
+  },
+  "siege-train": {
+    id: "siege-train",
+    name: "Siege Train",
+    class: "siege",
+    movement: 1,
+    strength: 20,
+  },
 };
 
 export function unitTypeById(id: string): UnitType | undefined {

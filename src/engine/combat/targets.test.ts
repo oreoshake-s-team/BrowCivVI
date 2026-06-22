@@ -42,6 +42,18 @@ describe("attackableHexes", () => {
     const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
     expect(attackableHexes([MACEDON, persia], "ghost")).toHaveLength(0);
   });
+
+  it("lets a ranged unit target an enemy two hexes away", () => {
+    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
+    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
+    expect(attackableHexes([archers, persia], "a1")).toContainEqual({ q: 3, r: 1 });
+  });
+
+  it("does not let a ranged unit target an enemy three hexes away", () => {
+    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
+    const persia = unit("p1", "persian-cavalry", "persia", 4, 1);
+    expect(attackableHexes([archers, persia], "a1")).toHaveLength(0);
+  });
 });
 
 const FLAT_MAP = createGameMap(
@@ -73,6 +85,22 @@ describe("reachableAttacks", () => {
     expect(reachableAttacks([spent, persia], { m1: 2 }, spent, FLAT_MAP, NO_RIVERS)).toHaveLength(
       0,
     );
+  });
+
+  it("lets a ranged unit fire at a distant enemy without paying movement to reach it", () => {
+    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
+    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
+    expect(
+      reachableAttacks([archers, persia], { a1: 1 }, archers, FLAT_MAP, NO_RIVERS),
+    ).toContainEqual({ q: 3, r: 1 });
+  });
+
+  it("denies a ranged attack once the unit has no movement left", () => {
+    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
+    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
+    expect(
+      reachableAttacks([archers, persia], { a1: 0 }, archers, FLAT_MAP, NO_RIVERS),
+    ).toHaveLength(0);
   });
 });
 
@@ -108,6 +136,13 @@ describe("attackableCityHexes", () => {
       attackableCityHexes(MACEDON, CITY_MAP, [{ id: "c2", owner: "persia", hp: 50 }]),
     ).toHaveLength(0);
   });
+
+  it("lets a siege unit bombard a city two hexes away", () => {
+    const siege = unit("s1", "siege-train", "macedon", 1, 1);
+    expect(
+      attackableCityHexes(siege, CITY_MAP, [{ id: "c2", owner: "persia", hp: 50 }]),
+    ).toContainEqual({ q: 3, r: 1 });
+  });
 });
 
 describe("reachableCityAttacks", () => {
@@ -122,5 +157,14 @@ describe("reachableCityAttacks", () => {
     expect(
       reachableCityAttacks({ m1: 4 }, spent, CITY_MAP, new Set<string>(), [ENEMY_CITY]),
     ).toHaveLength(0);
+  });
+
+  it("lets a siege unit bombard a distant city with movement to spare", () => {
+    const siege = unit("s1", "siege-train", "macedon", 1, 1);
+    expect(
+      reachableCityAttacks({ s1: 1 }, siege, CITY_MAP, new Set<string>(), [
+        { id: "c2", owner: "persia", hp: 50 },
+      ]),
+    ).toContainEqual({ q: 3, r: 1 });
   });
 });

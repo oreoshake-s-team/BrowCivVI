@@ -45,6 +45,22 @@ function strike(cityHp: number, attackerHp = 100, extraUnits: readonly Unit[] = 
   });
 }
 
+function strikeWith(typeId: string, cityHp = 200) {
+  return applyCityAttack({
+    units: [{ ...attacker(), typeId }],
+    cities: [{ id: "c1", owner: "persia", hp: cityHp }],
+    movement: { m1: 4 },
+    attackerId: "m1",
+    cityId: "c1",
+    cityHex: CITY_HEX,
+    cityDefense: 20,
+    cityTerrainDefense: 0,
+    cityTerrainMoveCost: 1,
+    riverAttack: false,
+    rng: createRng(7),
+  });
+}
+
 describe("applyCityAttack", () => {
   it("reduces the target city's HP by the damage dealt", () => {
     const app = strike(200);
@@ -96,5 +112,19 @@ describe("applyCityAttack", () => {
   it("only a unit of the city's owner garrisons it", () => {
     const enemyOnCity = strike(200, 100, [onCity("x1", "macedon")]).cityDamage;
     expect(enemyOnCity).toBe(strike(200).cityDamage);
+  });
+
+  it("a bombarding siege unit takes no retaliation from the city", () => {
+    expect(strikeWith("siege-train").attackerDamage).toBe(0);
+  });
+
+  it("a bombarding archer takes no retaliation from the city", () => {
+    expect(strikeWith("cretan-archers").attackerDamage).toBe(0);
+  });
+
+  it("a siege unit out-damages a stronger archer against a city via its anti-city bonus", () => {
+    expect(strikeWith("siege-train").cityDamage).toBeGreaterThan(
+      strikeWith("cretan-archers").cityDamage,
+    );
   });
 });

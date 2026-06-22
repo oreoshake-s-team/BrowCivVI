@@ -83,4 +83,22 @@ describe("applyAttack", () => {
     const low = applyAttack(input({ units: [{ ...ATTACKER, morale: 60 }, DEFENDER] }));
     expect(high.defenderDamage > low.defenderDamage).toBe(true);
   });
+
+  it("a ranged attacker takes no counterattack damage", () => {
+    const archers = unit("m1", "cretan-archers", "macedon", 1, 1);
+    expect(applyAttack(input({ units: [archers, DEFENDER] })).attackerDamage).toBe(0);
+  });
+
+  it("a ranged attacker still damages its target", () => {
+    const archers = unit("m1", "cretan-archers", "macedon", 1, 1);
+    const defender = applyAttack(input({ units: [archers, DEFENDER] })).units.find(
+      (u) => u.id === "p1",
+    );
+    expect(defender?.hp).toBeLessThan(100);
+  });
+
+  it("a ranged attacker spends its movement after firing", () => {
+    const archers = unit("m1", "cretan-archers", "macedon", 1, 1);
+    expect(applyAttack(input({ units: [archers, DEFENDER] })).movement.m1).toBe(0);
+  });
 });

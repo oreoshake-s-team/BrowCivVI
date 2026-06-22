@@ -137,4 +137,20 @@ describe("resolveCombat", () => {
     );
     expect(massed.defenderDamage > alone.defenderDamage).toBe(true);
   });
+
+  it("a ranged attacker takes no retaliation", () => {
+    expect(resolveCombat(makeInput(createRng(11), { ranged: true })).attackerDamage).toBe(0);
+  });
+
+  it("a melee attacker still takes a counterattack", () => {
+    expect(
+      resolveCombat(makeInput(createRng(11), { ranged: false })).attackerDamage,
+    ).toBeGreaterThan(0);
+  });
+
+  it("a ranged attacker still damages its target", () => {
+    expect(
+      resolveCombat(makeInput(createRng(11), { ranged: true })).defenderDamage,
+    ).toBeGreaterThan(0);
+  });
 });
