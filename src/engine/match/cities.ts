@@ -11,6 +11,7 @@ export interface CityState {
   readonly loyaltyStreak?: number;
   readonly defecting?: boolean;
   readonly attackedThisTurn?: boolean;
+  readonly struckThisTurn?: boolean;
   readonly sacked?: boolean;
   readonly scorched?: boolean;
 }
@@ -22,6 +23,10 @@ export const WALL_MAX_HP = 100;
 
 export function wallMaxHp(city: City): number {
   return city.walls === true ? WALL_MAX_HP : 0;
+}
+
+export function canCityStrike(city: CityState): boolean {
+  return (city.wallHp ?? 0) > 0 && city.struckThisTurn !== true;
 }
 
 export const LOYALTY_MIN = -100;
@@ -68,9 +73,10 @@ export function healCities(
 ): readonly CityState[] {
   return cities.map((city) => {
     if (city.owner !== faction) return city;
-    if (city.attackedThisTurn === true) return { ...city, attackedThisTurn: false };
+    const reset = city.struckThisTurn === true ? { ...city, struckThisTurn: false } : city;
+    if (city.attackedThisTurn === true) return { ...reset, attackedThisTurn: false };
     const healed = Math.min(maxHpOf(city.id), city.hp + CITY_HEAL_RATE);
-    return healed === city.hp ? city : { ...city, hp: healed };
+    return healed === city.hp ? reset : { ...reset, hp: healed };
   });
 }
 

@@ -6,6 +6,7 @@ import type {
   AttackEvent,
   CaptureEvent,
   CityAttackEvent,
+  CityStrikeEvent,
   DefectionEvent,
   MatchEvent,
   MoveEvent,
@@ -70,6 +71,27 @@ function CityAttackEntry({
       </span>{" "}
       besieged {cityName} — dealt {event.cityDamage}, took {event.retaliation}
       {event.cityFell ? <span className={styles.defeated}> (walls breached)</span> : null}
+    </>
+  );
+}
+
+function CityStrikeEntry({
+  event,
+  cityName,
+}: {
+  readonly event: CityStrikeEvent;
+  readonly cityName: string;
+}) {
+  return (
+    <>
+      <span className={styles.icon} aria-hidden="true">
+        ⚔
+      </span>
+      <span className={styles.actor} data-faction={event.faction}>
+        {cityName}
+      </span>{" "}
+      bombarded {unitName(event.targetTypeId)} at {coord(event.targetHex)} — dealt {event.damage}
+      {event.defeated ? <span className={styles.defeated}> (defeated)</span> : null}
     </>
   );
 }
@@ -157,6 +179,8 @@ export function MoveLog({
                 <AttackEntry event={event} />
               ) : event.kind === "cityAttack" ? (
                 <CityAttackEntry event={event} cityName={cityName(event.cityId)} />
+              ) : event.kind === "cityStrike" ? (
+                <CityStrikeEntry event={event} cityName={cityName(event.cityId)} />
               ) : event.kind === "capture" ? (
                 <CaptureEntry event={event} cityName={cityName(event.cityId)} />
               ) : (
