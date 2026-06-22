@@ -25,6 +25,7 @@ import {
   appendMove,
   type MatchEvent,
 } from "@/engine/match/events";
+import { applyIncite, canIncite } from "@/engine/match/incite";
 import { matchCityScores } from "@/engine/match/scoring";
 import { matchFormatOutdated, type MatchState } from "@/engine/match/state";
 import { StaleMatchError } from "@/engine/match/store";
@@ -68,9 +69,16 @@ export interface BoardView {
   readonly activeFaction: string;
   readonly events: readonly MatchEvent[];
   readonly scorched: readonly string[];
+  readonly canIncite: boolean;
   readonly scores?: Readonly<Record<string, number>>;
   readonly pendingDivergence?: DivergenceView;
   readonly incompatible?: boolean;
+}
+
+export interface InciteOutcome {
+  readonly ok: boolean;
+  readonly board: BoardView;
+  readonly rateLimited?: boolean;
 }
 
 export interface DivergenceOutcome {
@@ -165,6 +173,7 @@ function boardView(match: MatchState): BoardView {
     activeFaction: match.activeFaction,
     events: match.events,
     scorched: match.scorched,
+    canIncite: canIncite(match, FIRST_SLICE_PLAYER_FACTION),
     scores: matchCityScores(match, (id) => FIRST_SLICE_MAP.cities.get(id)?.value ?? 0),
     ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
     ...(incompatible ? { incompatible: true } : {}),
@@ -243,6 +252,27 @@ export async function resolveDivergence(
 
   try {
     return { ok: true, board: boardView(await store.save(resolved.state)) };
+  } catch (error) {
+    if (error instanceof StaleMatchError) return { ok: false, board: boardView(match) };
+    throw error;
+  }
+}
+
+export async function incite(matchId: string, cityId: string): Promise<InciteOutcome> {
+  const owner = await currentOwner();
+  if (!(await intentAllowed(owner)))
+    return { ok: false, board: boardView(await resolveMatch(matchId)), rateLimited: true };
+  const store = getStore();
+  const match = await loadOwned(store, owner, matchId);
+  if (match === null) return { ok: false, board: boardView(await resolveMatch(matchId)) };
+  if (match.activeFaction !== FIRST_SLICE_PLAYER_FACTION)
+    return { ok: false, board: boardView(match) };
+
+  const next = applyIncite(match, FIRST_SLICE_PLAYER_FACTION, cityId);
+  if (next === null) return { ok: false, board: boardView(match) };
+
+  try {
+    return { ok: true, board: boardView(await store.save(next)) };
   } catch (error) {
     if (error instanceof StaleMatchError) return { ok: false, board: boardView(match) };
     throw error;

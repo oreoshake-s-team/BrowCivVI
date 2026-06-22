@@ -46,6 +46,10 @@ describe("advanceTurn", () => {
     expect(advanceTurn(match({ activeFaction: "persia" }), ctx).turn).toBe(2);
   });
 
+  it("clears the spent-incite flag for the incoming turn", () => {
+    expect(advanceTurn(match({ incitedThisTurn: true }), ctx).incitedThisTurn).toBe(false);
+  });
+
   it("restores the incoming faction's movement", () => {
     expect(advanceTurn(match({ activeFaction: "persia" }), ctx).movement.mac).toBe(4);
   });

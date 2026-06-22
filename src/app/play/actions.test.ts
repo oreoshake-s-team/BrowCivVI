@@ -2,12 +2,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { FIRST_SLICE_UNITS } from "@/content/firstSlice";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
+import { INCITE_PRESSURE } from "@/engine/match/incite";
 import {
   loadBoard,
   newGame,
   move,
   attack,
   attackCity,
+  incite,
   targetsFor,
   endTurn,
   resolveDivergence,
@@ -276,6 +278,44 @@ describe("divergence resolution", () => {
     const board = await newGame();
     const outcome = await resolveDivergence(board.matchId, "granicus", "flee");
     expect(outcome.ok).toBe(false);
+  });
+});
+
+describe("incite", () => {
+  const loyaltyOf = (board: BoardView, id: string) =>
+    board.cities.find((city) => city.id === id)?.loyalty ?? 0;
+
+  it("nudges a city's loyalty toward the player", async () => {
+    const board = await newGame();
+    const before = loyaltyOf(board, "zeleia");
+    const outcome = await incite(board.matchId, "zeleia");
+    expect(loyaltyOf(outcome.board, "zeleia") - before).toBe(INCITE_PRESSURE);
+  });
+
+  it("spends the turn's incite so none remains", async () => {
+    const board = await newGame();
+    const outcome = await incite(board.matchId, "zeleia");
+    expect(outcome.board.canIncite).toBe(false);
+  });
+
+  it("rejects a second incite in the same turn", async () => {
+    const board = await newGame();
+    await incite(board.matchId, "zeleia");
+    const again = await incite(board.matchId, "dascylium");
+    expect(again.ok).toBe(false);
+  });
+
+  it("rejects inciting an unknown city", async () => {
+    const board = await newGame();
+    const outcome = await incite(board.matchId, "atlantis");
+    expect(outcome.ok).toBe(false);
+  });
+
+  it("rejects an incite that is rate limited", async () => {
+    const board = await newGame();
+    intentAllowedMock.mockResolvedValueOnce(false);
+    const outcome = await incite(board.matchId, "zeleia");
+    expect(outcome.rateLimited).toBe(true);
   });
 });
 

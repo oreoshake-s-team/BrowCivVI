@@ -73,6 +73,7 @@ export function advanceTurn(state: MatchState, ctx: TurnContext): MatchState {
     ...ended,
     activeFaction: order[nextIndex] ?? ended.activeFaction,
     turn: nextIndex === 0 ? ended.turn + 1 : ended.turn,
+    incitedThisTurn: false,
   };
   return runPhases(TURN_START_PHASES, advanced, advanced.activeFaction, ctx);
 }
