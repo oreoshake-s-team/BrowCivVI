@@ -38,6 +38,36 @@ export const CLASS_GLYPHS: Readonly<Record<UnitClass, string>> = {
   support: "H",
 };
 
+export const CLASS_LABELS: Readonly<Record<UnitClass, string>> = {
+  civilian: "Civilian",
+  recon: "Scout",
+  melee: "Melee infantry",
+  ranged: "Ranged",
+  antiCavalry: "Anti-cavalry",
+  lightCavalry: "Light cavalry",
+  heavyCavalry: "Heavy cavalry",
+  siege: "Siege",
+  navalMelee: "Warship",
+  navalRanged: "Ranged warship",
+  navalRaider: "Raider",
+  support: "Support",
+};
+
+export const CLASS_ORDER: readonly UnitClass[] = [
+  "melee",
+  "ranged",
+  "antiCavalry",
+  "lightCavalry",
+  "heavyCavalry",
+  "siege",
+  "support",
+  "recon",
+  "civilian",
+  "navalMelee",
+  "navalRanged",
+  "navalRaider",
+];
+
 export const FACTION_NAMES: Readonly<Record<string, string>> = {
   macedon: "Macedon",
   persia: "Persia",

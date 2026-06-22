@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as actions from "@/app/play/actions";
 import type {
@@ -488,8 +488,8 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
 
   it("shows the current turn number and active faction", async () => {
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
-    expect(await screen.findByText("Turn 1")).not.toBeNull();
-    expect(await screen.findByText("Macedon")).not.toBeNull();
+    const turnBar = (await screen.findByText("Turn 1")).parentElement!;
+    expect(within(turnBar).getByText("Macedon")).not.toBeNull();
   });
 
   it("ends the turn and advances the bar when no unit has moves left", async () => {
