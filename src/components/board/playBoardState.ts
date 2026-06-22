@@ -17,6 +17,7 @@ export interface PlayBoardState {
   readonly events: readonly MatchEvent[];
   readonly scorched: readonly string[];
   readonly canIncite: boolean;
+  readonly spent: readonly string[];
   readonly reachable: readonly Hex[];
   readonly attackable: readonly Hex[];
   readonly deselectSignal: number;
@@ -47,6 +48,7 @@ export function initialPlayBoardState(matchId: string | null): PlayBoardState {
     events: [],
     scorched: [],
     canIncite: false,
+    spent: [],
     reachable: [],
     attackable: [],
     deselectSignal: 0,

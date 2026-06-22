@@ -132,6 +132,17 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(keys).toContain(hexKey(WEST_DEEP));
   });
 
+  it("reports a unit as spent once it has no move or attack left", async () => {
+    const board = await newGame();
+    const outcome = await move(board.matchId, "mac-archers", { q: 1, r: 0 });
+    expect(outcome.spent).toContain("mac-archers");
+  });
+
+  it("does not list a unit that still has moves as spent", async () => {
+    const board = await newGame();
+    expect(board.spent).not.toContain(COMPANIONS);
+  });
+
   it("keeps moving across a bank the river shields from enemy zone of control", async () => {
     const board = await newGame();
     const entered = await move(board.matchId, PHALANX, WEST_MID);

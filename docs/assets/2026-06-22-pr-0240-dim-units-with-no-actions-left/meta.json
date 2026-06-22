@@ -1,0 +1,11 @@
+{
+  "pr": 240,
+  "date": "2026-06-22",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "dim-spent-after.webp",
+    "dim-spent-before.webp"
+  ],
+  "issue": 236,
+  "title": "Dim units with no actions left"
+}

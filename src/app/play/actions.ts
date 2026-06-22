@@ -69,6 +69,7 @@ export interface BoardView {
   readonly activeFaction: string;
   readonly events: readonly MatchEvent[];
   readonly scorched: readonly string[];
+  readonly spent: readonly string[];
   readonly canIncite: boolean;
   readonly scores?: Readonly<Record<string, number>>;
   readonly pendingDivergence?: DivergenceView;
@@ -97,6 +98,7 @@ export interface MoveOutcome {
   readonly reachable: readonly Hex[];
   readonly movement: Readonly<Record<string, number>>;
   readonly events?: readonly MatchEvent[];
+  readonly spent?: readonly string[];
   readonly rateLimited?: boolean;
 }
 
@@ -130,6 +132,15 @@ function attackTargets(match: MatchState, attacker: Unit): readonly Hex[] {
     ...reachableAttacks(match.units, match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES),
     ...reachableCityAttacks(match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES, match.cities),
   ];
+}
+
+function spentUnitIds(match: MatchState): readonly string[] {
+  return match.units
+    .filter(
+      (unit) =>
+        reachableForUnit(match, unit).length === 0 && attackTargets(match, unit).length === 0,
+    )
+    .map((unit) => unit.id);
 }
 
 async function resolveMatch(matchId?: string): Promise<MatchState> {
@@ -173,6 +184,7 @@ function boardView(match: MatchState): BoardView {
     activeFaction: match.activeFaction,
     events: match.events,
     scorched: match.scorched,
+    spent: spentUnitIds(match),
     canIncite: canIncite(match, FIRST_SLICE_PLAYER_FACTION),
     scores: matchCityScores(match, (id) => FIRST_SLICE_MAP.cities.get(id)?.value ?? 0),
     ...(pending !== null ? { pendingDivergence: divergenceView(pending) } : {}),
@@ -361,6 +373,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
       reachable: movedUnit === undefined ? [] : reachableForUnit(saved, movedUnit),
       movement: saved.movement,
       events: saved.events,
+      spent: spentUnitIds(saved),
     };
   } catch (error) {
     if (error instanceof StaleMatchError) {
@@ -390,6 +403,7 @@ export interface AttackOutcome {
   readonly defeated?: readonly string[];
   readonly movement?: Readonly<Record<string, number>>;
   readonly events?: readonly MatchEvent[];
+  readonly spent?: readonly string[];
   readonly rateLimited?: boolean;
 }
 
@@ -405,6 +419,7 @@ export interface CityAttackOutcome {
   readonly defeated?: readonly string[];
   readonly movement?: Readonly<Record<string, number>>;
   readonly events?: readonly MatchEvent[];
+  readonly spent?: readonly string[];
   readonly rateLimited?: boolean;
 }
 
@@ -467,6 +482,7 @@ export async function attack(
       defeated: application.defeated,
       movement: saved.movement,
       events: saved.events,
+      spent: spentUnitIds(saved),
     };
   } catch (error) {
     if (error instanceof StaleMatchError) return { ok: false, units: match.units };
@@ -531,6 +547,7 @@ export async function attackCity(
       defeated: application.defeated,
       movement: saved.movement,
       events: saved.events,
+      spent: spentUnitIds(saved),
     };
   } catch (error) {
     if (error instanceof StaleMatchError) return { ok: false, units: match.units };

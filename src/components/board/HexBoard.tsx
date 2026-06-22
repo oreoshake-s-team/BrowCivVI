@@ -126,6 +126,7 @@ export interface HexBoardProps {
   readonly playerFaction?: string;
   readonly reachable?: readonly Hex[];
   readonly attackable?: readonly Hex[];
+  readonly spent?: readonly string[];
   readonly deselectSignal?: number;
   readonly floaters?: readonly DamageFloater[];
   readonly fadingUnits?: readonly Unit[];
@@ -150,6 +151,7 @@ export function HexBoard({
   playerFaction = "",
   reachable = [],
   attackable = [],
+  spent = [],
   deselectSignal = 0,
   floaters = [],
   fadingUnits = [],
@@ -200,6 +202,7 @@ export function HexBoard({
   const granicus = river !== undefined && hasPlayableMedia(river.media) ? river : undefined;
   const bankKeys = granicus !== undefined ? riverBankKeys(map) : new Set<string>();
   const attackableKeys = new Set(attackable.map(hexKey));
+  const spentIds = new Set(spent);
   const cityStateById = new Map(cities.map((city) => [city.id, city]));
   const cityNames = new Map(Array.from(map.cities.values()).map((city) => [city.id, city.name]));
   const scorchedKeys = new Set(scorched);
@@ -800,6 +803,7 @@ export function HexBoard({
             const selected = unit.id === selectedId;
             const isAttackTarget =
               selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
+            const isSpent = spentIds.has(unit.id);
             const moves = movement[unit.id];
             const outOfSupply = !unit.supplied;
             const hpFrac = Math.max(0, Math.min(1, unit.hp / FULL_HP));
@@ -819,7 +823,8 @@ export function HexBoard({
               <g
                 key={unit.id}
                 data-unit-id={unit.id}
-                className={styles.token}
+                data-spent={isSpent ? unit.id : undefined}
+                className={isSpent ? `${styles.token} ${styles.spent}` : styles.token}
                 transform={`translate(${center.x}, ${center.y})`}
                 role="button"
                 tabIndex={0}
