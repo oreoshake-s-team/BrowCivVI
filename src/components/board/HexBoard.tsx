@@ -28,7 +28,7 @@ import { CityMarkerDefs } from "./CityMarkerDefs";
 import { CITY_SETTLEMENT_ID, cityAllegiance, sigilId } from "./cityMarkers";
 import { CityPanel, type CityPanelInfo } from "./CityPanel";
 import DebugPanel from "./DebugPanel";
-import { riverSegmentPoints } from "./geometry";
+import { riverSegmentPoints, coastSegmentPoints } from "./geometry";
 import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
@@ -852,6 +852,28 @@ export function HexBoard({
                 y2={b.y}
               />
             );
+          })}
+
+          {Array.from(map.hexes.values()).flatMap((mapHex) => {
+            if (WATER_TERRAINS.has(mapHex.terrain)) return [];
+            return neighbors(mapHex.hex).flatMap((n) => {
+              const neighborTile = map.hexes.get(hexKey(n));
+              if (neighborTile === undefined || !WATER_TERRAINS.has(neighborTile.terrain))
+                return [];
+              const id = `${hexKey(mapHex.hex)}|${hexKey(n)}`;
+              const [p1, p2] = coastSegmentPoints(mapHex.hex, n, SIZE, SIZE * 0.1);
+              return [
+                <line
+                  key={`coast-${id}`}
+                  className={styles.coastline}
+                  data-coastline={id}
+                  x1={p1.x}
+                  y1={p1.y}
+                  x2={p2.x}
+                  y2={p2.y}
+                />,
+              ];
+            });
           })}
 
           {reachable.map((hex) => (

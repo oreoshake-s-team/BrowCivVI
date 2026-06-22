@@ -85,6 +85,30 @@ describe("HexBoard", () => {
     expect(screen.getByText("Aegean Sea")).toBeTruthy();
   });
 
+  it("draws a coastline band where land meets adjacent water", () => {
+    const coastMap = createGameMap(
+      [
+        { hex: { q: 0, r: 0 }, terrain: "plains" },
+        { hex: { q: 1, r: 0 }, terrain: "coast" },
+      ],
+      [],
+    );
+    const { container } = render(<HexBoard map={coastMap} units={[]} />);
+    expect(container.querySelector('[data-coastline="0,0|1,0"]')).not.toBeNull();
+  });
+
+  it("draws no coastline between two land hexes", () => {
+    const landMap = createGameMap(
+      [
+        { hex: { q: 0, r: 0 }, terrain: "plains" },
+        { hex: { q: 1, r: 0 }, terrain: "hills" },
+      ],
+      [],
+    );
+    const { container } = render(<HexBoard map={landMap} units={[]} />);
+    expect(container.querySelector("[data-coastline]")).toBeNull();
+  });
+
   it("draws a royal road segment for an authored road", () => {
     const roadMap = createGameMap(
       [
