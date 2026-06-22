@@ -39,6 +39,14 @@ describe("FIRST_SLICE_MAP", () => {
   it("gives independent Sparta a neutral affinity", () => {
     expect(FIRST_SLICE_MAP.cities.get("sparta")?.affinity).toBe("neutral");
   });
+
+  it("secures Abydos as the Macedonian bridgehead at the crossing", () => {
+    expect(FIRST_SLICE_MAP.cities.get("abydos")?.owner).toBe("macedon");
+  });
+
+  it("leaves Ilium a neutral Troad town rather than a Persian holding", () => {
+    expect(FIRST_SLICE_MAP.cities.get("ilium")?.owner).toBeNull();
+  });
 });
 
 describe("FIRST_SLICE_REGIONS", () => {
