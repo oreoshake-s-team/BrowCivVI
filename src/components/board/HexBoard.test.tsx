@@ -264,7 +264,31 @@ describe("HexBoard interaction", () => {
     expect(onAttack).toHaveBeenCalledWith("macedon-phalanx-1", { q: 2, r: 1 });
   });
 
-  it("attacks an enemy token on a tap (touch)", () => {
+  it("arms an in-range enemy on the first click without attacking", () => {
+    const onAttack = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        attackable={[{ q: 2, r: 1 }]}
+        onAttack={onAttack}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.click(container.querySelector('[data-unit-id="persia-cavalry-1"]')!);
+    expect(onAttack).not.toHaveBeenCalled();
+  });
+
+  it("marks the armed enemy with an Attack confirm", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} attackable={[{ q: 2, r: 1 }]} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.click(container.querySelector('[data-unit-id="persia-cavalry-1"]')!);
+    expect(container.querySelector('[data-attack-armed="persia-cavalry-1"]')).not.toBeNull();
+  });
+
+  it("attacks an armed enemy on the second click", () => {
     const onAttack = vi.fn();
     const { container } = render(
       <HexBoard
@@ -276,10 +300,19 @@ describe("HexBoard interaction", () => {
     );
     fireEvent.click(screen.getByLabelText(MACEDON));
     const enemy = container.querySelector('[data-unit-id="persia-cavalry-1"]')!;
-    fireEvent.pointerDown(enemy, { pointerType: "touch", pointerId: 1 });
-    fireEvent.pointerUp(enemy, { pointerType: "touch", pointerId: 1 });
+    fireEvent.click(enemy);
     fireEvent.click(enemy);
     expect(onAttack).toHaveBeenCalledWith("macedon-phalanx-1", { q: 2, r: 1 });
+  });
+
+  it("disarms a pending attack on Escape", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} attackable={[{ q: 2, r: 1 }]} />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.click(container.querySelector('[data-unit-id="persia-cavalry-1"]')!);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(container.querySelector("[data-attack-armed]")).toBeNull();
   });
 
   it("does not attack an enemy that is not an attack target", () => {
@@ -944,7 +977,25 @@ describe("HexBoard city rendering", () => {
     expect(container.querySelector('[data-city-attack="sardis"]')).toBeNull();
   });
 
-  it("sends a city-attack intent when a targeted city is clicked", () => {
+  it("sends a city-attack intent when a targeted city is confirmed", () => {
+    const onAttackCity = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[ADJACENT_MAC]}
+        cities={persiaSardis(SARDIS_MAX)}
+        attackable={[SARDIS_HEX]}
+        onAttackCity={onAttackCity}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: MACEDON }));
+    const target = container.querySelector('[data-city-attack="sardis"]')!;
+    fireEvent.click(target);
+    fireEvent.click(target);
+    expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
+  });
+
+  it("arms a targeted city on the first click without attacking", () => {
     const onAttackCity = vi.fn();
     const { container } = render(
       <HexBoard
@@ -957,7 +1008,7 @@ describe("HexBoard city rendering", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: MACEDON }));
     fireEvent.click(container.querySelector('[data-city-attack="sardis"]')!);
-    expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
+    expect(onAttackCity).not.toHaveBeenCalled();
   });
 
   it("covers the whole city hex with an interactive hit area, not just the X strokes", () => {
@@ -974,6 +1025,7 @@ describe("HexBoard city rendering", () => {
     fireEvent.click(screen.getByRole("button", { name: MACEDON }));
     const hitArea = container.querySelector('[data-city-attack="sardis"] polygon');
     expect(hitArea).not.toBeNull();
+    fireEvent.click(hitArea!);
     fireEvent.click(hitArea!);
     expect(onAttackCity).toHaveBeenCalledWith(MAC_ID, "sardis");
   });

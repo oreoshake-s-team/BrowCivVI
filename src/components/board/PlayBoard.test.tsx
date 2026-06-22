@@ -269,6 +269,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       return el;
     });
     fireEvent.click(overlay);
+    fireEvent.click(overlay);
 
     expect(await screen.findByText(/besieged Dascylium — dealt 30, took 6/)).not.toBeNull();
     expect(actions.attackCity).toHaveBeenCalledWith(MATCH_ID, MOVER.id, CITY_ID);

@@ -352,6 +352,25 @@
   pointer-events: none;
 }
 
+.attackConfirm {
+  pointer-events: none;
+}
+
+.attackConfirmPill {
+  fill: var(--color-danger-surface);
+  stroke: var(--color-surface-raised);
+  stroke-width: 1.5;
+}
+
+.attackConfirmText {
+  fill: var(--color-on-danger);
+  font-size: var(--font-size-label-md);
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
 .cityAttack:focus-visible .attackMark line {
   stroke: var(--color-outline-emphasis);
   stroke-width: 5;

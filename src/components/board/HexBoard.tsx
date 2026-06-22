@@ -82,6 +82,24 @@ function UnitMark({ unitClass, color }: { unitClass: UnitClass | undefined; colo
   );
 }
 
+function AttackConfirm({ targetId }: { targetId: string }) {
+  return (
+    <g className={styles.attackConfirm} data-attack-armed={targetId}>
+      <rect
+        className={styles.attackConfirmPill}
+        x={-SIZE * 0.5}
+        y={-SIZE * 1.1}
+        width={SIZE}
+        height={SIZE * 0.46}
+        rx={SIZE * 0.23}
+      />
+      <text className={styles.attackConfirmText} x={0} y={-SIZE * 0.87}>
+        Attack
+      </text>
+    </g>
+  );
+}
+
 function MediaGlyph() {
   return (
     <tspan className={styles.mediaGlyph} dx={4} aria-hidden="true">
@@ -175,6 +193,9 @@ export function HexBoard({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [hoveredUnitId, setHoveredUnitId] = useState<string | null>(null);
+  const [armedTarget, setArmedTarget] = useState<{ kind: "unit" | "city"; id: string } | null>(
+    null,
+  );
   const [view, setView] = useState(() => fitView(bounds, PAD));
   const [cited, setCited] = useState<{
     name: string;
@@ -190,7 +211,6 @@ export function HexBoard({
   const pointers = useRef(new Map<number, { x: number; y: number; sx: number; sy: number }>());
   const pinchDist = useRef<number | null>(null);
   const moved = useRef(false);
-  const pointerType = useRef<string>("mouse");
 
   const selectedUnit = units.find((unit) => unit.id === selectedId) ?? null;
   const selectedMoves =
@@ -251,11 +271,13 @@ export function HexBoard({
     setSeenDeselect(deselectSignal);
     setSelectedId(null);
     setSelectedCityId(null);
+    setArmedTarget(null);
   }
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);
     if (unitId !== null) setSelectedCityId(null);
+    setArmedTarget(null);
     onSelect?.(unitId);
   };
 
@@ -274,6 +296,7 @@ export function HexBoard({
   const tapHex = (hex: Hex) => {
     if (moved.current) return;
     setCited(null);
+    setArmedTarget(null);
     if (reachableKeys.has(hexKey(hex))) {
       tryMove(hex);
       return;
@@ -331,8 +354,18 @@ export function HexBoard({
     };
   }, [cited]);
 
+  useEffect(() => {
+    if (armedTarget === null) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setArmedTarget(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [armedTarget]);
+
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
-    pointerType.current = event.pointerType;
     moved.current = false;
     pointers.current.set(event.pointerId, {
       x: event.clientX,
@@ -488,9 +521,18 @@ export function HexBoard({
             const loyaltyFillWidth = Math.abs(loyaltyFrac) * SIZE * 0.5;
             const isCityTarget =
               city !== undefined && selectedId !== null && attackableKeys.has(key);
+            const cityArmed = armedTarget?.kind === "city" && armedTarget.id === city?.id;
             const attackCity = () => {
               if (city !== undefined && selectedId !== null && onAttackCity)
                 onAttackCity(selectedId, city.id);
+            };
+            const confirmCityAttack = () => {
+              attackCity();
+              setArmedTarget(null);
+            };
+            const armOrConfirmCity = () => {
+              if (cityArmed) confirmCityAttack();
+              else if (city !== undefined) setArmedTarget({ kind: "city", id: city.id });
             };
             const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
             const isBank = bankRegion !== undefined;
@@ -756,20 +798,24 @@ export function HexBoard({
                     data-city-attack={city.id}
                     role="button"
                     tabIndex={0}
-                    aria-label={`${city.name} — attackable`}
+                    aria-label={
+                      cityArmed
+                        ? `${city.name} — armed; activate again to attack`
+                        : `${city.name} — attackable`
+                    }
                     transform={`translate(${center.x}, ${center.y})`}
                     onClick={(event) => {
                       event.stopPropagation();
-                      if (!moved.current) attackCity();
+                      if (!moved.current) armOrConfirmCity();
                     }}
                     onContextMenu={(event) => {
                       event.preventDefault();
-                      if (!moved.current) attackCity();
+                      if (!moved.current) confirmCityAttack();
                     }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        attackCity();
+                        armOrConfirmCity();
                       }
                     }}
                   >
@@ -777,10 +823,14 @@ export function HexBoard({
                       className={styles.cityAttackHit}
                       points={hexPolygonPoints({ x: 0, y: 0 }, SIZE)}
                     />
-                    <g className={styles.attackMark}>
-                      <line x1={-SIZE * 0.2} y1={-SIZE * 0.2} x2={SIZE * 0.2} y2={SIZE * 0.2} />
-                      <line x1={-SIZE * 0.2} y1={SIZE * 0.2} x2={SIZE * 0.2} y2={-SIZE * 0.2} />
-                    </g>
+                    {cityArmed ? (
+                      <AttackConfirm targetId={city.id} />
+                    ) : (
+                      <g className={styles.attackMark}>
+                        <line x1={-SIZE * 0.2} y1={-SIZE * 0.2} x2={SIZE * 0.2} y2={SIZE * 0.2} />
+                        <line x1={-SIZE * 0.2} y1={SIZE * 0.2} x2={SIZE * 0.2} y2={-SIZE * 0.2} />
+                      </g>
+                    )}
                   </g>
                 ) : null}
               </g>
@@ -894,13 +944,19 @@ export function HexBoard({
             const revealed = selected || hoveredUnitId === unit.id;
             const showMoves =
               moves !== undefined && (unit.owner === playerFaction ? moves > 0 : revealed);
+            const unitArmed = armedTarget?.kind === "unit" && armedTarget.id === unit.id;
             const toggle = () => {
               if (moved.current) return;
               setCited(null);
               select(selected ? null : unit.id);
             };
-            const doAttack = () => {
+            const confirmAttack = () => {
               if (selectedId !== null && onAttack) onAttack(selectedId, unit.hex);
+              setArmedTarget(null);
+            };
+            const armOrConfirmAttack = () => {
+              if (unitArmed) confirmAttack();
+              else setArmedTarget({ kind: "unit", id: unit.id });
             };
             return (
               <g
@@ -911,7 +967,7 @@ export function HexBoard({
                 transform={`translate(${center.x}, ${center.y})`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? " — attackable" : ""}${outOfSupply ? " — out of supply" : ""}`}
+                aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? (unitArmed ? " — armed; activate again to attack" : " — attackable") : ""}${outOfSupply ? " — out of supply" : ""}`}
                 aria-pressed={selected}
                 onMouseEnter={() => {
                   setHoveredUnitId(unit.id);
@@ -928,17 +984,19 @@ export function HexBoard({
                 onClick={(event) => {
                   event.stopPropagation();
                   if (moved.current) return;
-                  if (pointerType.current !== "mouse" && isAttackTarget) doAttack();
-                  else toggle();
+                  if (isAttackTarget) {
+                    setCited(null);
+                    armOrConfirmAttack();
+                  } else toggle();
                 }}
                 onContextMenu={(event) => {
                   event.preventDefault();
-                  if (!moved.current && isAttackTarget) doAttack();
+                  if (!moved.current && isAttackTarget) confirmAttack();
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    if (isAttackTarget) doAttack();
+                    if (isAttackTarget) armOrConfirmAttack();
                     else select(selected ? null : unit.id);
                   }
                 }}
@@ -995,10 +1053,14 @@ export function HexBoard({
                   </g>
                 ) : null}
                 {isAttackTarget ? (
-                  <g className={styles.attackMark} data-attack-target={unit.id}>
-                    <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />
-                    <line x1={-SIZE * 0.18} y1={-SIZE * 0.6} x2={SIZE * 0.18} y2={-SIZE * 0.96} />
-                  </g>
+                  unitArmed ? (
+                    <AttackConfirm targetId={unit.id} />
+                  ) : (
+                    <g className={styles.attackMark} data-attack-target={unit.id}>
+                      <line x1={-SIZE * 0.18} y1={-SIZE * 0.96} x2={SIZE * 0.18} y2={-SIZE * 0.6} />
+                      <line x1={-SIZE * 0.18} y1={-SIZE * 0.6} x2={SIZE * 0.18} y2={-SIZE * 0.96} />
+                    </g>
+                  )
                 ) : null}
                 {showMoves ? (
                   <g
