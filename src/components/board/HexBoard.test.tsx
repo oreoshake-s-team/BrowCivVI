@@ -965,6 +965,91 @@ describe("HexBoard city rendering", () => {
   });
 });
 
+const HILLS_CITY_MAP = createGameMap(
+  [{ hex: { q: 0, r: 0 }, terrain: "hills", cityId: "sardis" }],
+  [
+    {
+      id: "sardis",
+      name: "Sardis",
+      hex: { q: 0, r: 0 },
+      owner: "persia",
+      value: 100,
+      defense: 20,
+      citation: SARDIS_CITATION,
+    },
+  ],
+);
+
+describe("HexBoard city markers", () => {
+  it("draws a settlement marker on a city hex", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector('[data-city-marker="sardis"]')).not.toBeNull();
+  });
+
+  it("draws no settlement marker on a hex without a city", () => {
+    const plainsOnly = createGameMap([{ hex: { q: 0, r: 0 }, terrain: "plains" }], []);
+    const { container } = render(<HexBoard map={plainsOnly} units={[]} />);
+    expect(container.querySelector("[data-city-marker]")).toBeNull();
+  });
+
+  it("tints the settlement marker with the owner's faction color", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector('[data-city-marker="sardis"]')?.getAttribute("style")).toContain(
+      "--faction-persia-stroke",
+    );
+  });
+
+  it("marks a Macedon city with the Macedonian sigil", () => {
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[]}
+        cities={[{ id: "sardis", owner: "macedon", hp: SARDIS_MAX }]}
+      />,
+    );
+    expect(container.querySelector('[data-city-sigil="macedon"]')).not.toBeNull();
+  });
+
+  it("marks a Persia city with the Persian sigil", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector('[data-city-sigil="persia"]')).not.toBeNull();
+  });
+
+  it("marks an unowned city with the neutral sigil", () => {
+    const neutralMap = createGameMap(
+      [{ hex: { q: 0, r: 0 }, terrain: "plains", cityId: "ilium" }],
+      [
+        {
+          id: "ilium",
+          name: "Ilium",
+          hex: { q: 0, r: 0 },
+          owner: null,
+          value: 50,
+          defense: 10,
+          citation: SARDIS_CITATION,
+        },
+      ],
+    );
+    const { container } = render(
+      <HexBoard map={neutralMap} units={[]} cities={[{ id: "ilium", owner: null, hp: 100 }]} />,
+    );
+    expect(container.querySelector('[data-city-sigil="neutral"]')).not.toBeNull();
+  });
+
+  it("suppresses the terrain motif on a city hex", () => {
+    const { container } = render(
+      <HexBoard map={HILLS_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector('[data-motif="hills"]')).toBeNull();
+  });
+});
+
 function sardisLoyalty(loyalty: number): readonly CityState[] {
   return [{ id: "sardis", owner: "persia", hp: SARDIS_MAX, loyalty }];
 }
