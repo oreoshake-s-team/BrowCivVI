@@ -84,6 +84,20 @@ describe("HexBoard", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} regions={[SEA_REGION]} />);
     expect(screen.getByText("Aegean Sea")).toBeTruthy();
   });
+
+  it("draws a royal road segment for an authored road", () => {
+    const roadMap = createGameMap(
+      [
+        { hex: { q: 0, r: 0 }, terrain: "plains" },
+        { hex: { q: 1, r: 0 }, terrain: "hills" },
+      ],
+      [],
+      [],
+      [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 }, royal: true }],
+    );
+    const { container } = render(<HexBoard map={roadMap} units={[]} />);
+    expect(container.querySelector('[data-road="royal"]')).not.toBeNull();
+  });
 });
 
 describe("HexBoard interaction", () => {

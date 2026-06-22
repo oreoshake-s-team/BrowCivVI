@@ -32,6 +32,8 @@
   --color-ink-subtle: var(--ink-400);
   --color-water-river: var(--blue-500);
   --color-water-sea: var(--blue-800);
+  --color-road: var(--ink-700);
+  --color-road-royal: var(--gold-700);
   --color-reach-fill: var(--gold-400-a38);
   --color-reach-stroke: var(--gold-700);
   --color-media-accent: var(--gold-700);

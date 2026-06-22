@@ -1,6 +1,8 @@
+import { hexDistance } from "../hex";
 import { TERRAIN_CATALOG } from "../map/terrain";
 import type { City, GameMap } from "../map/types";
 import { hexKey } from "../map/types";
+import { riverEdgeKey } from "../movement/cost";
 
 export interface ValidationResult {
   readonly errors: readonly string[];
@@ -107,6 +109,23 @@ export function cityTerrainErrors(map: GameMap): string[] {
   return errors;
 }
 
+export function roadErrors(map: GameMap): string[] {
+  const errors: string[] = [];
+  const riverKeys = new Set(map.rivers.map((river) => riverEdgeKey(river.a, river.b)));
+  for (const road of map.roads) {
+    const key = riverEdgeKey(road.a, road.b);
+    if (riverKeys.has(key)) errors.push(`Road must not cross the river at ${key}`);
+    if (hexDistance(road.a, road.b) !== 1) errors.push(`Road must join adjacent hexes at ${key}`);
+    for (const end of [road.a, road.b]) {
+      const tile = map.hexes.get(hexKey(end));
+      if (tile === undefined || !TERRAIN_CATALOG[tile.terrain].passableBy.includes("land")) {
+        errors.push(`Road runs off land at ${hexKey(end)}`);
+      }
+    }
+  }
+  return errors;
+}
+
 export function citationErrors(map: GameMap): string[] {
   return [...map.cities.values()]
     .filter((city) => city.citation === undefined)
@@ -146,6 +165,7 @@ export function validateFirstSlice(map: GameMap): ValidationResult {
       ...cityTerrainErrors(map),
       ...citationErrors(map),
       ...anachronismErrors(map),
+      ...roadErrors(map),
     ],
     warnings: chronologyWarnings(map),
   };

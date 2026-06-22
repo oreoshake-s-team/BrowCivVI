@@ -2,7 +2,7 @@ import type { Citation, Confidence, SourceType } from "@/engine/content/citation
 import type { NamedRegion } from "@/engine/content/region";
 import type { DivergenceNode } from "@/engine/divergence/divergence";
 import type { TerrainType } from "@/engine/map/terrain";
-import type { City, GameMap, MapHex, RiverEdge } from "@/engine/map/types";
+import type { City, GameMap, MapHex, RiverEdge, RoadEdge } from "@/engine/map/types";
 import { createGameMap } from "@/engine/map/types";
 import type { Unit } from "@/engine/unit/types";
 
@@ -378,6 +378,33 @@ const RIVERS: readonly RiverEdge[] = [
   { a: { q: 6, r: 1 }, b: { q: 7, r: 0 } },
 ];
 
+function road(a: readonly [number, number], b: readonly [number, number], royal = false): RoadEdge {
+  const edge = { a: { q: a[0], r: a[1] }, b: { q: b[0], r: b[1] } };
+  return royal ? { ...edge, royal: true } : edge;
+}
+
+const ROADS: readonly RoadEdge[] = [
+  road([8, 1], [7, 1], true),
+  road([8, 1], [8, 2], true),
+  road([8, 2], [8, 3], true),
+  road([8, 3], [8, 4], true),
+  road([0, 1], [1, 1]),
+  road([1, 1], [2, 1]),
+  road([2, 1], [3, 0]),
+  road([3, 0], [4, 0]),
+  road([5, 0], [5, 1]),
+  road([5, 1], [5, 2]),
+  road([2, 5], [1, 5]),
+  road([1, 5], [1, 6]),
+  road([8, 4], [7, 5]),
+  road([7, 5], [7, 6]),
+  road([7, 6], [6, 6]),
+  road([7, 6], [7, 7]),
+  road([7, 7], [7, 8]),
+  road([7, 8], [6, 8]),
+  road([7, 8], [7, 9]),
+];
+
 function island(id: string, name: string, claim: string, title: string, url: string): NamedRegion {
   return { id, name, kind: "island", citation: ref(claim, title, url) };
 }
@@ -497,7 +524,7 @@ export const FIRST_SLICE_REGIONS: readonly NamedRegion[] = [
   ),
 ];
 
-export const FIRST_SLICE_MAP: GameMap = createGameMap(HEXES, CITIES, RIVERS);
+export const FIRST_SLICE_MAP: GameMap = createGameMap(HEXES, CITIES, RIVERS, ROADS);
 
 export const FIRST_SLICE_CITIES: readonly City[] = CITIES;
 

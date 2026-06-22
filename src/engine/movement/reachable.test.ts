@@ -104,6 +104,16 @@ describe("reachableHexes (Granicus map)", () => {
     });
     expect(reachable.has("2,5")).toBe(false);
   });
+
+  it("carries a unit down the royal road from Dascylium to Sardis on two movement", () => {
+    const reachable = reachableHexes({
+      start: { q: 8, r: 1 },
+      movement: 2,
+      map: FIRST_SLICE_MAP,
+      domain: "land",
+    });
+    expect(reachable.has("8,4")).toBe(true);
+  });
 });
 
 describe("reachableHexes (occupied tiles)", () => {
@@ -218,6 +228,74 @@ describe("reachableHexes (river crossings)", () => {
       atFullMovement: true,
     });
     expect(reachable.get("1,0")).toBe(1);
+  });
+});
+
+describe("reachableHexes (roads)", () => {
+  const HILL_ROW = [
+    { hex: { q: 0, r: 0 }, terrain: "plains" as const },
+    { hex: { q: 1, r: 0 }, terrain: "hills" as const },
+    { hex: { q: 2, r: 0 }, terrain: "hills" as const },
+    { hex: { q: 3, r: 0 }, terrain: "hills" as const },
+  ];
+  const ROAD = [
+    { a: { q: 0, r: 0 }, b: { q: 1, r: 0 } },
+    { a: { q: 1, r: 0 }, b: { q: 2, r: 0 } },
+    { a: { q: 2, r: 0 }, b: { q: 3, r: 0 } },
+  ];
+  const NO_ROAD_MAP = createGameMap(HILL_ROW, []);
+  const ROAD_MAP = createGameMap(HILL_ROW, [], [], ROAD);
+  const ROYAL_MAP = createGameMap(
+    HILL_ROW,
+    [],
+    [],
+    ROAD.map((edge) => ({ ...edge, royal: true })),
+  );
+
+  it("cannot reach the second hill over open ground with two movement", () => {
+    expect(
+      reachableHexes({ start, movement: 2, map: NO_ROAD_MAP, domain: "land" }).has("2,0"),
+    ).toBe(false);
+  });
+
+  it("reaches the second hill along a road that waives the hill penalty", () => {
+    expect(reachableHexes({ start, movement: 2, map: ROAD_MAP, domain: "land" }).has("2,0")).toBe(
+      true,
+    );
+  });
+
+  it("spends only one movement to enter a hill along a road", () => {
+    expect(reachableHexes({ start, movement: 2, map: ROAD_MAP, domain: "land" }).get("1,0")).toBe(
+      1,
+    );
+  });
+
+  it("reaches three hills deep along a royal road's double movement", () => {
+    expect(reachableHexes({ start, movement: 2, map: ROYAL_MAP, domain: "land" }).has("3,0")).toBe(
+      true,
+    );
+  });
+
+  it("spends only half a movement point per hex on a royal road", () => {
+    expect(reachableHexes({ start, movement: 2, map: ROYAL_MAP, domain: "land" }).get("1,0")).toBe(
+      1.5,
+    );
+  });
+
+  it("denies the road discount where a road would coincide with a river", () => {
+    const map = createGameMap(
+      [
+        { hex: { q: 0, r: 0 }, terrain: "plains" },
+        { hex: { q: 1, r: 0 }, terrain: "plains" },
+      ],
+      [],
+      [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 } }],
+      [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 }, royal: true }],
+    );
+    const riverEdges = riverEdgeSet(map.rivers);
+    expect(reachableHexes({ start, movement: 2, map, domain: "land", riverEdges }).has("1,0")).toBe(
+      false,
+    );
   });
 });
 
