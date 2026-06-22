@@ -3,6 +3,7 @@ import { createGameMap, hexKey, type City } from "../map/types";
 import {
   absorbCityDamage,
   blockingCityHexes,
+  canCityStrike,
   captureCityAt,
   CITY_HEAL_RATE,
   CITY_HP_PER_DEFENSE,
@@ -31,6 +32,37 @@ const city = (id: string, owner: string | null, defense: number): City => ({
 describe("cityMaxHp", () => {
   it("scales HP from the authored defense", () => {
     expect(cityMaxHp(24)).toBe(24 * CITY_HP_PER_DEFENSE);
+  });
+});
+
+describe("canCityStrike", () => {
+  it("lets a walled city with standing walls strike", () => {
+    expect(canCityStrike({ id: "c", owner: "persia", hp: 160, wallHp: 100 })).toBe(true);
+  });
+
+  it("denies a city whose walls are breached", () => {
+    expect(canCityStrike({ id: "c", owner: "persia", hp: 160, wallHp: 0 })).toBe(false);
+  });
+
+  it("denies an unwalled city", () => {
+    expect(canCityStrike({ id: "c", owner: "persia", hp: 160 })).toBe(false);
+  });
+
+  it("denies a city that has already struck this turn", () => {
+    expect(
+      canCityStrike({ id: "c", owner: "persia", hp: 160, wallHp: 100, struckThisTurn: true }),
+    ).toBe(false);
+  });
+});
+
+describe("healCities wall-strike reset", () => {
+  it("clears the spent strike flag for the owner's incoming turn", () => {
+    const reset = healCities(
+      [{ id: "sardis", owner: "persia", hp: cityMaxHp(24), wallHp: 100, struckThisTurn: true }],
+      "persia",
+      () => cityMaxHp(24),
+    );
+    expect(reset[0]?.struckThisTurn).toBe(false);
   });
 });
 
