@@ -13,9 +13,11 @@ import {
 } from "@/app/play/actions";
 import type { Hex } from "@/engine/hex";
 import { hexKey } from "@/engine/map/types";
+import type { Unit } from "@/engine/unit/types";
 import { inputLocked, playerHasActions, type PlayBoardState } from "./playBoardState";
 import { usePlayBoardStore } from "./playBoardStore";
 import {
+  defeatedFadeUnits,
   newAttackEvents,
   newDefectionEvents,
   replayAttacks,
@@ -101,6 +103,14 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     }, FLOATER_MS);
   };
 
+  const pushFade = (units: readonly Unit[]) => {
+    if (units.length === 0) return;
+    usePlayBoardStore.getState().setFading(units);
+    setTimeout(() => {
+      usePlayBoardStore.getState().setFading([]);
+    }, FADE_MS);
+  };
+
   const select = async (unitId: string | null) => {
     const store = usePlayBoardStore.getState();
     if (unitId === null || store.matchId === null || inputLocked(store)) {
@@ -171,13 +181,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
       pushFloater(outcome.defenderHex, `-${outcome.defenderDamage}`);
     }
     const defeatedIds = new Set(outcome.defeated ?? []);
-    const fading = store.units.filter((unit) => defeatedIds.has(unit.id));
-    if (fading.length > 0) {
-      usePlayBoardStore.getState().setFading(fading);
-      setTimeout(() => {
-        usePlayBoardStore.getState().setFading([]);
-      }, FADE_MS);
-    }
+    pushFade(store.units.filter((unit) => defeatedIds.has(unit.id)));
     await refreshTargetsOrDeselect(store.matchId, attackerId);
   };
 
@@ -216,6 +220,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     const store = usePlayBoardStore.getState();
     if (store.matchId === null) return;
     const sinceSeq = store.events.length;
+    const preTurnUnits = new Map(store.units.map((unit) => [unit.id, unit]));
     store.endTurnStarted();
     let board: BoardView;
     try {
@@ -240,6 +245,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
         showHit: (event) => {
           pushFloater(event.attackerHex, `-${event.attackerDamage}`);
           pushFloater(event.targetHex, `-${event.defenderDamage}`);
+          pushFade(defeatedFadeUnits(event, preTurnUnits));
         },
         delay,
       },
