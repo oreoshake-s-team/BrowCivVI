@@ -22,40 +22,6 @@ const unit = (id: string, typeId: string, owner: string, q: number, r: number): 
 
 const MACEDON = unit("m1", "pezhetairos", "macedon", 1, 1);
 
-describe("attackableHexes", () => {
-  it("lists an adjacent enemy hex as attackable", () => {
-    const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
-    expect(attackableHexes([MACEDON, persia], "m1")).toContainEqual({ q: 2, r: 1 });
-  });
-
-  it("excludes an enemy that is more than one hex away", () => {
-    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
-    expect(attackableHexes([MACEDON, persia], "m1")).toHaveLength(0);
-  });
-
-  it("never targets a friendly unit", () => {
-    const ally = unit("m2", "pezhetairos", "macedon", 2, 1);
-    expect(attackableHexes([MACEDON, ally], "m1")).toHaveLength(0);
-  });
-
-  it("returns nothing for an unknown attacker id", () => {
-    const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
-    expect(attackableHexes([MACEDON, persia], "ghost")).toHaveLength(0);
-  });
-
-  it("lets a ranged unit target an enemy two hexes away", () => {
-    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
-    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
-    expect(attackableHexes([archers, persia], "a1")).toContainEqual({ q: 3, r: 1 });
-  });
-
-  it("does not let a ranged unit target an enemy three hexes away", () => {
-    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
-    const persia = unit("p1", "persian-cavalry", "persia", 4, 1);
-    expect(attackableHexes([archers, persia], "a1")).toHaveLength(0);
-  });
-});
-
 const FLAT_MAP = createGameMap(
   [
     { hex: { q: 1, r: 1 }, terrain: "plains" },
@@ -64,34 +30,82 @@ const FLAT_MAP = createGameMap(
   [],
 );
 const NO_RIVERS: ReadonlySet<string> = new Set();
+const NO_CITIES: readonly CityState[] = [];
+
+describe("attackableHexes", () => {
+  it("lists an adjacent enemy hex as attackable", () => {
+    const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
+    expect(attackableHexes([MACEDON, persia], "m1", FLAT_MAP, NO_CITIES)).toContainEqual({
+      q: 2,
+      r: 1,
+    });
+  });
+
+  it("excludes an enemy that is more than one hex away", () => {
+    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
+    expect(attackableHexes([MACEDON, persia], "m1", FLAT_MAP, NO_CITIES)).toHaveLength(0);
+  });
+
+  it("never targets a friendly unit", () => {
+    const ally = unit("m2", "pezhetairos", "macedon", 2, 1);
+    expect(attackableHexes([MACEDON, ally], "m1", FLAT_MAP, NO_CITIES)).toHaveLength(0);
+  });
+
+  it("returns nothing for an unknown attacker id", () => {
+    const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
+    expect(attackableHexes([MACEDON, persia], "ghost", FLAT_MAP, NO_CITIES)).toHaveLength(0);
+  });
+
+  it("lets a ranged unit target an enemy two hexes away", () => {
+    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
+    const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
+    expect(attackableHexes([archers, persia], "a1", FLAT_MAP, NO_CITIES)).toContainEqual({
+      q: 3,
+      r: 1,
+    });
+  });
+
+  it("does not let a ranged unit target an enemy three hexes away", () => {
+    const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
+    const persia = unit("p1", "persian-cavalry", "persia", 4, 1);
+    expect(attackableHexes([archers, persia], "a1", FLAT_MAP, NO_CITIES)).toHaveLength(0);
+  });
+});
 
 describe("reachableAttacks", () => {
   it("lists an adjacent enemy a unit can still afford to reach", () => {
     const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
-    const hexes = reachableAttacks([MACEDON, persia], { m1: 2 }, MACEDON, FLAT_MAP, NO_RIVERS);
+    const hexes = reachableAttacks(
+      [MACEDON, persia],
+      { m1: 2 },
+      MACEDON,
+      FLAT_MAP,
+      NO_RIVERS,
+      NO_CITIES,
+    );
     expect(hexes).toContainEqual({ q: 2, r: 1 });
   });
 
   it("excludes a target the unit can no longer pay to reach", () => {
     const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
     expect(
-      reachableAttacks([MACEDON, persia], { m1: 0 }, MACEDON, FLAT_MAP, NO_RIVERS),
+      reachableAttacks([MACEDON, persia], { m1: 0 }, MACEDON, FLAT_MAP, NO_RIVERS, NO_CITIES),
     ).toHaveLength(0);
   });
 
   it("offers no targets once the unit has attacked this turn", () => {
     const persia = unit("p1", "persian-cavalry", "persia", 2, 1);
     const spent = { ...MACEDON, hasAttackedThisTurn: true };
-    expect(reachableAttacks([spent, persia], { m1: 2 }, spent, FLAT_MAP, NO_RIVERS)).toHaveLength(
-      0,
-    );
+    expect(
+      reachableAttacks([spent, persia], { m1: 2 }, spent, FLAT_MAP, NO_RIVERS, NO_CITIES),
+    ).toHaveLength(0);
   });
 
   it("lets a ranged unit fire at a distant enemy without paying movement to reach it", () => {
     const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
     const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
     expect(
-      reachableAttacks([archers, persia], { a1: 1 }, archers, FLAT_MAP, NO_RIVERS),
+      reachableAttacks([archers, persia], { a1: 1 }, archers, FLAT_MAP, NO_RIVERS, NO_CITIES),
     ).toContainEqual({ q: 3, r: 1 });
   });
 
@@ -99,7 +113,7 @@ describe("reachableAttacks", () => {
     const archers = unit("a1", "cretan-archers", "macedon", 1, 1);
     const persia = unit("p1", "persian-cavalry", "persia", 3, 1);
     expect(
-      reachableAttacks([archers, persia], { a1: 0 }, archers, FLAT_MAP, NO_RIVERS),
+      reachableAttacks([archers, persia], { a1: 0 }, archers, FLAT_MAP, NO_RIVERS, NO_CITIES),
     ).toHaveLength(0);
   });
 });
@@ -166,5 +180,42 @@ describe("reachableCityAttacks", () => {
         { id: "c2", owner: "persia", hp: 50 },
       ]),
     ).toContainEqual({ q: 3, r: 1 });
+  });
+});
+
+const FORT_MAP = createGameMap(
+  [
+    { hex: { q: 1, r: 1 }, terrain: "plains" },
+    { hex: { q: 2, r: 1 }, terrain: "plains", cityId: "fort" },
+  ],
+  [],
+);
+const GARRISON = unit("g1", "persian-cavalry", "persia", 2, 1);
+
+describe("garrison shield", () => {
+  it("hides a garrison behind its standing city", () => {
+    const cities: readonly CityState[] = [{ id: "fort", owner: "persia", hp: 50 }];
+    expect(attackableHexes([MACEDON, GARRISON], "m1", FORT_MAP, cities)).toHaveLength(0);
+  });
+
+  it("offers the standing city as the target on the garrison's hex", () => {
+    const cities: readonly CityState[] = [{ id: "fort", owner: "persia", hp: 50 }];
+    expect(attackableCityHexes(MACEDON, FORT_MAP, cities)).toContainEqual({ q: 2, r: 1 });
+  });
+
+  it("exposes the garrison once the city is fully breached", () => {
+    const cities: readonly CityState[] = [{ id: "fort", owner: "persia", hp: 0 }];
+    expect(attackableHexes([MACEDON, GARRISON], "m1", FORT_MAP, cities)).toContainEqual({
+      q: 2,
+      r: 1,
+    });
+  });
+
+  it("does not shield a unit standing on a city it does not own", () => {
+    const cities: readonly CityState[] = [{ id: "fort", owner: "macedon", hp: 50 }];
+    expect(attackableHexes([MACEDON, GARRISON], "m1", FORT_MAP, cities)).toContainEqual({
+      q: 2,
+      r: 1,
+    });
   });
 });

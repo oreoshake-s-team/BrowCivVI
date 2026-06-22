@@ -69,3 +69,20 @@ describe("movementConstraints city blocks", () => {
     expect(constraints.blocked.has(cityKey)).toBe(true);
   });
 });
+
+describe("movementConstraints garrison delays capture", () => {
+  const GARRISON_HEX: Hex = { q: 1, r: 0 };
+
+  it("blocks the hex of an enemy garrison even on a fallen, unblocked city", () => {
+    const mover = unit("m1", "macedon", PEZHETAIROS, { q: 0, r: 0 });
+    const garrison = unit("g1", "persia", PERSIAN_CAVALRY, GARRISON_HEX);
+    const constraints = movementConstraints([mover, garrison], mover, noRivers, new Set());
+    expect(constraints.blocked.has(hexKey(GARRISON_HEX))).toBe(true);
+  });
+
+  it("leaves an empty fallen city hex open to be captured by entry", () => {
+    const mover = unit("m1", "macedon", PEZHETAIROS, { q: 0, r: 0 });
+    const constraints = movementConstraints([mover], mover, noRivers, new Set());
+    expect(constraints.blocked.has(hexKey(GARRISON_HEX))).toBe(false);
+  });
+});
