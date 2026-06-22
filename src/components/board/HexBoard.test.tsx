@@ -917,3 +917,50 @@ describe("HexBoard defection pulse", () => {
     expect(container.querySelector("[data-defection-pulse]")).toBeNull();
   });
 });
+
+describe("HexBoard city selection and incite", () => {
+  it("selects a city for incitement when clicked with no unit selected", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    fireEvent.click(container.querySelector('[data-hex="0,0"]')!);
+    expect(container.querySelector('[data-city-selected="sardis"]')).not.toBeNull();
+  });
+
+  it("shows the city panel for the selected city", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    fireEvent.click(container.querySelector('[data-hex="0,0"]')!);
+    expect(screen.getByRole("region", { name: "Selected city" })).not.toBeNull();
+  });
+
+  it("incites the selected city through the panel when incite is available", () => {
+    const onIncite = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[]}
+        cities={persiaSardis(SARDIS_MAX)}
+        canIncite
+        onIncite={onIncite}
+      />,
+    );
+    fireEvent.click(container.querySelector('[data-hex="0,0"]')!);
+    fireEvent.click(screen.getByRole("button", { name: "Incite" }));
+    expect(onIncite).toHaveBeenCalledWith("sardis");
+  });
+
+  it("disables incite in the panel when it is unavailable", () => {
+    const { container } = render(
+      <HexBoard
+        map={CITED_CITY_MAP}
+        units={[]}
+        cities={persiaSardis(SARDIS_MAX)}
+        canIncite={false}
+      />,
+    );
+    fireEvent.click(container.querySelector('[data-hex="0,0"]')!);
+    expect(screen.getByRole("button", { name: "Incite" })).toHaveProperty("disabled", true);
+  });
+});
