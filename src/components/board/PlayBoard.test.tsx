@@ -39,6 +39,7 @@ vi.mock("@/app/play/actions", () => ({
   move: vi.fn(),
   attack: vi.fn(),
   attackCity: vi.fn(),
+  incite: vi.fn(),
   endTurn: vi.fn(),
   resolveDivergence: vi.fn(),
 }));
@@ -101,6 +102,32 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       reachable: [DEST],
       attackable: [ENEMY_HEX],
     } satisfies SelectionTargets);
+  });
+
+  it("incites a selected city through the city panel", async () => {
+    const incitable = (canIncite: boolean): BoardView => ({
+      matchId: MATCH_ID,
+      units: SAMPLE_UNITS,
+      movement: NO_MOVEMENT,
+      playerFaction: "macedon",
+      cities: CITIES_VIEW,
+      turn: 1,
+      activeFaction: "macedon",
+      events: [],
+      scorched: [],
+      canIncite,
+    });
+    vi.mocked(actions.loadBoard).mockResolvedValue({ status: "ok", board: incitable(true) });
+    vi.mocked(actions.incite).mockResolvedValue({ ok: true, board: incitable(false) });
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await screen.findByRole("button", { name: /Pezhetairos \(macedon\)/ });
+    fireEvent.click(container.querySelector('[data-hex="3,1"]')!);
+    fireEvent.click(screen.getByRole("button", { name: "Incite" }));
+
+    await waitFor(() => {
+      expect(actions.incite).toHaveBeenCalledWith(MATCH_ID, "dascylium");
+    });
   });
 
   afterEach(() => {

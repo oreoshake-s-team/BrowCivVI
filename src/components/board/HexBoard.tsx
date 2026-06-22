@@ -6,6 +6,7 @@ import type { Citation } from "@/engine/content/citation";
 import type { MediaLink } from "@/engine/content/media";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
+import { neighbors } from "@/engine/hex";
 import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
 import { blocksLand, type TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
@@ -22,6 +23,7 @@ import type { UnitClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { CitationCard } from "./CitationCard";
 import { CitationTarget } from "./CitationTarget";
+import { CityPanel, type CityPanelInfo } from "./CityPanel";
 import DebugPanel from "./DebugPanel";
 import { riverSegmentPoints } from "./geometry";
 import styles from "./HexBoard.module.css";
@@ -130,10 +132,12 @@ export interface HexBoardProps {
   readonly events?: readonly MatchEvent[];
   readonly panTarget?: Hex | null;
   readonly defectionPulse?: Hex | null;
+  readonly canIncite?: boolean;
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
   readonly onAttack?: (attackerId: string, target: Hex) => void;
   readonly onAttackCity?: (attackerId: string, cityId: string) => void;
+  readonly onIncite?: (cityId: string) => void;
 }
 
 export function HexBoard({
@@ -152,16 +156,19 @@ export function HexBoard({
   defectionPulse = null,
   events = [],
   panTarget = null,
+  canIncite = false,
   onSelect,
   onMove,
   onAttack,
   onAttackCity,
+  onIncite,
 }: HexBoardProps) {
   const bounds = mapPixelBounds(map, SIZE);
   const fitW = bounds.maxX - bounds.minX + PAD * 2;
 
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [hoveredUnitId, setHoveredUnitId] = useState<string | null>(null);
   const [view, setView] = useState(() => fitView(bounds, PAD));
   const [cited, setCited] = useState<{
@@ -196,6 +203,28 @@ export function HexBoard({
   const cityStateById = new Map(cities.map((city) => [city.id, city]));
   const cityNames = new Map(Array.from(map.cities.values()).map((city) => [city.id, city.name]));
   const scorchedKeys = new Set(scorched);
+  const selectedCityInfo: CityPanelInfo | null = (() => {
+    if (selectedCityId === null) return null;
+    const cityState = cityStateById.get(selectedCityId);
+    const mapCity = map.cities.get(selectedCityId);
+    if (cityState === undefined || mapCity === undefined) return null;
+    const loyalty = cityState.loyalty ?? 0;
+    const leaning = loyalty > 0 ? "macedon" : loyalty < 0 ? "persia" : null;
+    const cells = new Set([hexKey(mapCity.hex), ...neighbors(mapCity.hex).map(hexKey)]);
+    return {
+      id: selectedCityId,
+      name: mapCity.name,
+      owner: cityState.owner,
+      loyalty,
+      hp: cityState.hp,
+      maxHp: cityMaxHp(mapCity.defense),
+      wavering:
+        leaning !== null &&
+        leaning !== cityState.owner &&
+        Math.abs(loyalty) >= LOYALTY_DEFECT_THRESHOLD,
+      scorchedAdjacent: scorched.some((key) => cells.has(key)),
+    };
+  })();
   const occupiedKeys = new Set(units.map((unit) => hexKey(unit.hex)));
   const labeledHexKeys = new Set(
     regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
@@ -205,11 +234,18 @@ export function HexBoard({
   if (deselectSignal !== seenDeselect) {
     setSeenDeselect(deselectSignal);
     setSelectedId(null);
+    setSelectedCityId(null);
   }
 
   const select = (unitId: string | null) => {
     setSelectedId(unitId);
+    if (unitId !== null) setSelectedCityId(null);
     onSelect?.(unitId);
+  };
+
+  const selectCity = (cityId: string | null) => {
+    setSelectedCityId(cityId);
+    if (cityId !== null) select(null);
   };
 
   const [showQandR, setShowQandR] = useState(false);
@@ -222,8 +258,17 @@ export function HexBoard({
   const tapHex = (hex: Hex) => {
     if (moved.current) return;
     setCited(null);
-    if (pointerType.current !== "mouse" && reachableKeys.has(hexKey(hex))) tryMove(hex);
-    else select(null);
+    if (pointerType.current !== "mouse" && reachableKeys.has(hexKey(hex))) {
+      tryMove(hex);
+      return;
+    }
+    const cityId = map.hexes.get(hexKey(hex))?.cityId;
+    if (selectedId === null && cityId !== undefined) {
+      selectCity(cityId);
+      return;
+    }
+    select(null);
+    selectCity(null);
   };
 
   const cancelHide = () => {
@@ -514,6 +559,14 @@ export function HexBoard({
                   <polygon
                     className={styles.defectionPulse}
                     data-defection-pulse={key}
+                    points={hexPolygonPoints(center, SIZE)}
+                    pointerEvents="none"
+                  />
+                ) : null}
+                {selectedCityId !== null && city?.id === selectedCityId ? (
+                  <polygon
+                    className={styles.citySelectedRing}
+                    data-city-selected={selectedCityId}
                     points={hexPolygonPoints(center, SIZE)}
                     pointerEvents="none"
                   />
@@ -926,6 +979,10 @@ export function HexBoard({
         {selectedUnit !== null ? (
           <div className={styles.infoOverlay}>
             <InfoPanel unit={selectedUnit} moves={selectedMoves} />
+          </div>
+        ) : selectedCityInfo !== null ? (
+          <div className={styles.infoOverlay}>
+            <CityPanel city={selectedCityInfo} canIncite={canIncite} onIncite={onIncite} />
           </div>
         ) : null}
       </div>

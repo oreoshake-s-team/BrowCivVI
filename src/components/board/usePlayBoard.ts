@@ -6,6 +6,7 @@ import {
   move,
   attack,
   attackCity,
+  incite,
   newGame,
   endTurn,
   resolveDivergence,
@@ -52,6 +53,7 @@ export interface PlayBoardController {
   readonly retry: () => void;
   readonly dismissToast: () => void;
   readonly resolveChoice: (optionId: string) => void;
+  readonly incite: (cityId: string) => void;
 }
 
 export function usePlayBoard(initialMatchId?: string): PlayBoardController {
@@ -273,6 +275,17 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     if (outcome.ok) usePlayBoardStore.getState().divergenceResolved(outcome.board);
   };
 
+  const inciteCity = async (cityId: string) => {
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null || !store.canIncite || inputLocked(store)) return;
+    const outcome = await incite(store.matchId, cityId);
+    if (outcome.rateLimited === true) {
+      usePlayBoardStore.getState().setToast(RATE_LIMIT_MSG);
+      return;
+    }
+    if (outcome.ok) usePlayBoardStore.getState().inciteResolved(outcome.board);
+  };
+
   return {
     state,
     canEndTurn: !inputLocked(state),
@@ -287,6 +300,9 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     },
     attackCity: (attackerId, cityId) => {
       void attackCityAt(attackerId, cityId);
+    },
+    incite: (cityId) => {
+      void inciteCity(cityId);
     },
     requestEndTurn,
     confirmEndTurn: () => {

@@ -1,0 +1,11 @@
+{
+  "pr": 235,
+  "date": "2026-06-22",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "incite-board.webp",
+    "incite-panel.png"
+  ],
+  "issue": 229,
+  "title": "Select a city and incite it from the board"
+}

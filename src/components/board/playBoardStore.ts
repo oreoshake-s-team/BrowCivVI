@@ -44,6 +44,7 @@ export interface PlayBoardStore extends PlayBoardState {
   readonly setConfirmNewGame: (value: boolean) => void;
   readonly setToast: (toast: string | null) => void;
   readonly divergenceResolved: (board: BoardView) => void;
+  readonly inciteResolved: (board: BoardView) => void;
 }
 
 function projectBoard(board: BoardView): Partial<PlayBoardState> {
@@ -57,6 +58,7 @@ function projectBoard(board: BoardView): Partial<PlayBoardState> {
     activeFaction: board.activeFaction,
     events: board.events,
     scorched: board.scorched,
+    canIncite: board.canIncite,
     pendingDivergence: board.pendingDivergence ?? null,
     incompatible: board.incompatible ?? false,
   };
@@ -162,6 +164,9 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
   },
   setToast: (toast) => {
     set({ toast });
+  },
+  inciteResolved: (board) => {
+    set(projectBoard(board));
   },
   divergenceResolved: (board) => {
     set(projectBoard(board));

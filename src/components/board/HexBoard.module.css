@@ -383,6 +383,35 @@
   stroke-dasharray: 4 3;
 }
 
+.citySelectedRing {
+  fill: none;
+  stroke: var(--color-outline-emphasis);
+  stroke-width: 2.5;
+  stroke-dasharray: 4 3;
+}
+
+.inciteButton {
+  margin-top: var(--space-sm);
+  padding: var(--space-3xs) var(--space-md);
+  font: inherit;
+  color: var(--color-on-danger);
+  background: var(--color-danger-surface);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.inciteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inciteHint {
+  margin: var(--space-3xs) 0 0;
+  font-size: var(--font-size-label-sm);
+  color: var(--color-ink-muted);
+}
+
 .movesBadge {
   pointer-events: none;
 }
