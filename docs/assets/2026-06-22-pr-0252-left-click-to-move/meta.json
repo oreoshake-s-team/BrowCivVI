@@ -1,0 +1,11 @@
+{
+  "pr": 252,
+  "date": "2026-06-22",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "action-prompt.webp",
+    "reachable-hexes-after-selecting-a-unit.webp"
+  ],
+  "issue": 250,
+  "title": "left-click to move"
+}
