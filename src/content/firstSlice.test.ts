@@ -108,4 +108,28 @@ describe("FIRST_SLICE_UNITS", () => {
       r: 1,
     });
   });
+
+  it("fields the Cretan archers for Macedon", () => {
+    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-archers")?.typeId).toBe(
+      "cretan-archers",
+    );
+  });
+
+  it("brings a Macedonian siege train to the campaign", () => {
+    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-siege")?.typeId).toBe("siege-train");
+  });
+
+  it("arrays Persian archers behind the satraps' line", () => {
+    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "per-archers")?.typeId).toBe(
+      "persian-archers",
+    );
+  });
+
+  it("stations every unit on land it can occupy", () => {
+    const offLand = FIRST_SLICE_UNITS.filter((unit) => {
+      const terrain = mapHexAt(FIRST_SLICE_MAP, unit.hex)?.terrain;
+      return terrain === undefined || terrain === "coast" || terrain === "deepSea";
+    });
+    expect(offLand).toEqual([]);
+  });
 });

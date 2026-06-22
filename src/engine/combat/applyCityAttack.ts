@@ -4,6 +4,7 @@ import type { CityState } from "../match/cities";
 import type { Rng } from "../rng";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
+import { isBombardAttacker, isRangedAttacker, siegeCityMultiplier } from "./range";
 import { effectiveUnitStrength, resolveCombat } from "./resolveCombat";
 
 export const GARRISON_BUFF_FRACTION = 0.5;
@@ -56,9 +57,13 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
   }
 
   const attackerType = unitTypeById(attacker.typeId);
+  const ranged = attackerType !== undefined && isRangedAttacker(attackerType);
+  const bombard = attackerType !== undefined && isBombardAttacker(attackerType);
   const result = resolveCombat({
     attacker: {
-      strength: effectiveUnitStrength(attackerType?.strength ?? 0, attacker.hp, attacker.morale),
+      strength:
+        effectiveUnitStrength(attackerType?.strength ?? 0, attacker.hp, attacker.morale) *
+        siegeCityMultiplier(bombard),
       hp: attacker.hp,
       abilities: attackerType?.abilities ?? [],
       adjacentAllies: 0,
@@ -72,7 +77,8 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
     defenderTerrainDefense: input.cityTerrainDefense,
     defenderTerrainMoveCost: input.cityTerrainMoveCost,
     flanked: false,
-    riverAttack: input.riverAttack,
+    riverAttack: ranged ? false : input.riverAttack,
+    ranged,
     rng: input.rng,
   });
 
