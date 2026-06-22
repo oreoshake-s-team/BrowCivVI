@@ -12,7 +12,7 @@ export function riverSegmentPoints(a: Hex, b: Hex, size: number): readonly [Poin
   const length = Math.hypot(dx, dy) || 1;
   const perpX = -dy / length;
   const perpY = dx / length;
-  const half = size * 0.6;
+  const half = size * 0.5;
   return [
     { x: midX + perpX * half, y: midY + perpY * half },
     { x: midX - perpX * half, y: midY - perpY * half },

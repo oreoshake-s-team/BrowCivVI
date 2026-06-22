@@ -15,6 +15,11 @@ describe("riverSegmentPoints", () => {
     const [a, b] = riverSegmentPoints({ q: 0, r: 0 }, { q: 1, r: 0 }, 10);
     expect((a.x + b.x) / 2).toBeCloseTo(10 * Math.sqrt(3) * 0.5);
   });
+
+  it("spans exactly one hex edge", () => {
+    const [a, b] = riverSegmentPoints({ q: 0, r: 0 }, { q: 1, r: 0 }, 10);
+    expect(distance(a, b)).toBeCloseTo(10);
+  });
 });
 
 describe("coastSegmentPoints", () => {
