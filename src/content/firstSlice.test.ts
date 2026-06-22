@@ -32,6 +32,24 @@ describe("FIRST_SLICE_MAP", () => {
     expect(FIRST_SLICE_MAP.cities.get("pella")?.media?.length).toBe(3);
   });
 
+  it("fortifies the strongly-walled Lydian capital Sardis", () => {
+    expect(FIRST_SLICE_MAP.cities.get("sardis")?.walls).toBe(true);
+  });
+
+  it("leaves famously unwalled Sparta without walls", () => {
+    expect(FIRST_SLICE_MAP.cities.get("sparta")?.walls).toBeUndefined();
+  });
+
+  it("leaves the minor town of Ilium unwalled", () => {
+    expect(FIRST_SLICE_MAP.cities.get("ilium")?.walls).toBeUndefined();
+  });
+
+  it("walls exactly the eleven historically fortified cities", () => {
+    expect(
+      Array.from(FIRST_SLICE_MAP.cities.values()).filter((c) => c.walls === true),
+    ).toHaveLength(11);
+  });
+
   it("models Sparta as an independent holdout (no owner)", () => {
     expect(FIRST_SLICE_MAP.cities.get("sparta")?.owner).toBeNull();
   });

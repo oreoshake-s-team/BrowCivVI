@@ -15,6 +15,7 @@ import {
   cityMaxHp,
   LOYALTY_DEFECT_THRESHOLD,
   LOYALTY_MAX,
+  WALL_MAX_HP,
   type CityState,
 } from "@/engine/match/cities";
 import type { MatchEvent } from "@/engine/match/events";
@@ -454,6 +455,10 @@ export function HexBoard({
             const cityMax = city ? cityMaxHp(city.defense) : 0;
             const cityHp = cityState?.hp ?? cityMax;
             const cityHpFrac = cityMax > 0 ? Math.max(0, Math.min(1, cityHp / cityMax)) : 0;
+            const cityWalled = city?.walls === true;
+            const wallHp = cityState?.wallHp ?? (cityWalled ? WALL_MAX_HP : 0);
+            const wallFrac = Math.max(0, Math.min(1, wallHp / WALL_MAX_HP));
+            const showWall = cityWalled && wallHp > 0;
             const loyalty = cityState?.loyalty ?? 0;
             const loyaltyLeaning = loyalty > 0 ? "macedon" : loyalty < 0 ? "persia" : null;
             const citySettled =
@@ -620,6 +625,32 @@ export function HexBoard({
                   <text className={styles.city} x={center.x} y={center.y - SIZE * 0.5}>
                     {city.name}
                   </text>
+                ) : null}
+                {showWall ? (
+                  <g
+                    className={styles.cityWall}
+                    data-city-wall={city.id}
+                    role="img"
+                    aria-label={`${city.name} walls: ${wallHp} of ${WALL_MAX_HP}`}
+                    pointerEvents="none"
+                  >
+                    <rect
+                      className={styles.cityWallTrack}
+                      x={center.x - SIZE * 0.5}
+                      y={center.y - SIZE * 1.18}
+                      width={SIZE}
+                      height={SIZE * 0.16}
+                      rx={SIZE * 0.08}
+                    />
+                    <rect
+                      className={styles.cityWallFill}
+                      x={center.x - SIZE * 0.5}
+                      y={center.y - SIZE * 1.18}
+                      width={SIZE * wallFrac}
+                      height={SIZE * 0.16}
+                      rx={SIZE * 0.08}
+                    />
+                  </g>
                 ) : null}
                 {city ? (
                   <g

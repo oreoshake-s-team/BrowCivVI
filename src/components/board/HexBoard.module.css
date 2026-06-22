@@ -149,6 +149,16 @@
   fill: var(--color-city-hp-low);
 }
 
+.cityWallTrack {
+  fill: var(--color-city-wall-track);
+  stroke: var(--color-hex-stroke);
+  stroke-width: 1;
+}
+
+.cityWallFill {
+  fill: var(--color-city-wall-fill);
+}
+
 .unitHpTrack {
   fill: var(--color-unit-hp-track);
   stroke: var(--color-hex-stroke);

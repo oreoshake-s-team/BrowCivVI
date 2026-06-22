@@ -128,3 +128,42 @@ describe("applyCityAttack", () => {
     );
   });
 });
+
+function strikeWalled(wallHp: number, cityHp = 200) {
+  return applyCityAttack({
+    units: [attacker()],
+    cities: [{ id: "c1", owner: "persia", hp: cityHp, wallHp }],
+    movement: { m1: 4 },
+    attackerId: "m1",
+    cityId: "c1",
+    cityHex: CITY_HEX,
+    cityDefense: 20,
+    cityTerrainDefense: 0,
+    cityTerrainMoveCost: 1,
+    riverAttack: false,
+    rng: createRng(7),
+  });
+}
+
+describe("applyCityAttack against walls", () => {
+  it("absorbs the hit on the wall HP track", () => {
+    const app = strikeWalled(100);
+    expect(app.cities[0]!.wallHp).toBe(100 - app.cityDamage);
+  });
+
+  it("leaves the city HP untouched while the walls stand", () => {
+    expect(strikeWalled(100).cities[0]!.hp).toBe(200);
+  });
+
+  it("does not fall a city whose walls still stand even at 1 city HP", () => {
+    expect(strikeWalled(100, 1).cityFell).toBe(false);
+  });
+
+  it("clamps depleted wall HP at 0", () => {
+    expect(strikeWalled(1).cities[0]!.wallHp).toBe(0);
+  });
+
+  it("damages the city HP once the walls are breached", () => {
+    expect(strikeWalled(0).cities[0]!.hp).toBeLessThan(200);
+  });
+});

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createGameMap, hexKey, type City } from "../map/types";
 import {
+  absorbCityDamage,
   blockingCityHexes,
   captureCityAt,
   CITY_HEAL_RATE,
@@ -13,6 +14,8 @@ import {
   LOYALTY_MIN,
   LOYALTY_OWNER_SEED,
   seedCities,
+  WALL_MAX_HP,
+  wallMaxHp,
   type CityState,
 } from "./cities";
 
@@ -31,9 +34,50 @@ describe("cityMaxHp", () => {
   });
 });
 
+const walled = (id: string, owner: string | null, defense: number): City => ({
+  ...city(id, owner, defense),
+  walls: true,
+});
+
+describe("wallMaxHp", () => {
+  it("gives a walled city the full wall track", () => {
+    expect(wallMaxHp(walled("sardis", "persia", 24))).toBe(WALL_MAX_HP);
+  });
+
+  it("gives an unwalled city no walls", () => {
+    expect(wallMaxHp(city("sparta", null, 26))).toBe(0);
+  });
+});
+
+describe("absorbCityDamage", () => {
+  it("spends standing wall HP before city HP", () => {
+    expect(absorbCityDamage(40, 200, 25).wallHp).toBe(15);
+  });
+
+  it("leaves city HP intact while the walls stand", () => {
+    expect(absorbCityDamage(40, 200, 25).hp).toBe(200);
+  });
+
+  it("clamps depleted walls at 0 rather than going negative", () => {
+    expect(absorbCityDamage(10, 200, 25).wallHp).toBe(0);
+  });
+
+  it("hits city HP once the walls are gone", () => {
+    expect(absorbCityDamage(0, 200, 25).hp).toBe(175);
+  });
+});
+
 describe("seedCities", () => {
   it("seeds each city at full HP", () => {
     expect(seedCities([city("sardis", "persia", 24)])[0]?.hp).toBe(cityMaxHp(24));
+  });
+
+  it("seeds a walled city at full wall HP", () => {
+    expect(seedCities([walled("sardis", "persia", 24)])[0]?.wallHp).toBe(WALL_MAX_HP);
+  });
+
+  it("gives an unwalled city no wall HP", () => {
+    expect(seedCities([city("sparta", null, 26)])[0]?.wallHp).toBeUndefined();
   });
 
   it("carries the authored owner", () => {

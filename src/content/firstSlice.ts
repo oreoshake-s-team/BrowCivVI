@@ -134,6 +134,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 120,
     defense: 25,
+    walls: true,
     firstAttestedBce: 399,
     citation: ref(
       "Pella was the capital of Macedon, Alexander's home base.",
@@ -169,6 +170,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 90,
     defense: 20,
+    walls: true,
     firstAttestedBce: 437,
     citation: ref(
       "Amphipolis on the Strymon was the army's eastward staging point.",
@@ -184,6 +186,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 105,
     defense: 20,
+    walls: true,
     firstAttestedBce: 1400,
     citation: ref(
       "Athens, the great Attic city, was a reluctant member of the League of Corinth.",
@@ -199,6 +202,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 90,
     defense: 20,
+    walls: true,
     firstAttestedBce: 900,
     citation: ref(
       "Corinth gave its name to the League of Corinth through which Macedon led the Greeks.",
@@ -229,6 +233,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 60,
     defense: 15,
+    walls: true,
     firstAttestedBce: 600,
     citation: ref(
       "Sestos on the European shore was the embarkation point for the Hellespont crossing.",
@@ -244,6 +249,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 70,
     defense: 18,
+    walls: true,
     firstAttestedBce: 670,
     citation: ref(
       "Parmenion ferried the main army across to Abydos on the Asian shore.",
@@ -289,6 +295,7 @@ const CITIES: readonly City[] = [
     affinity: "persia",
     value: 100,
     defense: 22,
+    walls: true,
     firstAttestedBce: 750,
     citation: ref(
       "Dascylium was the satrapal seat of Hellespontine Phrygia, the road's eastern goal.",
@@ -304,6 +311,7 @@ const CITIES: readonly City[] = [
     affinity: "persia",
     value: 110,
     defense: 24,
+    walls: true,
     firstAttestedBce: 1200,
     citation: ref(
       "Sardis, the inland Lydian capital, surrendered to Alexander after the Granicus.",
@@ -319,6 +327,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 95,
     defense: 20,
+    walls: true,
     firstAttestedBce: 1000,
     citation: ref(
       "Ephesus was a Greek Ionian city on the Aegean coast south of Sardis.",
@@ -334,6 +343,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 90,
     defense: 20,
+    walls: true,
     firstAttestedBce: 1000,
     citation: ref(
       "Miletus, further south on the Ionian coast, was taken by siege.",
@@ -349,6 +359,7 @@ const CITIES: readonly City[] = [
     affinity: "macedon",
     value: 85,
     defense: 22,
+    walls: true,
     firstAttestedBce: 650,
     citation: ref(
       "Halicarnassus in Caria, the southern coastal goal, fell after a hard siege.",

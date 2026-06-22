@@ -5,7 +5,7 @@ import type { Citation } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
 import { createGameMap } from "@/engine/map/types";
-import { cityMaxHp, type CityState } from "@/engine/match/cities";
+import { cityMaxHp, WALL_MAX_HP, type CityState } from "@/engine/match/cities";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
 import { HexBoard } from "./HexBoard";
@@ -363,6 +363,25 @@ const CITED_CITY_MAP = createGameMap(
       owner: "persia",
       value: 100,
       defense: 20,
+      citation: SARDIS_CITATION,
+    },
+  ],
+);
+
+const WALLED_CITY_MAP = createGameMap(
+  [
+    { hex: { q: 0, r: 0 }, terrain: "plains", cityId: "sardis" },
+    { hex: { q: 1, r: 0 }, terrain: "plains" },
+  ],
+  [
+    {
+      id: "sardis",
+      name: "Sardis",
+      hex: { q: 0, r: 0 },
+      owner: "persia",
+      value: 100,
+      defense: 20,
+      walls: true,
       citation: SARDIS_CITATION,
     },
   ],
@@ -794,6 +813,46 @@ describe("HexBoard city rendering", () => {
   it("labels the HP bar with the current and max HP for assistive tech", () => {
     render(<HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(40)} />);
     expect(screen.getByRole("img", { name: `Sardis: 40 of ${SARDIS_MAX} HP` })).not.toBeNull();
+  });
+
+  it("renders a wall bar for a walled city with standing walls", () => {
+    const { container } = render(
+      <HexBoard
+        map={WALLED_CITY_MAP}
+        units={[]}
+        cities={[{ id: "sardis", owner: "persia", hp: SARDIS_MAX, wallHp: WALL_MAX_HP }]}
+      />,
+    );
+    expect(container.querySelector('[data-city-wall="sardis"]')).not.toBeNull();
+  });
+
+  it("shows no wall bar for an unwalled city", () => {
+    const { container } = render(
+      <HexBoard map={CITED_CITY_MAP} units={[]} cities={persiaSardis(SARDIS_MAX)} />,
+    );
+    expect(container.querySelector("[data-city-wall]")).toBeNull();
+  });
+
+  it("drops the wall bar once the walls are breached", () => {
+    const { container } = render(
+      <HexBoard
+        map={WALLED_CITY_MAP}
+        units={[]}
+        cities={[{ id: "sardis", owner: "persia", hp: SARDIS_MAX, wallHp: 0 }]}
+      />,
+    );
+    expect(container.querySelector("[data-city-wall]")).toBeNull();
+  });
+
+  it("labels the wall bar with the current and max wall HP for assistive tech", () => {
+    render(
+      <HexBoard
+        map={WALLED_CITY_MAP}
+        units={[]}
+        cities={[{ id: "sardis", owner: "persia", hp: SARDIS_MAX, wallHp: 60 }]}
+      />,
+    );
+    expect(screen.getByRole("img", { name: `Sardis walls: 60 of ${WALL_MAX_HP}` })).not.toBeNull();
   });
 
   it("offers a city as an attack target once a unit is selected", () => {
