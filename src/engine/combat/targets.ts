@@ -1,6 +1,7 @@
 import type { Hex } from "../hex";
 import { hexDistance } from "../hex";
 import type { GameMap } from "../map/types";
+import { hexKey } from "../map/types";
 import type { CityState } from "../match/cities";
 import { entryCost } from "../movement/cost";
 import { unitTypeById } from "../unit/catalog";
@@ -20,14 +21,32 @@ function inRange(from: Hex, to: Hex, range: number): boolean {
   return distance >= 1 && distance <= range;
 }
 
-export function attackableHexes(units: readonly Unit[], attackerId: string): readonly Hex[] {
+function isShieldedGarrison(unit: Unit, map: GameMap, cities: readonly CityState[]): boolean {
+  const cityId = map.hexes.get(hexKey(unit.hex))?.cityId;
+  if (cityId === undefined) return false;
+  const city = cities.find((candidate) => candidate.id === cityId);
+  if (city === undefined) return false;
+  return city.owner === unit.owner && city.hp > 0;
+}
+
+export function attackableHexes(
+  units: readonly Unit[],
+  attackerId: string,
+  map: GameMap,
+  cities: readonly CityState[],
+): readonly Hex[] {
   const attacker = units.find((unit) => unit.id === attackerId);
   if (attacker === undefined || !canAttack(attacker)) return [];
   const type = unitTypeById(attacker.typeId);
   if (type === undefined) return [];
   const range = attackRange(type);
   return units
-    .filter((unit) => unit.owner !== attacker.owner && inRange(attacker.hex, unit.hex, range))
+    .filter(
+      (unit) =>
+        unit.owner !== attacker.owner &&
+        inRange(attacker.hex, unit.hex, range) &&
+        !isShieldedGarrison(unit, map, cities),
+    )
     .map((unit) => unit.hex);
 }
 
@@ -37,12 +56,13 @@ export function reachableAttacks(
   attacker: Unit,
   map: GameMap,
   riverEdges: ReadonlySet<string>,
+  cities: readonly CityState[],
 ): readonly Hex[] {
   if (attacker.hasAttackedThisTurn === true) return [];
   const type = unitTypeById(attacker.typeId);
   if (type === undefined) return [];
   const mp = movement[attacker.id] ?? 0;
-  const targets = attackableHexes(units, attacker.id);
+  const targets = attackableHexes(units, attacker.id, map, cities);
   if (isRangedAttacker(type)) return mp > 0 ? targets : [];
   return targets.filter((hex) => {
     const cost = entryCost(map, riverEdges, attacker.hex, hex);

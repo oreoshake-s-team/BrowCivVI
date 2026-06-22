@@ -119,6 +119,48 @@ describe("Granicus river course", () => {
   });
 });
 
+function hasRoad(q1: number, r1: number, q2: number, r2: number): boolean {
+  return FIRST_SLICE_MAP.roads.some(
+    (road) =>
+      (road.a.q === q1 && road.a.r === r1 && road.b.q === q2 && road.b.r === r2) ||
+      (road.b.q === q1 && road.b.r === r1 && road.a.q === q2 && road.a.r === r2),
+  );
+}
+
+describe("road network", () => {
+  it("authors both royal and plain roads", () => {
+    const royal = FIRST_SLICE_MAP.roads.some((road) => road.royal === true);
+    const plain = FIRST_SLICE_MAP.roads.some((road) => road.royal !== true);
+    expect([royal, plain]).toEqual([true, true]);
+  });
+
+  it("keeps the imperial road from Dascylium to Zeleia royal", () => {
+    const segment = FIRST_SLICE_MAP.roads.find(
+      (road) => road.a.q === 8 && road.a.r === 1 && road.b.q === 7 && road.b.r === 1,
+    );
+    expect(segment?.royal).toBe(true);
+  });
+
+  it("runs a Macedonian road from Pella toward Amphipolis", () => {
+    expect(hasRoad(0, 1, 1, 1)).toBe(true);
+  });
+
+  it("connects Athens to Corinth across the Isthmus", () => {
+    expect(hasRoad(1, 5, 1, 6)).toBe(true);
+  });
+
+  it("carries the coast road on to Halicarnassus", () => {
+    expect(hasRoad(7, 8, 7, 9)).toBe(true);
+  });
+
+  it("leaves the Greek coast roads non-royal", () => {
+    const segment = FIRST_SLICE_MAP.roads.find(
+      (road) => road.a.q === 1 && road.a.r === 5 && road.b.q === 1 && road.b.r === 6,
+    );
+    expect(segment?.royal).toBeUndefined();
+  });
+});
+
 describe("FIRST_SLICE_UNITS", () => {
   it("places Alexander's companions on the approach to the river", () => {
     expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-companions")?.hex).toEqual({

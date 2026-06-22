@@ -129,7 +129,14 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
 
 function attackTargets(match: MatchState, attacker: Unit): readonly Hex[] {
   return [
-    ...reachableAttacks(match.units, match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES),
+    ...reachableAttacks(
+      match.units,
+      match.movement,
+      attacker,
+      FIRST_SLICE_MAP,
+      RIVER_EDGES,
+      match.cities,
+    ),
     ...reachableCityAttacks(match.movement, attacker, FIRST_SLICE_MAP, RIVER_EDGES, match.cities),
   ];
 }

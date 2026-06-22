@@ -40,22 +40,30 @@ export interface RiverEdge {
   readonly b: Hex;
 }
 
+export interface RoadEdge {
+  readonly a: Hex;
+  readonly b: Hex;
+  readonly royal?: boolean;
+}
+
 export interface GameMap {
   readonly hexes: ReadonlyMap<string, MapHex>;
   readonly cities: ReadonlyMap<string, City>;
   readonly rivers: readonly RiverEdge[];
+  readonly roads: readonly RoadEdge[];
 }
 
 export function createGameMap(
   hexes: readonly MapHex[],
   cities: readonly City[],
   rivers: readonly RiverEdge[] = [],
+  roads: readonly RoadEdge[] = [],
 ): GameMap {
   const hexIndex = new Map<string, MapHex>();
   for (const mapHex of hexes) hexIndex.set(hexKey(mapHex.hex), mapHex);
   const cityIndex = new Map<string, City>();
   for (const city of cities) cityIndex.set(city.id, city);
-  return { hexes: hexIndex, cities: cityIndex, rivers };
+  return { hexes: hexIndex, cities: cityIndex, rivers, roads };
 }
 
 export function mapHexAt(map: GameMap, hex: Hex): MapHex | undefined {

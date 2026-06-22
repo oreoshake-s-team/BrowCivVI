@@ -68,7 +68,14 @@ function weakestTarget(
   riverEdges: ReadonlySet<string>,
 ): Unit | undefined {
   let best: Unit | undefined;
-  for (const hex of reachableAttacks(state.units, state.movement, attacker, map, riverEdges)) {
+  for (const hex of reachableAttacks(
+    state.units,
+    state.movement,
+    attacker,
+    map,
+    riverEdges,
+    state.cities,
+  )) {
     const enemy = state.units.find(
       (unit) => hexKey(unit.hex) === hexKey(hex) && unit.owner !== attacker.owner,
     );

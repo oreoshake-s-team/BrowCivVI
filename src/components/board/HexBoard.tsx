@@ -837,6 +837,23 @@ export function HexBoard({
             );
           })}
 
+          {map.roads.map((road, index) => {
+            const a = hexToPixel(road.a, SIZE);
+            const b = hexToPixel(road.b, SIZE);
+            const royal = road.royal === true;
+            return (
+              <line
+                key={`road-${index}`}
+                className={royal ? `${styles.road} ${styles.royalRoad}` : styles.road}
+                data-road={royal ? "royal" : "plain"}
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+              />
+            );
+          })}
+
           {reachable.map((hex) => (
             <polygon
               key={`reach-${hexKey(hex)}`}
