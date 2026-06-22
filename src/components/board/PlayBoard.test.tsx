@@ -94,6 +94,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         activeFaction: "macedon",
         events: [],
         scorched: [],
+        canIncite: false,
       },
     } satisfies LoadBoardResult);
     vi.mocked(actions.targetsFor).mockResolvedValue({
@@ -363,6 +364,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      canIncite: false,
     } satisfies BoardView);
 
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -388,6 +390,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         activeFaction: "macedon",
         events: [],
         scorched: [],
+        canIncite: false,
         incompatible: true,
       },
     } satisfies LoadBoardResult);
@@ -401,6 +404,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      canIncite: false,
     } satisfies BoardView);
 
     const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -429,6 +433,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
           activeFaction: "macedon",
           events: [],
           scorched: [],
+          canIncite: false,
         },
       } satisfies LoadBoardResult);
 
@@ -465,6 +470,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      canIncite: false,
     } satisfies BoardView);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
     fireEvent.click(await screen.findByRole("button", { name: "End turn" }));
@@ -501,6 +507,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [aiAttack],
       scorched: [],
+      canIncite: false,
     } satisfies BoardView);
 
     const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -541,6 +548,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [aiMove],
       scorched: [],
+      canIncite: false,
     } satisfies BoardView);
 
     const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -576,6 +584,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [defection],
       scorched: [],
+      canIncite: false,
     } satisfies BoardView);
 
     const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -603,6 +612,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         activeFaction: "macedon",
         events: [],
         scorched: [],
+        canIncite: false,
       },
     } satisfies LoadBoardResult);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -656,6 +666,7 @@ describe("PlayBoard divergence node", () => {
     activeFaction: "macedon",
     events: [],
     scorched: [],
+    canIncite: false,
   };
 
   beforeEach(() => {

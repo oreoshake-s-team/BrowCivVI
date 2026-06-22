@@ -28,6 +28,7 @@ const BOARD: BoardView = {
   activeFaction: "macedon",
   events: [],
   scorched: [],
+  canIncite: false,
 };
 
 const MOVE_EVENT: MatchEvent = {

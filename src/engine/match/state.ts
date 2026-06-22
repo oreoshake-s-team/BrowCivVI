@@ -32,6 +32,7 @@ export interface MatchState {
   readonly cities: readonly CityState[];
   readonly divergence: Readonly<Record<string, DivergenceRecord>>;
   readonly scorched: readonly string[];
+  readonly incitedThisTurn?: boolean;
 }
 
 export interface CreateMatchInput {
@@ -67,5 +68,6 @@ export function createMatch(input: CreateMatchInput): MatchState {
     cities: seedCities(input.cities ?? []),
     divergence: {},
     scorched: [],
+    incitedThisTurn: false,
   };
 }
