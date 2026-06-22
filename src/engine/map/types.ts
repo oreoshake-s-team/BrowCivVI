@@ -28,6 +28,7 @@ export interface City {
   readonly owner: string | null;
   readonly value: number;
   readonly defense: number;
+  readonly walls?: boolean;
   readonly affinity?: Affinity;
   readonly citation?: Citation;
   readonly media?: readonly MediaLink[];

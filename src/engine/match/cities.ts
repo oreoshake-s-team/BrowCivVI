@@ -6,6 +6,7 @@ export interface CityState {
   readonly id: string;
   readonly owner: string | null;
   readonly hp: number;
+  readonly wallHp?: number;
   readonly loyalty?: number;
   readonly loyaltyStreak?: number;
   readonly defecting?: boolean;
@@ -17,6 +18,11 @@ export interface CityState {
 export const CITY_HP_PER_DEFENSE = 8;
 export const CITY_CAPTURE_HP_FRACTION = 0.5;
 export const CITY_HEAL_RATE = 20;
+export const WALL_MAX_HP = 100;
+
+export function wallMaxHp(city: City): number {
+  return city.walls === true ? WALL_MAX_HP : 0;
+}
 
 export const LOYALTY_MIN = -100;
 export const LOYALTY_MAX = 100;
@@ -26,6 +32,16 @@ export const LOYALTY_DEFECT_THRESHOLD = 50;
 
 export function cityMaxHp(defense: number): number {
   return defense * CITY_HP_PER_DEFENSE;
+}
+
+export interface CityDamageResult {
+  readonly wallHp: number;
+  readonly hp: number;
+}
+
+export function absorbCityDamage(wallHp: number, hp: number, damage: number): CityDamageResult {
+  if (wallHp > 0) return { wallHp: Math.max(0, wallHp - damage), hp };
+  return { wallHp: 0, hp: Math.max(0, hp - damage) };
 }
 
 export function clampLoyalty(value: number): number {
@@ -63,6 +79,7 @@ export function seedCities(cities: readonly City[]): readonly CityState[] {
     id: city.id,
     owner: city.owner,
     hp: cityMaxHp(city.defense),
+    ...(city.walls === true ? { wallHp: WALL_MAX_HP } : {}),
     loyalty: seedLoyalty(city),
   }));
 }

@@ -16,6 +16,7 @@
   --gold-400: #d4af37;
   --gold-700: #9a7d1e;
   --gold-400-a38: rgb(212 175 55 / 38%);
+  --stone-500: #807d74;
   --color-surface-board: var(--parchment);
   --color-surface-raised: var(--parchment-light);
   --color-text-halo: var(--parchment);
@@ -39,6 +40,8 @@
   --color-city-hp-track: rgb(0 0 0 / 45%);
   --color-city-hp-fill: var(--green-600);
   --color-city-hp-low: var(--faction-persia-fill);
+  --color-city-wall-track: rgb(0 0 0 / 45%);
+  --color-city-wall-fill: var(--stone-500);
   --color-unit-hp-track: rgb(0 0 0 / 45%);
   --color-unit-hp-fill: var(--green-600);
   --color-unit-hp-low: var(--faction-persia-fill);

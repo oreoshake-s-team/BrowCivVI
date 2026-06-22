@@ -1,6 +1,6 @@
 import type { Hex } from "../hex";
 import { hexKey } from "../map/types";
-import type { CityState } from "../match/cities";
+import { absorbCityDamage, type CityState } from "../match/cities";
 import type { Rng } from "../rng";
 import { unitTypeById } from "../unit/catalog";
 import type { Unit } from "../unit/types";
@@ -59,6 +59,8 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
   const attackerType = unitTypeById(attacker.typeId);
   const ranged = attackerType !== undefined && isRangedAttacker(attackerType);
   const bombard = attackerType !== undefined && isBombardAttacker(attackerType);
+  const wallHp = city.wallHp ?? 0;
+  const exposedHp = wallHp > 0 ? wallHp : city.hp;
   const result = resolveCombat({
     attacker: {
       strength:
@@ -70,7 +72,7 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
     },
     defender: {
       strength: input.cityDefense + garrisonBuff(input, city.owner),
-      hp: city.hp,
+      hp: exposedHp,
       abilities: [],
       adjacentAllies: 0,
     },
@@ -82,12 +84,14 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
     rng: input.rng,
   });
 
+  const absorbed = absorbCityDamage(wallHp, city.hp, result.defenderDamage);
   const cities = input.cities.map((candidate) =>
     candidate.id === input.cityId
       ? {
           ...candidate,
-          hp: Math.max(0, candidate.hp - result.defenderDamage),
+          hp: absorbed.hp,
           attackedThisTurn: true,
+          ...(candidate.wallHp !== undefined ? { wallHp: absorbed.wallHp } : {}),
         }
       : candidate,
   );
@@ -108,7 +112,7 @@ export function applyCityAttack(input: ApplyCityAttackInput): CityAttackApplicat
     movement: { ...input.movement, [input.attackerId]: 0 },
     attackerDamage: result.attackerDamage,
     cityDamage: result.defenderDamage,
-    cityFell: result.defenderDefeated,
+    cityFell: absorbed.hp <= 0,
     defeated,
   };
 }
