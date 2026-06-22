@@ -5,8 +5,14 @@ import type { Hex } from "../hex";
 import { hexDistance } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
-import { blockingCityHexes, captureCityAt } from "../match/cities";
+import {
+  blockingCityHexes,
+  captureCityAt,
+  factionPolarity,
+  LOYALTY_DEFECT_THRESHOLD,
+} from "../match/cities";
 import { appendAttack, appendCapture, appendCityAttack, appendMove } from "../match/events";
+import { applyIncite, canIncite } from "../match/incite";
 import type { MatchState } from "../match/state";
 import { domainOf, movementConstraints } from "../movement/constraints";
 import { riverEdgeKey } from "../movement/cost";
@@ -252,10 +258,33 @@ function unitAct(
   return state;
 }
 
+function chooseInciteTarget(state: MatchState, faction: string, map: GameMap): string | undefined {
+  const polarity = factionPolarity(faction);
+  if (polarity === 0) return undefined;
+  let best: string | undefined;
+  let bestValue = -Infinity;
+  for (const city of state.cities) {
+    if (polarity * (city.loyalty ?? 0) >= LOYALTY_DEFECT_THRESHOLD) continue;
+    const value = map.cities.get(city.id)?.value ?? 0;
+    if (value > bestValue || (value === bestValue && best !== undefined && city.id < best)) {
+      best = city.id;
+      bestValue = value;
+    }
+  }
+  return best;
+}
+
+function inciteBestCity(state: MatchState, faction: string, map: GameMap): MatchState {
+  if (!canIncite(state, faction)) return state;
+  const cityId = chooseInciteTarget(state, faction, map);
+  if (cityId === undefined) return state;
+  return applyIncite(state, faction, cityId) ?? state;
+}
+
 export function runFactionTurn(input: FactionTurnInput): MatchState {
   const { faction, map, riverEdges, rng } = input;
   const unitIds = input.state.units.filter((unit) => unit.owner === faction).map((unit) => unit.id);
-  let state = input.state;
+  let state = inciteBestCity(input.state, faction, map);
   for (const id of unitIds) {
     let unit = state.units.find((candidate) => candidate.id === id);
     if (unit === undefined) continue;

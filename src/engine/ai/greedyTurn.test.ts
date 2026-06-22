@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { hexDistance, type Hex } from "../hex";
 import { createGameMap, type City, type GameMap, type MapHex } from "../map/types";
 import type { CityState } from "../match/cities";
+import { INCITE_PRESSURE } from "../match/incite";
 import type { MatchState } from "../match/state";
 import { riverEdgeSet } from "../movement/cost";
 import { createRng } from "../rng";
@@ -207,5 +208,68 @@ describe("runFactionTurn determinism", () => {
   it("makes no change for a faction that has no units", () => {
     const start = match([unit("m1", "pezhetairos", "macedon", 4, 2)]);
     expect(run(start)).toBe(start);
+  });
+});
+
+function twoCityMap(): GameMap {
+  const hexes: MapHex[] = [];
+  for (let r = 0; r < 6; r++)
+    for (let q = 0; q < 12; q++) {
+      const cityId = q === 1 && r === 1 ? "small" : q === 3 && r === 1 ? "big" : undefined;
+      hexes.push(
+        cityId === undefined
+          ? { hex: { q, r }, terrain: "plains" }
+          : { hex: { q, r }, terrain: "plains", cityId },
+      );
+    }
+  const cities: City[] = [
+    { id: "small", name: "Small", hex: { q: 1, r: 1 }, owner: "persia", value: 50, defense: 10 },
+    { id: "big", name: "Big", hex: { q: 3, r: 1 }, owner: "macedon", value: 120, defense: 10 },
+  ];
+  return createGameMap(hexes, cities);
+}
+
+const cityState = (id: string, owner: string, loyalty: number): CityState => ({
+  id,
+  owner,
+  hp: 80,
+  loyalty,
+});
+
+const loyaltyOf = (state: MatchState, id: string): number =>
+  state.cities.find((city) => city.id === id)?.loyalty ?? 0;
+
+describe("runFactionTurn loyalty play", () => {
+  it("spends incite on the highest-value eligible city", () => {
+    const state = {
+      ...match([]),
+      cities: [cityState("small", "persia", 0), cityState("big", "macedon", 0)],
+    };
+    expect(loyaltyOf(runOn(state, twoCityMap()), "big")).toBe(-INCITE_PRESSURE);
+  });
+
+  it("skips a city already firmly its own and incites an eligible one", () => {
+    const state = {
+      ...match([]),
+      cities: [cityState("small", "macedon", 0), cityState("big", "persia", -60)],
+    };
+    const result = runOn(state, twoCityMap());
+    expect(loyaltyOf(result, "small")).toBe(-INCITE_PRESSURE);
+  });
+
+  it("leaves a firmly held city untouched", () => {
+    const state = {
+      ...match([]),
+      cities: [cityState("small", "macedon", 0), cityState("big", "persia", -60)],
+    };
+    expect(loyaltyOf(runOn(state, twoCityMap()), "big")).toBe(-60);
+  });
+
+  it("does not incite when every city is already firmly its own", () => {
+    const state = {
+      ...match([]),
+      cities: [cityState("small", "persia", -60), cityState("big", "persia", -55)],
+    };
+    expect(runOn(state, twoCityMap()).incitedThisTurn ?? false).toBe(false);
   });
 });
