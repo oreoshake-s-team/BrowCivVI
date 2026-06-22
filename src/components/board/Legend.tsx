@@ -35,12 +35,28 @@ function factionLabel(owner: string | null): string {
   return owner === null ? "Neutral" : (FACTION_NAMES[owner] ?? owner);
 }
 
-function LegendGroup({ title, children }: { title: string; children: ReactNode }) {
+function LegendGroup({
+  title,
+  wide = false,
+  children,
+}: {
+  title: string;
+  wide?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div className={styles.legendGroup}>
       <h3 className={styles.legendGroupTitle}>{title}</h3>
-      <ul className={styles.legendList}>{children}</ul>
+      <ul className={wide ? styles.legendListWide : styles.legendList}>{children}</ul>
     </div>
+  );
+}
+
+function BarIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg className={styles.legendBar} viewBox="0 0 28 12" aria-hidden="true">
+      {children}
+    </svg>
   );
 }
 
@@ -123,6 +139,62 @@ export function Legend({ unitClasses = [] }: LegendProps) {
               ))}
             </LegendGroup>
           ) : null}
+          <LegendGroup title="Status" wide>
+            <li className={styles.legendItem}>
+              <BarIcon>
+                <rect className={styles.cityHpTrack} x={1} y={4} width={26} height={4} rx={2} />
+                <rect className={styles.cityHpFill} x={1} y={4} width={17} height={4} rx={2} />
+              </BarIcon>
+              Health
+            </li>
+            <li className={styles.legendItem}>
+              <BarIcon>
+                <rect className={styles.cityWallTrack} x={1} y={4} width={26} height={4} rx={2} />
+                <rect className={styles.cityWallFill} x={1} y={4} width={13} height={4} rx={2} />
+              </BarIcon>
+              City walls
+            </li>
+            <li className={styles.legendItem}>
+              <BarIcon>
+                <rect
+                  className={styles.cityLoyaltyTrack}
+                  x={1}
+                  y={4}
+                  width={26}
+                  height={4}
+                  rx={2}
+                />
+                <rect
+                  x={2}
+                  y={4.5}
+                  width={11.5}
+                  height={3}
+                  style={{ fill: factionStyle("persia").fill }}
+                />
+                <rect
+                  x={14.5}
+                  y={4.5}
+                  width={11.5}
+                  height={3}
+                  style={{ fill: factionStyle("macedon").fill }}
+                />
+                <rect className={styles.cityLoyaltyCenter} x={13.5} y={2.5} width={1} height={7} />
+              </BarIcon>
+              Loyalty (Persia ↔ Macedon)
+            </li>
+            <li className={styles.legendItem}>
+              <BarIcon>
+                <line
+                  className={`${styles.road} ${styles.royalRoad}`}
+                  x1={2}
+                  y1={6}
+                  x2={26}
+                  y2={6}
+                />
+              </BarIcon>
+              Royal Road
+            </li>
+          </LegendGroup>
         </div>
       ) : null}
     </section>

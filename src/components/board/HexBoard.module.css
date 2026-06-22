@@ -605,6 +605,22 @@
   font-size: var(--font-size-ui-sm);
 }
 
+.legendListWide {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2xs);
+  font-size: var(--font-size-ui-sm);
+}
+
+.legendBar {
+  width: 30px;
+  height: 13px;
+  flex: none;
+}
+
 .legendItem {
   display: flex;
   align-items: center;
