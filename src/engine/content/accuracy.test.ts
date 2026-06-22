@@ -9,6 +9,7 @@ import {
   citationErrors,
   cityTerrainErrors,
   chronologyWarnings,
+  roadErrors,
 } from "./accuracy";
 import type { Citation } from "./citation";
 
@@ -104,5 +105,39 @@ describe("chronologyWarnings", () => {
   it("warns about a city founded within ~50 years of the campaign", () => {
     const map = createGameMap([], [city("recent", 0, 0, { bce: 360 })]);
     expect(chronologyWarnings(map)).toHaveLength(1);
+  });
+});
+
+describe("roadErrors", () => {
+  const HEXES = [
+    { hex: { q: 0, r: 0 }, terrain: "plains" as const },
+    { hex: { q: 1, r: 0 }, terrain: "plains" as const },
+    { hex: { q: 2, r: 0 }, terrain: "plains" as const },
+    { hex: { q: 3, r: 0 }, terrain: "deepSea" as const },
+  ];
+
+  it("accepts a road joining adjacent land tiles", () => {
+    const map = createGameMap(HEXES, [], [], [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 } }]);
+    expect(roadErrors(map)).toEqual([]);
+  });
+
+  it("rejects a road that coincides with a river edge", () => {
+    const map = createGameMap(
+      HEXES,
+      [],
+      [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 } }],
+      [{ a: { q: 0, r: 0 }, b: { q: 1, r: 0 } }],
+    );
+    expect(roadErrors(map).some((error) => error.includes("must not cross"))).toBe(true);
+  });
+
+  it("rejects a road between non-adjacent hexes", () => {
+    const map = createGameMap(HEXES, [], [], [{ a: { q: 0, r: 0 }, b: { q: 2, r: 0 } }]);
+    expect(roadErrors(map).some((error) => error.includes("adjacent"))).toBe(true);
+  });
+
+  it("rejects a road running onto water", () => {
+    const map = createGameMap(HEXES, [], [], [{ a: { q: 2, r: 0 }, b: { q: 3, r: 0 } }]);
+    expect(roadErrors(map).some((error) => error.includes("off land"))).toBe(true);
   });
 });
