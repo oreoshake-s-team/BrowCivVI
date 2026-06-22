@@ -17,6 +17,7 @@ export interface MatchStore {
   load(id: string): Promise<MatchState | null>;
   save(state: MatchState): Promise<MatchState>;
   listByOwner(owner: string): Promise<readonly OwnedMatch[]>;
+  deleteByOwner(owner: string, keepId?: string): Promise<number>;
 }
 
 export class InMemoryMatchStore implements MatchStore {
@@ -50,5 +51,16 @@ export class InMemoryMatchStore implements MatchStore {
   listByOwner(owner: string): Promise<readonly OwnedMatch[]> {
     const owned = [...this.matches.values()].filter((match) => match.state.owner === owner);
     return Promise.resolve(owned);
+  }
+
+  deleteByOwner(owner: string, keepId?: string): Promise<number> {
+    let deleted = 0;
+    for (const [id, match] of this.matches) {
+      if (match.state.owner === owner && id !== keepId) {
+        this.matches.delete(id);
+        deleted += 1;
+      }
+    }
+    return Promise.resolve(deleted);
   }
 }

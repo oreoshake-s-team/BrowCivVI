@@ -69,6 +69,13 @@ export async function loadOwned(
   return match !== null && match.owner === owner ? match : null;
 }
 
+export async function deleteOldMatches(store: MatchStore, owner: string): Promise<number> {
+  const summaries = await listOwnedSummaries(store, owner);
+  const mostRecentId = summaries[0]?.id;
+  if (mostRecentId === undefined) return 0;
+  return store.deleteByOwner(owner, mostRecentId);
+}
+
 export async function listOwnedSummaries(
   store: MatchStore,
   owner: string,
