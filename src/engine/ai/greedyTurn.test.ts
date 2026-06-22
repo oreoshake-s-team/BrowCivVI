@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { hexDistance, type Hex } from "../hex";
-import { createGameMap, type City, type GameMap, type MapHex } from "../map/types";
+import { createGameMap, hexKey, type City, type GameMap, type MapHex } from "../map/types";
 import type { CityState } from "../match/cities";
 import { INCITE_PRESSURE } from "../match/incite";
 import type { MatchState } from "../match/state";
@@ -271,5 +271,46 @@ describe("runFactionTurn loyalty play", () => {
       cities: [cityState("small", "persia", -60), cityState("big", "persia", -55)],
     };
     expect(runOn(state, twoCityMap()).incitedThisTurn ?? false).toBe(false);
+  });
+});
+
+describe("runFactionTurn garrison play", () => {
+  const HOME: Hex = { q: 1, r: 1 };
+
+  it("steers a unit toward a wavering own city", () => {
+    const map = cityMap("home", HOME);
+    const state = {
+      ...match([unit("p1", "pezhetairos", "persia", 8, 1)]),
+      cities: [cityState("home", "persia", 80)],
+    };
+    const moved = runOn(state, map).units.find((u) => u.id === "p1");
+    expect(moved ? hexDistance(moved.hex, HOME) : 99).toBeLessThan(
+      hexDistance({ q: 8, r: 1 }, HOME),
+    );
+  });
+
+  it("holds position once it is garrisoning the waverer", () => {
+    const map = cityMap("home", HOME);
+    const state = {
+      ...match([unit("p1", "pezhetairos", "persia", 1, 1)]),
+      cities: [cityState("home", "persia", 80)],
+    };
+    const held = runOn(state, map).units.find((u) => u.id === "p1");
+    expect(held ? hexKey(held.hex) : "").toBe(hexKey(HOME));
+  });
+
+  it("ignores a firmly held own city and advances on the enemy", () => {
+    const map = cityMap("home", HOME);
+    const state = {
+      ...match([
+        unit("p1", "pezhetairos", "persia", 8, 1),
+        unit("m1", "pezhetairos", "macedon", 4, 1),
+      ]),
+      cities: [cityState("home", "persia", -60)],
+    };
+    const moved = runOn(state, map).units.find((u) => u.id === "p1");
+    expect(moved ? hexDistance(moved.hex, { q: 4, r: 1 }) : 99).toBeLessThan(
+      hexDistance({ q: 8, r: 1 }, { q: 4, r: 1 }),
+    );
   });
 });

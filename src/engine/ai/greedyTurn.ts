@@ -2,7 +2,7 @@ import { applyAttack } from "../combat/applyAttack";
 import { applyCityAttack } from "../combat/applyCityAttack";
 import { reachableAttacks, reachableCityAttacks } from "../combat/targets";
 import type { Hex } from "../hex";
-import { hexDistance } from "../hex";
+import { hexDistance, neighbors } from "../hex";
 import type { GameMap } from "../map/types";
 import { hexKey, terrainAt } from "../map/types";
 import {
@@ -164,6 +164,29 @@ function isCapturableCityHex(state: MatchState, map: GameMap, faction: string, h
   return city !== undefined && city.owner !== faction && city.hp <= 0;
 }
 
+function waveringOwnCityHexes(state: MatchState, faction: string, map: GameMap): readonly Hex[] {
+  const polarity = factionPolarity(faction);
+  if (polarity === 0) return [];
+  const hexes: Hex[] = [];
+  for (const city of state.cities) {
+    if (city.owner !== faction) continue;
+    if (polarity * (city.loyalty ?? 0) > -LOYALTY_DEFECT_THRESHOLD) continue;
+    const hex = map.cities.get(city.id)?.hex;
+    if (hex !== undefined) hexes.push(hex);
+  }
+  return hexes;
+}
+
+function onOrAdjacent(a: Hex, b: Hex): boolean {
+  return hexKey(a) === hexKey(b) || neighbors(b).some((n) => hexKey(n) === hexKey(a));
+}
+
+function garrisonTargetHexes(state: MatchState, faction: string, map: GameMap): readonly Hex[] {
+  return waveringOwnCityHexes(state, faction, map).filter(
+    (cityHex) => !state.units.some((u) => u.owner === faction && onOrAdjacent(u.hex, cityHex)),
+  );
+}
+
 function chooseDestination(
   state: MatchState,
   unit: Unit,
@@ -181,7 +204,13 @@ function chooseDestination(
     }
   }
   if (capture !== undefined) return capture;
-  const target = nearestHex(unit.hex, enemyTargetHexes(state, faction, map));
+  const holding = waveringOwnCityHexes(state, faction, map).some((hex) =>
+    onOrAdjacent(unit.hex, hex),
+  );
+  if (holding) return undefined;
+  const target =
+    nearestHex(unit.hex, garrisonTargetHexes(state, faction, map)) ??
+    nearestHex(unit.hex, enemyTargetHexes(state, faction, map));
   if (target === undefined) return undefined;
   let best: Hex | undefined;
   let bestDist = hexDistance(unit.hex, target);
