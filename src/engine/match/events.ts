@@ -41,6 +41,19 @@ export interface CityAttackEvent {
   readonly cityFell: boolean;
 }
 
+export interface CityStrikeEvent {
+  readonly kind: "cityStrike";
+  readonly seq: number;
+  readonly turn: number;
+  readonly faction: string;
+  readonly cityId: string;
+  readonly targetId: string;
+  readonly targetTypeId: string;
+  readonly targetHex: Hex;
+  readonly damage: number;
+  readonly defeated: boolean;
+}
+
 export interface CaptureEvent {
   readonly kind: "capture";
   readonly seq: number;
@@ -62,7 +75,13 @@ export interface DefectionEvent {
   readonly previousOwner: string | null;
 }
 
-export type MatchEvent = MoveEvent | AttackEvent | CityAttackEvent | CaptureEvent | DefectionEvent;
+export type MatchEvent =
+  | MoveEvent
+  | AttackEvent
+  | CityAttackEvent
+  | CityStrikeEvent
+  | CaptureEvent
+  | DefectionEvent;
 
 export interface AttackOutcomeSummary {
   readonly attackerDamage: number;
@@ -145,6 +164,32 @@ export function appendCityAttack(
       cityDamage: outcome.cityDamage,
       retaliation: outcome.attackerDamage,
       cityFell: outcome.cityFell,
+    },
+  ];
+}
+
+export function appendCityStrike(
+  events: readonly MatchEvent[],
+  turn: number,
+  faction: string,
+  cityId: string,
+  target: Unit,
+  damage: number,
+  defeated: boolean,
+): readonly MatchEvent[] {
+  return [
+    ...events,
+    {
+      kind: "cityStrike",
+      seq: events.length,
+      turn,
+      faction,
+      cityId,
+      targetId: target.id,
+      targetTypeId: target.typeId,
+      targetHex: target.hex,
+      damage,
+      defeated,
     },
   ];
 }

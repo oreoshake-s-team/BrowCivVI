@@ -314,3 +314,57 @@ describe("runFactionTurn garrison play", () => {
     );
   });
 });
+
+function walledPersiaCityMap(cityHex: Hex): GameMap {
+  const hexes: MapHex[] = [];
+  for (let r = 0; r < 6; r++)
+    for (let q = 0; q < 12; q++)
+      hexes.push(
+        q === cityHex.q && r === cityHex.r
+          ? { hex: { q, r }, terrain: "plains", cityId: "dascylium" }
+          : { hex: { q, r }, terrain: "plains" },
+      );
+  const city: City = {
+    id: "dascylium",
+    name: "Dascylium",
+    hex: cityHex,
+    owner: "persia",
+    value: 100,
+    defense: 22,
+    walls: true,
+  };
+  return createGameMap(hexes, [city]);
+}
+
+describe("runFactionTurn walled-city ranged strike", () => {
+  const CITY_HEX: Hex = { q: 5, r: 2 };
+  const map = walledPersiaCityMap(CITY_HEX);
+  const walled: CityState = { id: "dascylium", owner: "persia", hp: 176, wallHp: 100 };
+  const adjacentEnemy = unit("m1", "pezhetairos", "macedon", 5, 1, 100);
+
+  it("bombards an adjacent enemy unit from a walled city", () => {
+    const after = runOn(withCities([adjacentEnemy], [walled]), map);
+    expect(after.units.find((u) => u.id === "m1")!.hp).toBeLessThan(100);
+  });
+
+  it("records a city-strike event", () => {
+    const after = runOn(withCities([adjacentEnemy], [walled]), map);
+    expect(after.events.some((event) => event.kind === "cityStrike")).toBe(true);
+  });
+
+  it("spends the city's strike for the turn", () => {
+    const after = runOn(withCities([adjacentEnemy], [walled]), map);
+    expect(after.cities.find((c) => c.id === "dascylium")!.struckThisTurn).toBe(true);
+  });
+
+  it("does not bombard from a breached city", () => {
+    const after = runOn(withCities([adjacentEnemy], [{ ...walled, wallHp: 0 }]), map);
+    expect(after.events.some((event) => event.kind === "cityStrike")).toBe(false);
+  });
+
+  it("does not bombard an enemy that is not adjacent", () => {
+    const distant = unit("m2", "pezhetairos", "macedon", 5, 4, 100);
+    const after = runOn(withCities([distant], [walled]), map);
+    expect(after.events.some((event) => event.kind === "cityStrike")).toBe(false);
+  });
+});

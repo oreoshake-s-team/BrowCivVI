@@ -1,5 +1,6 @@
 import { applyAttack } from "../combat/applyAttack";
 import { applyCityAttack } from "../combat/applyCityAttack";
+import { applyCityStrike, cityStrikeTargets } from "../combat/applyCityStrike";
 import { reachableAttacks, reachableCityAttacks } from "../combat/targets";
 import type { Hex } from "../hex";
 import { hexDistance, neighbors } from "../hex";
@@ -11,7 +12,13 @@ import {
   factionPolarity,
   LOYALTY_DEFECT_THRESHOLD,
 } from "../match/cities";
-import { appendAttack, appendCapture, appendCityAttack, appendMove } from "../match/events";
+import {
+  appendAttack,
+  appendCapture,
+  appendCityAttack,
+  appendCityStrike,
+  appendMove,
+} from "../match/events";
 import { applyIncite, canIncite } from "../match/incite";
 import type { MatchState } from "../match/state";
 import { domainOf, movementConstraints } from "../movement/constraints";
@@ -310,6 +317,59 @@ function inciteBestCity(state: MatchState, faction: string, map: GameMap): Match
   return applyIncite(state, faction, cityId) ?? state;
 }
 
+function weakestStrikeTarget(targets: readonly Unit[]): Unit | undefined {
+  let best: Unit | undefined;
+  for (const enemy of targets) {
+    if (
+      best === undefined ||
+      enemy.hp < best.hp ||
+      (enemy.hp === best.hp && hexKey(enemy.hex) < hexKey(best.hex))
+    )
+      best = enemy;
+  }
+  return best;
+}
+
+function runCityStrikes(state: MatchState, faction: string, map: GameMap, rng: Rng): MatchState {
+  let next = state;
+  for (const seed of state.cities) {
+    if (seed.owner !== faction) continue;
+    const cityData = map.cities.get(seed.id);
+    if (cityData === undefined) continue;
+    const city = next.cities.find((candidate) => candidate.id === seed.id);
+    if (city === undefined) continue;
+    const target = weakestStrikeTarget(cityStrikeTargets(city, cityData.hex, next.units));
+    if (target === undefined) continue;
+    const terrain = terrainAt(map, target.hex);
+    const application = applyCityStrike({
+      units: next.units,
+      cities: next.cities,
+      cityId: seed.id,
+      cityHex: cityData.hex,
+      cityStrength: cityData.defense,
+      targetId: target.id,
+      targetTerrainDefense: terrain?.defenseModifier ?? 0,
+      targetTerrainMoveCost: terrain?.moveCost ?? 1,
+      rng,
+    });
+    next = {
+      ...next,
+      units: application.units,
+      cities: application.cities,
+      events: appendCityStrike(
+        next.events,
+        next.turn,
+        faction,
+        seed.id,
+        target,
+        application.damage,
+        application.defeated,
+      ),
+    };
+  }
+  return next;
+}
+
 export function runFactionTurn(input: FactionTurnInput): MatchState {
   const { faction, map, riverEdges, rng } = input;
   const unitIds = input.state.units.filter((unit) => unit.owner === faction).map((unit) => unit.id);
@@ -327,5 +387,5 @@ export function runFactionTurn(input: FactionTurnInput): MatchState {
     if (unit === undefined) continue;
     state = unitAct(state, unit, map, riverEdges, rng);
   }
-  return state;
+  return runCityStrikes(state, faction, map, rng);
 }

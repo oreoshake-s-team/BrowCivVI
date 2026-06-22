@@ -5,6 +5,7 @@ import type {
   AttackEvent,
   CaptureEvent,
   CityAttackEvent,
+  CityStrikeEvent,
   DefectionEvent,
   MatchEvent,
   MoveEvent,
@@ -26,6 +27,19 @@ const cityAttackEvent = (seq: number, cityFell: boolean): CityAttackEvent => ({
   cityDamage: 30,
   retaliation: 8,
   cityFell,
+});
+
+const cityStrikeEvent = (seq: number, defeated: boolean): CityStrikeEvent => ({
+  kind: "cityStrike",
+  seq,
+  turn: 4,
+  faction: "persia",
+  cityId: "sardis",
+  targetId: "m1",
+  targetTypeId: "pezhetairos",
+  targetHex: { q: 6, r: 1 },
+  damage: 28,
+  defeated,
 });
 
 const captureEvent = (seq: number): CaptureEvent => ({
@@ -126,6 +140,16 @@ describe("MoveLog", () => {
   it("marks a breached city in the siege entry", () => {
     render(<MoveLog events={[cityAttackEvent(0, true)]} cityNames={CITY_NAMES} />);
     expect(screen.getByText("(walls breached)")).not.toBeNull();
+  });
+
+  it("renders a city-strike entry naming the city, target, and damage", () => {
+    render(<MoveLog events={[cityStrikeEvent(0, false)]} cityNames={CITY_NAMES} />);
+    expect(screen.getByText(/bombarded Pezhetairos at \(6, 1\) — dealt 28/)).not.toBeNull();
+  });
+
+  it("marks a target the city strike defeated", () => {
+    render(<MoveLog events={[cityStrikeEvent(0, true)]} cityNames={CITY_NAMES} />);
+    expect(screen.getByText("(defeated)")).not.toBeNull();
   });
 
   it("renders a capture entry naming the capturer, city, and previous owner", () => {
