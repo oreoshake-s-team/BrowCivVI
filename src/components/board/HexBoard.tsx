@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { FULL_HP } from "@/engine/combat/resolveCombat";
 import type { Citation } from "@/engine/content/citation";
 import type { MediaLink } from "@/engine/content/media";
 import type { NamedRegion } from "@/engine/content/region";
@@ -43,6 +44,7 @@ import {
 
 const SIZE = 36;
 const PAD = SIZE;
+const LOW_HP_FRACTION = 0.34;
 const PAN_THRESHOLD = 4;
 const CITATION_HIDE_MS = 700;
 const REPLAY_PAN_MS = 280;
@@ -747,6 +749,8 @@ export function HexBoard({
               selectedId !== null && selectedId !== unit.id && attackableKeys.has(hexKey(unit.hex));
             const moves = movement[unit.id];
             const outOfSupply = !unit.supplied;
+            const hpFrac = Math.max(0, Math.min(1, unit.hp / FULL_HP));
+            const damaged = unit.hp < FULL_HP;
             const revealed = selected || hoveredUnitId === unit.id;
             const showMoves =
               moves !== undefined && (unit.owner === playerFaction ? moves > 0 : revealed);
@@ -809,6 +813,33 @@ export function HexBoard({
                   strokeWidth={2}
                 />
                 <UnitMark unitClass={type?.class} color={style.text} />
+                {damaged ? (
+                  <g
+                    className={styles.unitHp}
+                    data-unit-hp={unit.id}
+                    role="img"
+                    aria-label={`${type?.name ?? unit.typeId}: ${unit.hp} of ${FULL_HP} HP`}
+                    pointerEvents="none"
+                  >
+                    <rect
+                      className={styles.unitHpTrack}
+                      x={-SIZE * 0.5}
+                      y={-SIZE * 0.84}
+                      width={SIZE}
+                      height={SIZE * 0.14}
+                      rx={SIZE * 0.07}
+                    />
+                    <rect
+                      className={styles.unitHpFill}
+                      data-low={hpFrac <= LOW_HP_FRACTION || undefined}
+                      x={-SIZE * 0.5}
+                      y={-SIZE * 0.84}
+                      width={SIZE * hpFrac}
+                      height={SIZE * 0.14}
+                      rx={SIZE * 0.07}
+                    />
+                  </g>
+                ) : null}
                 {outOfSupply ? (
                   <g
                     className={styles.supplyBadge}

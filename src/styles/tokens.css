@@ -39,6 +39,9 @@
   --color-city-hp-track: rgb(0 0 0 / 45%);
   --color-city-hp-fill: var(--green-600);
   --color-city-hp-low: var(--faction-persia-fill);
+  --color-unit-hp-track: rgb(0 0 0 / 45%);
+  --color-unit-hp-fill: var(--green-600);
+  --color-unit-hp-low: var(--faction-persia-fill);
   --color-loyalty-track: rgb(0 0 0 / 35%);
   --color-loyalty-center: var(--color-text-halo);
   --color-loyalty-wavering: var(--gold-400);
