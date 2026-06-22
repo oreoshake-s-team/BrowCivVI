@@ -238,6 +238,13 @@ export function HexBoard({
   const hasActionableUnit = units.some(
     (unit) => unit.owner === playerFaction && (movement[unit.id] ?? 0) > 0,
   );
+  const presentUnitClasses = Array.from(
+    new Set(
+      units
+        .map((unit) => unitTypeById(unit.typeId)?.class)
+        .filter((unitClass): unitClass is UnitClass => unitClass !== undefined),
+    ),
+  );
 
   const [seenDeselect, setSeenDeselect] = useState(deselectSignal);
   if (deselectSignal !== seenDeselect) {
@@ -1038,7 +1045,7 @@ export function HexBoard({
         </svg>
 
         <div className={styles.legendOverlay}>
-          <Legend />
+          <Legend unitClasses={presentUnitClasses} />
         </div>
         {selectedUnit !== null ? (
           <div className={styles.infoOverlay}>

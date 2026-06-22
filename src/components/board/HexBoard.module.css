@@ -542,9 +542,29 @@
   transform: rotate(90deg);
 }
 
+.legendBody {
+  margin-top: var(--space-sm);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.legendGroup {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.legendGroupTitle {
+  margin: 0;
+  font-size: var(--font-size-ui-sm);
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .legendList {
   list-style: none;
-  margin: var(--space-sm) 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -563,6 +583,21 @@
   height: 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border-strong);
+}
+
+.legendIcon,
+.legendUnitIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.legendUnitIcon {
+  color: var(--color-ink);
+}
+
+.legendSigil {
+  color: var(--color-surface-raised);
 }
 
 .stats {
