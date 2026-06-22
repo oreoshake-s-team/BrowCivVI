@@ -677,6 +677,41 @@ describe("HexBoard terrain motifs", () => {
   });
 });
 
+describe("HexBoard unit health", () => {
+  const wound = (id: string, hp: number): readonly Unit[] =>
+    SAMPLE_UNITS.map((u) => (u.id === id ? { ...u, hp } : u));
+
+  it("renders a health bar for a damaged unit", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={wound(MAC_ID, 60)} />);
+    expect(container.querySelector(`[data-unit-hp="${MAC_ID}"]`)).not.toBeNull();
+  });
+
+  it("leaves a full-health unit without a health bar", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector("[data-unit-hp]")).toBeNull();
+  });
+
+  it("shows a health bar on a damaged enemy unit", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={wound(PER_ID, 50)} />);
+    expect(container.querySelector(`[data-unit-hp="${PER_ID}"]`)).not.toBeNull();
+  });
+
+  it("flags a critically wounded unit's health bar as low", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={wound(MAC_ID, 20)} />);
+    expect(container.querySelector(`[data-unit-hp="${MAC_ID}"] [data-low]`)).not.toBeNull();
+  });
+
+  it("does not flag a lightly wounded unit's health bar as low", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={wound(MAC_ID, 80)} />);
+    expect(container.querySelector(`[data-unit-hp="${MAC_ID}"] [data-low]`)).toBeNull();
+  });
+
+  it("labels the health bar with the current and max HP for assistive tech", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={wound(MAC_ID, 40)} />);
+    expect(screen.getByRole("img", { name: "Pezhetairos: 40 of 100 HP" })).not.toBeNull();
+  });
+});
+
 const SARDIS_HEX = { q: 0, r: 0 };
 const SARDIS_MAX = cityMaxHp(20);
 const ADJACENT_MAC: Unit = {

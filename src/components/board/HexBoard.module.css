@@ -149,6 +149,20 @@
   fill: var(--color-city-hp-low);
 }
 
+.unitHpTrack {
+  fill: var(--color-unit-hp-track);
+  stroke: var(--color-hex-stroke);
+  stroke-width: 1;
+}
+
+.unitHpFill {
+  fill: var(--color-unit-hp-fill);
+}
+
+.unitHpFill[data-low] {
+  fill: var(--color-unit-hp-low);
+}
+
 .cityLoyaltyTrack {
   fill: var(--color-loyalty-track);
   stroke: var(--color-hex-stroke);
