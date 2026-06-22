@@ -54,4 +54,19 @@ describe("Legend", () => {
     render(<Legend unitClasses={["heavyCavalry"]} />);
     expect(screen.queryByText("Siege")).toBeNull();
   });
+
+  it("keys the loyalty meter", () => {
+    render(<Legend />);
+    expect(screen.getByText(/Loyalty/)).toBeTruthy();
+  });
+
+  it("keys the Royal Road", () => {
+    render(<Legend />);
+    expect(screen.getByText("Royal Road")).toBeTruthy();
+  });
+
+  it("keys the health bar", () => {
+    render(<Legend />);
+    expect(screen.getByText("Health")).toBeTruthy();
+  });
 });
