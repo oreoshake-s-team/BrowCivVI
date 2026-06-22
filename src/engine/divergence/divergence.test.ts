@@ -156,6 +156,16 @@ describe("applyDivergenceEffect", () => {
     const after = applyDivergenceEffect(before, SCORCH);
     expect(loyaltyOf(after, "dascylium")).toBe(loyaltyOf(before, "dascylium"));
   });
+
+  it("flags a scorched satrapy so it scores reduced value", () => {
+    const after = applyDivergenceEffect(matchWithCities(), SCORCH, MAP_CTX);
+    expect(after.cities.find((city) => city.id === "dascylium")?.scorched).toBe(true);
+  });
+
+  it("does not flag a city outside the scorched region", () => {
+    const after = applyDivergenceEffect(matchWithCities(), SCORCH, MAP_CTX);
+    expect(after.cities.find((city) => city.id === "pella")?.scorched ?? false).toBe(false);
+  });
 });
 
 describe("pendingDivergence", () => {

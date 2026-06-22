@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import type { CityState } from "./cities";
-import { CITY_SACKED_VALUE_FRACTION, cityScore, matchCityScores } from "./scoring";
+import {
+  CITY_SACKED_VALUE_FRACTION,
+  CITY_SCORCHED_VALUE_FRACTION,
+  cityScore,
+  matchCityScores,
+} from "./scoring";
 import { createMatch } from "./state";
 
 const VALUES: Record<string, number> = { a: 100, b: 50, c: 80 };
@@ -15,6 +20,20 @@ describe("cityScore", () => {
     const sacked: CityState = { id: "a", owner: "macedon", hp: 100, sacked: true };
     expect(cityScore([sacked], "macedon", valueOf)).toBe(
       Math.round(100 * CITY_SACKED_VALUE_FRACTION),
+    );
+  });
+
+  it("counts a scorched city at the steepest reduced fraction", () => {
+    const scorched: CityState = { id: "a", owner: "macedon", hp: 100, scorched: true };
+    expect(cityScore([scorched], "macedon", valueOf)).toBe(
+      Math.round(100 * CITY_SCORCHED_VALUE_FRACTION),
+    );
+  });
+
+  it("devalues a scorched city further even when it was also sacked", () => {
+    const both: CityState = { id: "a", owner: "macedon", hp: 100, sacked: true, scorched: true };
+    expect(cityScore([both], "macedon", valueOf)).toBe(
+      Math.round(100 * CITY_SCORCHED_VALUE_FRACTION),
     );
   });
 
