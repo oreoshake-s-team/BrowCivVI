@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import type { Hex } from "@/engine/hex";
 import type { AttackEvent, MatchEvent } from "@/engine/match/events";
+import type { Unit } from "@/engine/unit/types";
 import {
+  defeatedFadeUnits,
   newAttackEvents,
   newDefectionEvents,
   replayAttacks,
@@ -116,6 +118,52 @@ function defectionAt(seq: number): MatchEvent {
     previousOwner: "persia",
   };
 }
+
+function unit(id: string, owner: string, hex: Hex, typeId = "pezhetairos"): Unit {
+  return { id, typeId, owner, hex, hp: 100, morale: 80, supplied: true, hasMovedThisTurn: false };
+}
+
+describe("defeatedFadeUnits", () => {
+  const ATTACKER_HEX: Hex = { q: 7, r: 1 };
+
+  it("fades the defeated target at the hex where it was struck", () => {
+    const event: AttackEvent = { ...attackAt(1, ATTACKER_HEX), defeated: ["m1"] };
+    const units = new Map([["m1", unit("m1", "macedon", { q: 0, r: 0 })]]);
+    expect(defeatedFadeUnits(event, units)[0]?.hex).toEqual(event.targetHex);
+  });
+
+  it("preserves the defeated unit's owner for faction tinting", () => {
+    const event: AttackEvent = { ...attackAt(1, ATTACKER_HEX), defeated: ["m1"] };
+    const units = new Map([["m1", unit("m1", "macedon", { q: 0, r: 0 })]]);
+    expect(defeatedFadeUnits(event, units)[0]?.owner).toBe("macedon");
+  });
+
+  it("places a defeated attacker at its own attacker hex", () => {
+    const event: AttackEvent = { ...attackAt(2, ATTACKER_HEX), defeated: ["p2"] };
+    const units = new Map([["p2", unit("p2", "persia", { q: 9, r: 9 }, "persian-cavalry")]]);
+    expect(defeatedFadeUnits(event, units)[0]?.hex).toEqual(ATTACKER_HEX);
+  });
+
+  it("fades every unit named in the defeated list", () => {
+    const event: AttackEvent = { ...attackAt(2, ATTACKER_HEX), defeated: ["m1", "p2"] };
+    const units = new Map([
+      ["m1", unit("m1", "macedon", { q: 0, r: 0 })],
+      ["p2", unit("p2", "persia", { q: 9, r: 9 }, "persian-cavalry")],
+    ]);
+    expect(defeatedFadeUnits(event, units)).toHaveLength(2);
+  });
+
+  it("skips a defeated id with no unit on the pre-turn board", () => {
+    const event: AttackEvent = { ...attackAt(1, ATTACKER_HEX), defeated: ["ghost"] };
+    expect(defeatedFadeUnits(event, new Map())).toEqual([]);
+  });
+
+  it("fades nothing when the attack defeated no one", () => {
+    const event = attackAt(1, ATTACKER_HEX);
+    const units = new Map([["m1", unit("m1", "macedon", { q: 0, r: 0 })]]);
+    expect(defeatedFadeUnits(event, units)).toEqual([]);
+  });
+});
 
 describe("newDefectionEvents", () => {
   it("keeps only defection events newer than the cutoff sequence", () => {
