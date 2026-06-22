@@ -233,6 +233,9 @@ export function HexBoard({
   const labeledHexKeys = new Set(
     regions.flatMap((region) => (region.labelHex ? [hexKey(region.labelHex)] : [])),
   );
+  const hasActionableUnit = units.some(
+    (unit) => unit.owner === playerFaction && (movement[unit.id] ?? 0) > 0,
+  );
 
   const [seenDeselect, setSeenDeselect] = useState(deselectSignal);
   if (deselectSignal !== seenDeselect) {
@@ -262,7 +265,7 @@ export function HexBoard({
   const tapHex = (hex: Hex) => {
     if (moved.current) return;
     setCited(null);
-    if (pointerType.current !== "mouse" && reachableKeys.has(hexKey(hex))) {
+    if (reachableKeys.has(hexKey(hex))) {
       tryMove(hex);
       return;
     }
@@ -1019,6 +1022,12 @@ export function HexBoard({
         ) : selectedCityInfo !== null ? (
           <div className={styles.infoOverlay}>
             <CityPanel city={selectedCityInfo} canIncite={canIncite} onIncite={onIncite} />
+          </div>
+        ) : hasActionableUnit ? (
+          <div className={styles.infoOverlay}>
+            <section className={styles.info} aria-label="Board help">
+              <p className={styles.infoEmpty}>Select a unit to move or attack.</p>
+            </section>
           </div>
         ) : null}
       </div>
