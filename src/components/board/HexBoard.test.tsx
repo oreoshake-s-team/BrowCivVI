@@ -118,6 +118,21 @@ describe("HexBoard interaction", () => {
     expect(onSelect).toHaveBeenLastCalledWith(null);
   });
 
+  it("moves the selected unit when a reachable hex is left-clicked", () => {
+    const onMove = vi.fn();
+    const { container } = render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        reachable={[{ q: 1, r: 0 }]}
+        onMove={onMove}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.click(container.querySelector('[data-hex="1,0"]')!);
+    expect(onMove).toHaveBeenCalledWith("macedon-phalanx-1", { q: 1, r: 0 });
+  });
+
   it("moves the selected unit when a reachable hex is right-clicked", () => {
     const onMove = vi.fn();
     const { container } = render(
@@ -637,6 +652,45 @@ describe("HexBoard movement display", () => {
     render(friendly({ movement: { [MAC_ID]: 0 } }));
     fireEvent.click(screen.getByLabelText(MACEDON));
     expect(screen.getByText(`0 / ${MAC_MAX}`)).toBeTruthy();
+  });
+});
+
+describe("HexBoard action prompt", () => {
+  it("prompts the player to select a unit when none is selected", () => {
+    render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        playerFaction="macedon"
+        movement={{ [MAC_ID]: 2 }}
+      />,
+    );
+    expect(screen.getByText("Select a unit to move or attack.")).toBeTruthy();
+  });
+
+  it("drops the prompt once a unit is selected", () => {
+    render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        playerFaction="macedon"
+        movement={{ [MAC_ID]: 2 }}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(screen.queryByText("Select a unit to move or attack.")).toBeNull();
+  });
+
+  it("omits the prompt when the player has no units left to act", () => {
+    render(
+      <HexBoard
+        map={SAMPLE_MAP}
+        units={SAMPLE_UNITS}
+        playerFaction="macedon"
+        movement={{ [MAC_ID]: 0 }}
+      />,
+    );
+    expect(screen.queryByText("Select a unit to move or attack.")).toBeNull();
   });
 });
 
