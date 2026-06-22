@@ -77,3 +77,36 @@ describe("InMemoryMatchStore listByOwner", () => {
     expect((await store.listByOwner("owner-1"))[0]!.updatedAt).toBeGreaterThan(before);
   });
 });
+
+describe("InMemoryMatchStore deleteByOwner", () => {
+  it("deletes every match owned by the visitor", async () => {
+    const store = new InMemoryMatchStore();
+    await store.create(make("a", "owner-1"));
+    await store.create(make("b", "owner-1"));
+    await store.deleteByOwner("owner-1");
+    expect(await store.listByOwner("owner-1")).toEqual([]);
+  });
+
+  it("reports how many matches it deleted", async () => {
+    const store = new InMemoryMatchStore();
+    await store.create(make("a", "owner-1"));
+    await store.create(make("b", "owner-1"));
+    expect(await store.deleteByOwner("owner-1")).toBe(2);
+  });
+
+  it("keeps the match named by keepId", async () => {
+    const store = new InMemoryMatchStore();
+    await store.create(make("a", "owner-1"));
+    await store.create(make("b", "owner-1"));
+    await store.deleteByOwner("owner-1", "b");
+    expect((await store.listByOwner("owner-1")).map((m) => m.state.id)).toEqual(["b"]);
+  });
+
+  it("never touches another visitor's matches", async () => {
+    const store = new InMemoryMatchStore();
+    await store.create(make("a", "owner-1"));
+    await store.create(make("b", "owner-2"));
+    await store.deleteByOwner("owner-1");
+    expect((await store.listByOwner("owner-2")).map((m) => m.state.id)).toEqual(["b"]);
+  });
+});

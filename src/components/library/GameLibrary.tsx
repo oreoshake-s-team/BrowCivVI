@@ -10,14 +10,7 @@ export interface GameLibraryProps {
 
 export function GameLibrary({ games, now }: GameLibraryProps) {
   if (games.length === 0) {
-    return (
-      <div className={styles.empty}>
-        <p className={styles.emptyText}>No campaigns yet.</p>
-        <Link className={styles.cta} href="/play">
-          Start your first campaign →
-        </Link>
-      </div>
-    );
+    return <p className={styles.emptyText}>No campaigns yet — start one above.</p>;
   }
 
   return (

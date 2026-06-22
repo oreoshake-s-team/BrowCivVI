@@ -32,8 +32,13 @@ describe("GameLibrary", () => {
     expect(screen.getByText("2 days ago")).toBeTruthy();
   });
 
-  it("offers a start-a-campaign call to action when empty", () => {
+  it("shows an empty-state message when there are no games", () => {
     render(<GameLibrary games={[]} now={NOW} />);
-    expect(screen.getByRole("link").getAttribute("href")).toBe("/play");
+    expect(screen.getByText(/No campaigns yet/)).toBeTruthy();
+  });
+
+  it("renders no link when there are no games", () => {
+    render(<GameLibrary games={[]} now={NOW} />);
+    expect(screen.queryByRole("link")).toBeNull();
   });
 });
