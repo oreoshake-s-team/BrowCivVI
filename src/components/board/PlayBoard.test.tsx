@@ -95,6 +95,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         activeFaction: "macedon",
         events: [],
         scorched: [],
+        spent: [],
         canIncite: false,
       },
     } satisfies LoadBoardResult);
@@ -115,6 +116,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      spent: [],
       canIncite,
     });
     vi.mocked(actions.loadBoard).mockResolvedValue({ status: "ok", board: incitable(true) });
@@ -391,6 +393,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      spent: [],
       canIncite: false,
     } satisfies BoardView);
 
@@ -417,6 +420,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         activeFaction: "macedon",
         events: [],
         scorched: [],
+        spent: [],
         canIncite: false,
         incompatible: true,
       },
@@ -431,6 +435,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      spent: [],
       canIncite: false,
     } satisfies BoardView);
 
@@ -460,6 +465,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
           activeFaction: "macedon",
           events: [],
           scorched: [],
+          spent: [],
           canIncite: false,
         },
       } satisfies LoadBoardResult);
@@ -497,6 +503,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [],
       scorched: [],
+      spent: [],
       canIncite: false,
     } satisfies BoardView);
     render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
@@ -534,6 +541,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [aiAttack],
       scorched: [],
+      spent: [],
       canIncite: false,
     } satisfies BoardView);
 
@@ -575,6 +583,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [aiMove],
       scorched: [],
+      spent: [],
       canIncite: false,
     } satisfies BoardView);
 
@@ -611,6 +620,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
       activeFaction: "macedon",
       events: [defection],
       scorched: [],
+      spent: [],
       canIncite: false,
     } satisfies BoardView);
 
@@ -639,6 +649,7 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
         activeFaction: "macedon",
         events: [],
         scorched: [],
+        spent: [],
         canIncite: false,
       },
     } satisfies LoadBoardResult);
@@ -693,6 +704,7 @@ describe("PlayBoard divergence node", () => {
     activeFaction: "macedon",
     events: [],
     scorched: [],
+    spent: [],
     canIncite: false,
   };
 

@@ -57,6 +57,18 @@ describe("HexBoard", () => {
     expect(screen.getByText("Dascylium")).toBeTruthy();
   });
 
+  it("marks a unit with no actions left as spent", () => {
+    const { container } = render(
+      <HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} spent={[MAC_ID]} />,
+    );
+    expect(container.querySelector(`[data-spent="${MAC_ID}"]`)).not.toBeNull();
+  });
+
+  it("leaves a unit that still has actions undimmed", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector("[data-spent]")).toBeNull();
+  });
+
   it("hides unit stats until a unit is selected", () => {
     render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(screen.queryByText("Morale")).toBeNull();

@@ -368,6 +368,11 @@
   stroke-width: 3;
 }
 
+.spent {
+  opacity: 0.45;
+  filter: grayscale(100%);
+}
+
 .glyph {
   font-size: var(--font-size-glyph);
   font-weight: 700;

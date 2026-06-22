@@ -22,6 +22,7 @@ export interface PlayBoardStore extends PlayBoardState {
     reachable: readonly Hex[],
     events?: readonly MatchEvent[],
     cities?: readonly CityState[],
+    spent?: readonly string[],
   ) => void;
   readonly actionRejected: (units: readonly Unit[], message: string) => void;
   readonly attackApplied: (
@@ -29,6 +30,7 @@ export interface PlayBoardStore extends PlayBoardState {
     movement?: Readonly<Record<string, number>>,
     events?: readonly MatchEvent[],
     cities?: readonly CityState[],
+    spent?: readonly string[],
   ) => void;
   readonly addFloater: (floater: DamageFloater) => void;
   readonly removeFloater: (id: string) => void;
@@ -59,6 +61,7 @@ function projectBoard(board: BoardView): Partial<PlayBoardState> {
     events: board.events,
     scorched: board.scorched,
     canIncite: board.canIncite,
+    spent: board.spent,
     pendingDivergence: board.pendingDivergence ?? null,
     incompatible: board.incompatible ?? false,
   };
@@ -98,24 +101,26 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
       attackable: [],
     }));
   },
-  moveApplied: (units, movement, reachable, events, cities) => {
+  moveApplied: (units, movement, reachable, events, cities, spent) => {
     set((state) => ({
       units,
       movement,
       reachable,
       events: events ?? state.events,
       cities: cities ?? state.cities,
+      spent: spent ?? state.spent,
     }));
   },
   actionRejected: (units, message) => {
     set({ units, toast: message });
   },
-  attackApplied: (units, movement, events, cities) => {
+  attackApplied: (units, movement, events, cities, spent) => {
     set((state) => ({
       units,
       movement: movement ?? state.movement,
       events: events ?? state.events,
       cities: cities ?? state.cities,
+      spent: spent ?? state.spent,
     }));
   },
   addFloater: (floater) => {

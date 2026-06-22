@@ -28,6 +28,7 @@ const BOARD: BoardView = {
   activeFaction: "macedon",
   events: [],
   scorched: [],
+  spent: [],
   canIncite: false,
 };
 
@@ -80,6 +81,17 @@ describe("playBoardStore", () => {
     store().boardLoaded(BOARD);
     store().moveApplied(BOARD.units, BOARD.movement, [], [MOVE_EVENT]);
     expect(store().events).toEqual([MOVE_EVENT]);
+  });
+
+  it("projects the loaded spent-unit list", () => {
+    store().boardLoaded({ ...BOARD, spent: ["mac"] });
+    expect(store().spent).toEqual(["mac"]);
+  });
+
+  it("refreshes the spent-unit list when a move reports it", () => {
+    store().boardLoaded(BOARD);
+    store().moveApplied(BOARD.units, BOARD.movement, [], undefined, undefined, ["mac"]);
+    expect(store().spent).toEqual(["mac"]);
   });
 
   it("restores the prior units and toasts when an action is rejected", () => {

@@ -148,6 +148,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
           outcome.reachable,
           outcome.events,
           outcome.cities,
+          outcome.spent,
         );
       await refreshTargetsOrDeselect(store.matchId, unitId);
     } else {
@@ -175,7 +176,9 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
         );
       return;
     }
-    usePlayBoardStore.getState().attackApplied(outcome.units, outcome.movement, outcome.events);
+    usePlayBoardStore
+      .getState()
+      .attackApplied(outcome.units, outcome.movement, outcome.events, undefined, outcome.spent);
     if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
       pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);
     }
@@ -202,7 +205,13 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     }
     usePlayBoardStore
       .getState()
-      .attackApplied(outcome.units, outcome.movement, outcome.events, outcome.cities);
+      .attackApplied(
+        outcome.units,
+        outcome.movement,
+        outcome.events,
+        outcome.cities,
+        outcome.spent,
+      );
     if (outcome.attackerHex !== undefined && outcome.attackerDamage !== undefined) {
       pushFloater(outcome.attackerHex, `-${outcome.attackerDamage}`);
     }
