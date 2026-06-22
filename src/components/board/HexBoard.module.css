@@ -135,6 +135,14 @@
   pointer-events: none;
 }
 
+.cityMarker {
+  pointer-events: none;
+}
+
+.citySigil {
+  color: var(--color-surface-raised);
+}
+
 .cityHpTrack {
   fill: var(--color-city-hp-track);
   stroke: var(--color-hex-stroke);

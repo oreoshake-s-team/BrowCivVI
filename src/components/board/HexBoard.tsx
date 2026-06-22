@@ -24,6 +24,8 @@ import type { UnitClass } from "@/engine/unit/classes";
 import type { Unit } from "@/engine/unit/types";
 import { CitationCard } from "./CitationCard";
 import { CitationTarget } from "./CitationTarget";
+import { CityMarkerDefs } from "./CityMarkerDefs";
+import { CITY_SETTLEMENT_ID, cityAllegiance, sigilId } from "./cityMarkers";
 import { CityPanel, type CityPanelInfo } from "./CityPanel";
 import DebugPanel from "./DebugPanel";
 import { riverSegmentPoints } from "./geometry";
@@ -448,6 +450,7 @@ export function HexBoard({
           onPointerCancel={onPointerUp}
         >
           <UnitSpriteDefs />
+          <CityMarkerDefs />
           {Array.from(map.hexes.values()).map((mapHex) => {
             const key = hexKey(mapHex.hex);
             const center = hexToPixel(mapHex.hex, SIZE);
@@ -558,6 +561,28 @@ export function HexBoard({
                     pointerEvents="none"
                   />
                 ) : null}
+                {city ? (
+                  <g className={styles.cityMarker} pointerEvents="none">
+                    <use
+                      data-city-marker={city.id}
+                      href={`#${CITY_SETTLEMENT_ID}`}
+                      x={center.x - SIZE * 0.5}
+                      y={center.y - SIZE * 0.16}
+                      width={SIZE}
+                      height={SIZE}
+                      style={{ color: factionStyle(cityOwner).stroke }}
+                    />
+                    <use
+                      className={styles.citySigil}
+                      data-city-sigil={cityAllegiance(cityOwner)}
+                      href={`#${sigilId(cityOwner)}`}
+                      x={center.x - SIZE * 0.22}
+                      y={center.y + SIZE * 0.02}
+                      width={SIZE * 0.44}
+                      height={SIZE * 0.44}
+                    />
+                  </g>
+                ) : null}
                 {cityWavering ? (
                   <polygon
                     className={styles.cityWavering}
@@ -589,7 +614,7 @@ export function HexBoard({
                     pointerEvents="none"
                   />
                 ) : null}
-                {labeledHexKeys.has(key) ? null : (
+                {labeledHexKeys.has(key) || city !== undefined ? null : (
                   <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
                 )}
                 {scorchedKeys.has(key) ? (
