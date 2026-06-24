@@ -27,6 +27,15 @@ function makeInput(rng: Rng, over: Partial<CombatInput> = {}): CombatInput {
   };
 }
 
+describe("fortify defense", () => {
+  it("reduces the damage a defender takes when fortified", () => {
+    const rng: Rng = () => 0.5;
+    const plain = resolveCombat(makeInput(rng)).defenderDamage;
+    const fortified = resolveCombat(makeInput(rng, { defenderFortifyBonus: 6 })).defenderDamage;
+    expect(fortified).toBeLessThan(plain);
+  });
+});
+
 describe("effectiveUnitStrength", () => {
   it("is unchanged at full HP and baseline morale", () => {
     expect(effectiveUnitStrength(35, 100, 80)).toBe(35);

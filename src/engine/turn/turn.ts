@@ -1,5 +1,6 @@
 import { healCities } from "../match/cities";
 import { applyDefections } from "../match/defection";
+import { rampFortify } from "../match/defend";
 import { applyLoyaltyPressure, type LoyaltyContext } from "../match/loyalty";
 import type { MatchState } from "../match/state";
 import { applyOutOfSupplyAttrition } from "../supply/attrition";
@@ -50,8 +51,13 @@ function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): 
   return { ...state, units, movement };
 }
 
+function rampFortifyPhase(state: MatchState, faction: string): MatchState {
+  return { ...state, units: rampFortify(state.units, faction) };
+}
+
 export const TURN_START_PHASES: readonly TurnPhase[] = [
   restoreMovement,
+  rampFortifyPhase,
   healFactionCities,
   supplyPropagation,
   outOfSupplyAttrition,

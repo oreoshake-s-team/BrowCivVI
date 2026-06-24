@@ -55,6 +55,22 @@ describe("applyAttack", () => {
     expect(defender?.hp).toBeLessThan(100);
   });
 
+  it("clears the attacker's fortify when it attacks", () => {
+    const attacker = { ...ATTACKER, fortifiedTurns: 2 };
+    const result = applyAttack(input({ units: [attacker, DEFENDER] })).units.find(
+      (u) => u.id === "m1",
+    );
+    expect(result?.fortifiedTurns).toBe(0);
+  });
+
+  it("keeps the defender's fortify when it is attacked", () => {
+    const defender = { ...DEFENDER, fortifiedTurns: 2 };
+    const result = applyAttack(input({ units: [ATTACKER, defender] })).units.find(
+      (u) => u.id === "p1",
+    );
+    expect(result?.fortifiedTurns).toBe(2);
+  });
+
   it("removes and reports a unit reduced to zero hp", () => {
     const frail = unit("p1", "persian-cavalry", "persia", 2, 1, 1);
     expect(applyAttack(input({ units: [ATTACKER, frail] })).defeated).toContain("p1");

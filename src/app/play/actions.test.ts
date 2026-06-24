@@ -9,6 +9,7 @@ import {
   move,
   attack,
   attackCity,
+  defend,
   incite,
   targetsFor,
   endTurn,
@@ -289,6 +290,35 @@ describe("divergence resolution", () => {
     const board = await newGame();
     const outcome = await resolveDivergence(board.matchId, "granicus", "flee");
     expect(outcome.ok).toBe(false);
+  });
+});
+
+describe("defend", () => {
+  it("fortifies an idle unit", async () => {
+    const board = await newGame();
+    const outcome = await defend(board.matchId, PHALANX);
+    expect(outcome.units.find((u) => u.id === PHALANX)?.fortifiedTurns).toBe(1);
+  });
+
+  it("consumes the fortified unit's movement", async () => {
+    const board = await newGame();
+    const outcome = await defend(board.matchId, PHALANX);
+    expect(outcome.movement[PHALANX]).toBe(0);
+  });
+
+  it("rejects defending a unit that already moved this turn", async () => {
+    const board = await newGame();
+    const targets = await targetsFor(board.matchId, PHALANX);
+    await move(board.matchId, PHALANX, targets.reachable[0]!);
+    const outcome = await defend(board.matchId, PHALANX);
+    expect(outcome.ok).toBe(false);
+  });
+
+  it("reports a rate-limited defend", async () => {
+    const board = await newGame();
+    intentAllowedMock.mockResolvedValueOnce(false);
+    const outcome = await defend(board.matchId, PHALANX);
+    expect(outcome.rateLimited).toBe(true);
   });
 });
 

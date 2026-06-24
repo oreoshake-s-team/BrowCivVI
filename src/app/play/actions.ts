@@ -18,6 +18,7 @@ import {
 import type { Hex } from "@/engine/hex";
 import { hexKey, terrainAt } from "@/engine/map/types";
 import { blockingCityHexes, captureCityAt, cityMaxHp, type CityState } from "@/engine/match/cities";
+import { applyDefend } from "@/engine/match/defend";
 import {
   appendAttack,
   appendCapture,
@@ -298,6 +299,37 @@ export async function incite(matchId: string, cityId: string): Promise<InciteOut
   }
 }
 
+export interface DefendOutcome {
+  readonly ok: boolean;
+  readonly units: readonly Unit[];
+  readonly movement: Readonly<Record<string, number>>;
+  readonly spent?: readonly string[];
+  readonly rateLimited?: boolean;
+}
+
+export async function defend(matchId: string, unitId: string): Promise<DefendOutcome> {
+  const owner = await currentOwner();
+  if (!(await intentAllowed(owner)))
+    return { ok: false, units: [], movement: {}, rateLimited: true };
+  const store = getStore();
+  const match = await loadOwned(store, owner, matchId);
+  if (match === null) return { ok: false, units: [], movement: {} };
+  if (match.activeFaction !== FIRST_SLICE_PLAYER_FACTION)
+    return { ok: false, units: match.units, movement: match.movement };
+
+  const next = applyDefend(match, FIRST_SLICE_PLAYER_FACTION, unitId);
+  if (next === null) return { ok: false, units: match.units, movement: match.movement };
+
+  try {
+    const saved = await store.save(next);
+    return { ok: true, units: saved.units, movement: saved.movement, spent: spentUnitIds(saved) };
+  } catch (error) {
+    if (error instanceof StaleMatchError)
+      return { ok: false, units: match.units, movement: match.movement };
+    throw error;
+  }
+}
+
 export async function reachableFor(matchId: string, unitId: string): Promise<readonly Hex[]> {
   const match = await resolveMatch(matchId);
   const unit = match.units.find((candidate) => candidate.id === unitId);
@@ -354,7 +386,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
   const next: MatchState = {
     ...match,
     units: match.units.map((u) =>
-      u.id === unitId ? { ...u, hex: result.hex, hasMovedThisTurn: true } : u,
+      u.id === unitId ? { ...u, hex: result.hex, hasMovedThisTurn: true, fortifiedTurns: 0 } : u,
     ),
     movement: { ...match.movement, [unitId]: result.remaining },
     cities: capture.cities,

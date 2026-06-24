@@ -41,6 +41,7 @@ export interface CombatInput {
   readonly flanked: boolean;
   readonly riverAttack: boolean;
   readonly ranged?: boolean;
+  readonly defenderFortifyBonus?: number;
   readonly rng: Rng;
 }
 
@@ -78,7 +79,8 @@ export function resolveCombat(input: CombatInput): CombatResult {
     }) *
     phalanxAdjacencyMultiplier(input.defender.abilities, input.defender.adjacentAllies) *
     (1 + input.defenderTerrainDefense);
-  const defenderStrength = input.defender.strength * defenseMultiplier;
+  const defenderStrength =
+    input.defender.strength * defenseMultiplier + (input.defenderFortifyBonus ?? 0);
 
   const defenderDamage = Math.min(
     damage(attackerStrength, defenderStrength, input.rng),

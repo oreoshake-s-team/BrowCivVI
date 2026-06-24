@@ -73,6 +73,13 @@ describe("advanceTurn", () => {
     expect(healed?.hp).toBe(50 + UNIT_HEAL_RATE);
   });
 
+  it("ramps a fortified unit one level at the start of its turn", () => {
+    const fort: Unit = { ...unit("mac", "macedon", false), fortifiedTurns: 1 };
+    const state = match({ activeFaction: "persia", units: [fort, unit("per", "persia", true)] });
+    const ramped = advanceTurn(state, ctx).units.find((u) => u.id === "mac");
+    expect(ramped?.fortifiedTurns).toBe(2);
+  });
+
   it("clears the incoming faction's hasAttackedThisTurn flag", () => {
     const m = match({
       activeFaction: "persia",
