@@ -8,6 +8,14 @@ describe("FIRST_SLICE_MAP", () => {
     expect(FIRST_SLICE_MAP.cities.get("pella")?.owner).toBe("macedon");
   });
 
+  it("extends the world east into the Anatolian interior", () => {
+    expect(mapHexAt(FIRST_SLICE_MAP, { q: 14, r: 4 })?.terrain).toBe("mountain");
+  });
+
+  it("extends the world south into the Mediterranean", () => {
+    expect(mapHexAt(FIRST_SLICE_MAP, { q: 4, r: 11 })?.terrain).toBe("deepSea");
+  });
+
   it("marks Zeleia with Persian affinity", () => {
     expect(FIRST_SLICE_MAP.cities.get("zeleia")?.affinity).toBe("persia");
   });

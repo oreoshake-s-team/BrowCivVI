@@ -13,7 +13,7 @@ import type { MediaLink } from "@/engine/content/media";
 import type { NamedRegion } from "@/engine/content/region";
 import type { Hex } from "@/engine/hex";
 import { neighbors } from "@/engine/hex";
-import { hexToPixel, hexPolygonPoints, mapPixelBounds } from "@/engine/map/layout";
+import { hexToPixel, hexPolygonPoints, mapPixelBounds, pixelBoundsOf } from "@/engine/map/layout";
 import { blocksLand, type TerrainType } from "@/engine/map/terrain";
 import { hexKey } from "@/engine/map/types";
 import type { GameMap } from "@/engine/map/types";
@@ -194,6 +194,11 @@ export function HexBoard({
 }: HexBoardProps) {
   const bounds = mapPixelBounds(map, SIZE);
   const fitW = bounds.maxX - bounds.minX + PAD * 2;
+  const focusHexes = [
+    ...Array.from(map.cities.values(), (city) => city.hex),
+    ...units.map((unit) => unit.hex),
+  ];
+  const focusBounds = focusHexes.length > 0 ? pixelBoundsOf(focusHexes, SIZE) : bounds;
 
   const [hovered, setHovered] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -202,7 +207,7 @@ export function HexBoard({
   const [armedTarget, setArmedTarget] = useState<{ kind: "unit" | "city"; id: string } | null>(
     null,
   );
-  const [view, setView] = useState(() => fitView(bounds, PAD));
+  const [view, setView] = useState(() => fitView(focusBounds, PAD));
   const [cited, setCited] = useState<{
     name: string;
     citation: Citation;
