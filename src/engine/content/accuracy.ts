@@ -22,7 +22,6 @@ export const REQUIRED_CITY_IDS: readonly string[] = [
   "abydos",
   "ilium",
   "zeleia",
-  "dascylium",
   "sardis",
   "ephesus",
   "halicarnassus",
@@ -54,10 +53,10 @@ export function geographyErrors(map: GameMap): string[] {
 
   westOf("pella", "sestos", "Pella must lie west of the Hellespont crossing");
   westOf("sestos", "abydos", "the European bank (Sestos) must lie west of the Asian bank (Abydos)");
-  westOf("abydos", "dascylium", "the road from Abydos must run east to Dascylium");
+  westOf("abydos", "zeleia", "the road from Abydos must run east toward Zeleia");
   westOf("ephesus", "sardis", "the Ionian coast (Ephesus) must lie west of inland Sardis");
   westOf("athens", "ilium", "the Greek mainland (Athens) must lie west of Asia Minor (Ilium)");
-  southOf("sardis", "dascylium", "Sardis must lie inland to the south of the Granicus region");
+  southOf("sardis", "zeleia", "Sardis must lie inland to the south of the Granicus region");
   southOf("ephesus", "sardis", "Ephesus must lie south of Sardis");
   southOf("miletus", "ephesus", "Miletus must lie south of Ephesus");
   southOf("corinth", "athens", "Corinth must lie south of Athens toward the isthmus");
