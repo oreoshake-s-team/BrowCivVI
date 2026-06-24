@@ -153,7 +153,7 @@ Two coupled systems, both **pure per-turn engine passes** (server-authoritative,
 
 **Supply.** Supply flows from **supply sources** (controlled cities, the home base, captured naval bases + the fleet, the Royal Road network) outward through friendly/controlled hexes; impassable terrain, rivers, and enemy-held ground break the line. A unit **out of supply** (cut off, or pushed too far beyond a source) takes escalating **attrition** (HP/strength loss) and bleeds **morale**. This is where **Memnon's scorched earth** (§13) bites (burned hexes deny supply), and where **navigable rivers / naval bases** (Tigris, Euphrates, Nile; the fleet) and the **Royal Road** act as supply arteries. Overextension by pure conquest stretches supply thin; consolidating **loyal** territory secures it — another nudge toward eXpand.
 
-**Morale.** Each unit has **morale**, raised by victories and nearby leadership (a **great general** / Alexander), lowered by losses, being **flanked / rear-hit** (§13), going **out of supply**, and **war-weariness** from overextension and distance from home. Low morale weakens units and can trigger a **rout** (flee / refuse orders); a **leader's death or flight** craters morale army-wide — the mechanism behind the **king's-flight rout** at Issus/Gaugamela (§10/§12) and the **Hyphasis mutiny** (§12). Alexander's **"To the World's End"** (no war-weariness, §13) is the systemic counter.
+**Morale.** Each unit has **morale**, raised by victories and nearby leadership (a **great general** / Alexander), lowered by losses, being **flanked / rear-hit** (§13), going **out of supply**, and **war-weariness** from overextension and distance from home. Low morale weakens units and can trigger a **rout** (flee / refuse orders); a **leader's death or flight** craters morale army-wide — the mechanism behind the **king's-flight rout** at Issus/Gaugamela (§10/§12) and the **Hyphasis mutiny** (§12). Alexander's **"To the World's End"** (§13) is the systemic _engine_ of that mutiny, not a shield from it: his army's war-weariness grows **exponentially with distance from its nearest supply source**, so unchecked conquest accelerates toward collapse.
 
 Both resolve **server-side** in the pure engine (§3); the client only sees the result. Thresholds/rates are authored data, so harshness is tunable (§14).
 
@@ -161,7 +161,7 @@ Both resolve **server-side** in the pure engine (§3); the client only sees the 
 
 A `Faction` is authored data — `{ id, leader, objective, abilities[], uniqueUnits[] }` — so new sides and tuning are data edits, not engine changes. Objective/ability effects are pure modules behind a registry; stubs return identity so the engine stays green before each is implemented.
 
-- **Macedon / Alexander — offense.** Objective: conquer-by-deadline score. Abilities (hooks now, effects later): "To the World's End" (no war-weariness), "Hellenistic Fusion" (capture bonus). Unique units: Hetairoi, Hypaspist.
+- **Macedon / Alexander — offense.** Objective: conquer-by-deadline score. Abilities (hooks now, effects later): "To the World's End" (war-weariness that grows exponentially with distance from supply), "Hellenistic Fusion" (capture bonus). Unique units: Hetairoi, Hypaspist.
 - **Persia / Darius — defense (attrition).** Objective: attrition score (see Scoring). Signature buff **Royal Road** — once per turn, redeploy one defender between two Persia-held cities linked by the road network at reduced/zero movement cost, letting a single army cover a wide front. Unique unit hook: Immortals. When playing as Persia, Alexander is known as "Alexander the Accursed" and not "Alexander the Great."
 
 ### Loyalty & defection (peaceful expansion)
@@ -242,7 +242,7 @@ Each PR keeps **app-code changes under ~300 lines** (`src/` `.ts`/`.tsx`; excl. 
 5. **Movement & combat UI** — wire intents to the board.
 6. **AI phase** — seeded greedy AI on End Turn.
 7. **Deadline, scoring, leaderboard** (Macedon board first).
-8. **Alexander abilities** (Fusion, no war-weariness) as data-driven effects.
+8. **Alexander abilities** (Fusion, exponential war-weariness) as data-driven effects.
 
 _Phase 2 — Persia + PvP (each its own PR/issue):_
 
@@ -334,7 +334,7 @@ Authored as faction/unit/effect data behind the registry (§5). **Most depend on
 - **Sarissa wall** (phalangite defense): a phalangite (a unit with the `phalanx` ability) presents a hedge of sarissas to its attacker — a strong **defensive** bonus that holds **unless the phalangite is flanked** (pincered, per the rule above), in which case it is **negated** (the formation is taken from two sides). It is also **reduced on rough terrain** (any hex with `moveCost > 1`), where the line loses cohesion. Distinct from the hoplite **adjacency** bonus above (formation density) — the wall is about **encirclement** and **ground**. The historical strength-and-weakness of the Macedonian phalanx: near-unbreakable head-on, fatally exposed once caught from two sides or broken up on uneven ground (the gap at Gaugamela; Arrian, _Anabasis_ III.13–14). Provisional values in §14; a pure modifier behind the combat/effect registry (§5).
 - **Hypaspists**: no bonus when sieging a city.
 - **Hetairoi**: +1 movement while benefiting from a great general.
-- **To the World's End**: immune to **war-weariness** morale decay from overextension/distance (§5 Supply & morale) — the systemic counter to the Hyphasis mutiny.
+- **To the World's End**: the march to the world's end is what _breaks_ the army, not what steels it. Alexander's forces suffer **war-weariness morale decay that grows _exponentially_ with distance from the nearest supply source** (§5 Supply & morale) — the systemic engine behind the Hyphasis mutiny, and the deliberate counterweight to his battlefield dominance. Inverts the Civ 6 "no war-weariness" reading: the name now describes the failure mode, not immunity. Provisional curve/thresholds are authored, tunable data (§14).
 - Capturing a **wonder-city** with **Alexander adjacent** grants **that city's own unique unit** (Hellenistic Fusion); further copies are purchasable thereafter at **+50% cost**.
 
 ### Persia / Darius
