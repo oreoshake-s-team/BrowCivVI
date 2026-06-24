@@ -1,0 +1,11 @@
+{
+  "pr": 277,
+  "date": "2026-06-24",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "defend-button-in-unit-panel.webp",
+    "fortified-unit-badge.webp"
+  ],
+  "issue": 268,
+  "title": "Defend button and fortified indicator"
+}
