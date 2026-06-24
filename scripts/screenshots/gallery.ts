@@ -151,12 +151,14 @@ export function renderRootIndexHtml(entries: RootGalleryEntry[]): string {
         "</a>",
       ].join("");
     })
-    .join("");
+    .join("\n");
 
   const body = [
     "<h1>Screenshot gallery</h1>",
     '<p class="meta">Images attached to pull requests, newest first.</p>',
-    `<div class="grid">${cards}</div>`,
+    '<div class="grid">',
+    cards,
+    "</div>",
   ].join("\n");
   return page("Screenshot gallery", body);
 }

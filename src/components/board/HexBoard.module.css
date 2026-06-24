@@ -469,6 +469,17 @@
   cursor: not-allowed;
 }
 
+.defendButton {
+  margin-top: var(--space-sm);
+  padding: var(--space-3xs) var(--space-md);
+  font: inherit;
+  color: var(--color-text-halo);
+  background: var(--color-fortify);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
 .inciteHint {
   margin: var(--space-3xs) 0 0;
   font-size: var(--font-size-label-sm);
@@ -503,6 +514,24 @@
 
 .supplyBadge {
   pointer-events: none;
+}
+
+.fortifyBadge {
+  pointer-events: none;
+}
+
+.fortifyShield {
+  fill: var(--color-fortify);
+  stroke: var(--color-text-halo);
+  stroke-width: 1.5;
+}
+
+.fortifyLevel {
+  font-size: var(--font-size-label-sm);
+  font-weight: 700;
+  fill: var(--color-text-halo);
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 
 .supplyBadgeDot {

@@ -849,6 +849,71 @@ describe("HexBoard terrain motifs", () => {
   });
 });
 
+describe("HexBoard fortify badge", () => {
+  const fortify = (id: string, turns: number): readonly Unit[] =>
+    SAMPLE_UNITS.map((u) => (u.id === id ? { ...u, fortifiedTurns: turns } : u));
+
+  it("badges a fortified unit with its level", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={fortify(MAC_ID, 2)} />);
+    expect(container.querySelector(`[data-fortify="${MAC_ID}"]`)?.textContent).toBe("2");
+  });
+
+  it("leaves an unfortified unit without a fortify badge", () => {
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    expect(container.querySelector("[data-fortify]")).toBeNull();
+  });
+
+  it("announces a fortified unit to assistive tech", () => {
+    render(<HexBoard map={SAMPLE_MAP} units={fortify(MAC_ID, 1)} />);
+    expect(screen.getByRole("button", { name: `${MACEDON} — fortified` })).toBeTruthy();
+  });
+});
+
+describe("HexBoard defend action", () => {
+  const props = (onDefend: () => void) => ({
+    map: SAMPLE_MAP,
+    units: SAMPLE_UNITS,
+    playerFaction: "macedon",
+    movement: { [MAC_ID]: MAC_MAX },
+    interactive: true,
+    onDefend,
+  });
+
+  it("offers the Defend button for the player's selected unit", () => {
+    render(<HexBoard {...props(vi.fn())} />);
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(screen.getByRole("button", { name: "Defend (F)" })).toBeTruthy();
+  });
+
+  it("defends the selected unit when the button is clicked", () => {
+    const onDefend = vi.fn();
+    render(<HexBoard {...props(onDefend)} />);
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.click(screen.getByRole("button", { name: "Defend (F)" }));
+    expect(onDefend).toHaveBeenCalledWith(MAC_ID);
+  });
+
+  it("defends the selected unit with the F shortcut", () => {
+    const onDefend = vi.fn();
+    render(<HexBoard {...props(onDefend)} />);
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    fireEvent.keyDown(window, { key: "f" });
+    expect(onDefend).toHaveBeenCalledWith(MAC_ID);
+  });
+
+  it("does not offer the Defend button for a spent unit", () => {
+    render(<HexBoard {...props(vi.fn())} movement={{ [MAC_ID]: 0 }} />);
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(screen.queryByRole("button", { name: "Defend (F)" })).toBeNull();
+  });
+
+  it("does not offer the Defend button when the board is not interactive", () => {
+    render(<HexBoard {...props(vi.fn())} interactive={false} />);
+    fireEvent.click(screen.getByLabelText(MACEDON));
+    expect(screen.queryByRole("button", { name: "Defend (F)" })).toBeNull();
+  });
+});
+
 describe("HexBoard unit health", () => {
   const wound = (id: string, hp: number): readonly Unit[] =>
     SAMPLE_UNITS.map((u) => (u.id === id ? { ...u, hp } : u));

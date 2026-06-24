@@ -6,6 +6,7 @@ import {
   move,
   attack,
   attackCity,
+  defend,
   incite,
   newGame,
   endTurn,
@@ -44,6 +45,7 @@ export interface PlayBoardController {
   readonly moveUnit: (unitId: string, to: Hex) => void;
   readonly attackUnit: (attackerId: string, target: Hex) => void;
   readonly attackCity: (attackerId: string, cityId: string) => void;
+  readonly defend: (unitId: string) => void;
   readonly requestEndTurn: () => void;
   readonly confirmEndTurn: () => void;
   readonly cancelEndTurn: () => void;
@@ -221,6 +223,22 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     await refreshTargetsOrDeselect(store.matchId, attackerId);
   };
 
+  const defendUnit = async (unitId: string) => {
+    const store = usePlayBoardStore.getState();
+    if (store.matchId === null || inputLocked(store)) return;
+    const outcome = await defend(store.matchId, unitId);
+    if (!outcome.ok) {
+      usePlayBoardStore
+        .getState()
+        .setToast(
+          outcome.rateLimited ? RATE_LIMIT_MSG : "Defend rejected — the board changed. Try again.",
+        );
+      return;
+    }
+    usePlayBoardStore.getState().defendApplied(outcome.units, outcome.movement, outcome.spent);
+    usePlayBoardStore.getState().autoDeselect();
+  };
+
   const confirmNewGame = async () => {
     const board = await newGame();
     usePlayBoardStore.getState().gameStarted(board);
@@ -309,6 +327,9 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     },
     attackCity: (attackerId, cityId) => {
       void attackCityAt(attackerId, cityId);
+    },
+    defend: (unitId) => {
+      void defendUnit(unitId);
     },
     incite: (cityId) => {
       void inciteCity(cityId);

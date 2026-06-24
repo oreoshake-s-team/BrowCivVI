@@ -106,6 +106,25 @@ function AttackConfirm({ targetId }: { targetId: string }) {
   );
 }
 
+function FortifyBadge({ unitId, level }: { unitId: string; level: number }) {
+  return (
+    <g
+      className={styles.fortifyBadge}
+      data-fortify={unitId}
+      transform={`translate(${SIZE * 0.42}, ${-SIZE * 0.42})`}
+      aria-hidden="true"
+    >
+      <path
+        className={styles.fortifyShield}
+        d={`M${-SIZE * 0.22} ${-SIZE * 0.22} H${SIZE * 0.22} V${SIZE * 0.02} Q${SIZE * 0.22} ${SIZE * 0.24} 0 ${SIZE * 0.32} Q${-SIZE * 0.22} ${SIZE * 0.24} ${-SIZE * 0.22} ${SIZE * 0.02} Z`}
+      />
+      <text className={styles.fortifyLevel} x={0} y={SIZE * 0.04}>
+        {level}
+      </text>
+    </g>
+  );
+}
+
 function MediaGlyph() {
   return (
     <tspan className={styles.mediaGlyph} dx={4} aria-hidden="true">
@@ -161,10 +180,12 @@ export interface HexBoardProps {
   readonly panTarget?: Hex | null;
   readonly defectionPulse?: Hex | null;
   readonly canIncite?: boolean;
+  readonly interactive?: boolean;
   readonly onSelect?: (unitId: string | null) => void;
   readonly onMove?: (unitId: string, to: Hex) => void;
   readonly onAttack?: (attackerId: string, target: Hex) => void;
   readonly onAttackCity?: (attackerId: string, cityId: string) => void;
+  readonly onDefend?: (unitId: string) => void;
   readonly onIncite?: (cityId: string) => void;
 }
 
@@ -186,10 +207,12 @@ export function HexBoard({
   events = [],
   panTarget = null,
   canIncite = false,
+  interactive = false,
   onSelect,
   onMove,
   onAttack,
   onAttackCity,
+  onDefend,
   onIncite,
 }: HexBoardProps) {
   const bounds = mapPixelBounds(map, SIZE);
@@ -231,6 +254,13 @@ export function HexBoard({
           max: unitTypeById(selectedUnit.typeId)?.movement ?? 0,
         }
       : null;
+  const canDefendSelected =
+    interactive &&
+    selectedUnit !== null &&
+    selectedUnit.owner === playerFaction &&
+    (movement[selectedUnit.id] ?? 0) > 0 &&
+    !selectedUnit.hasMovedThisTurn &&
+    selectedUnit.hasAttackedThisTurn !== true;
   const reachableKeys = new Set(reachable.map(hexKey));
   const river = regions.find((region) => region.kind === "river");
   const granicus = river !== undefined && hasPlayableMedia(river.media) ? river : undefined;
@@ -375,6 +405,17 @@ export function HexBoard({
       window.removeEventListener("keydown", onKey);
     };
   }, [armedTarget]);
+
+  useEffect(() => {
+    if (!canDefendSelected || selectedId === null || onDefend === undefined) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "f" || event.key === "F") onDefend(selectedId);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [canDefendSelected, selectedId, onDefend]);
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     moved.current = false;
@@ -1006,7 +1047,7 @@ export function HexBoard({
                 transform={`translate(${center.x}, ${center.y})`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? (unitArmed ? " — armed; activate again to attack" : " — attackable") : ""}${outOfSupply ? " — out of supply" : ""}`}
+                aria-label={`${type?.name ?? unit.typeId} (${unit.owner})${isAttackTarget ? (unitArmed ? " — armed; activate again to attack" : " — attackable") : ""}${outOfSupply ? " — out of supply" : ""}${unit.fortifiedTurns ? " — fortified" : ""}`}
                 aria-pressed={selected}
                 onMouseEnter={() => {
                   setHoveredUnitId(unit.id);
@@ -1091,6 +1132,9 @@ export function HexBoard({
                     </text>
                   </g>
                 ) : null}
+                {unit.fortifiedTurns && unit.fortifiedTurns > 0 ? (
+                  <FortifyBadge unitId={unit.id} level={unit.fortifiedTurns} />
+                ) : null}
                 {isAttackTarget ? (
                   unitArmed ? (
                     <AttackConfirm targetId={unit.id} />
@@ -1167,7 +1211,12 @@ export function HexBoard({
         </div>
         {selectedUnit !== null ? (
           <div className={styles.infoOverlay}>
-            <InfoPanel unit={selectedUnit} moves={selectedMoves} />
+            <InfoPanel
+              unit={selectedUnit}
+              moves={selectedMoves}
+              canDefend={canDefendSelected}
+              onDefend={onDefend}
+            />
           </div>
         ) : selectedCityInfo !== null ? (
           <div className={styles.infoOverlay}>
