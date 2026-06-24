@@ -135,7 +135,7 @@ describe("Server Action intent channel against the in-memory store", () => {
 
   it("reports a unit as spent once it has no move or attack left", async () => {
     const board = await newGame();
-    const outcome = await move(board.matchId, "mac-archers", { q: 1, r: 0 });
+    const outcome = await move(board.matchId, "mac-archers", { q: 3, r: 0 });
     expect(outcome.spent).toContain("mac-archers");
   });
 
@@ -153,15 +153,29 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(targets.reachable.length).toBeGreaterThan(0);
   });
 
-  it("a melee that crosses the Granicus spends all its moves and cannot attack", async () => {
+  it("rejects a player move of an enemy Persian unit", async () => {
     const board = await newGame();
-    const crossed = await move(board.matchId, PER_IMMORTALS, WEST_MID);
-    const targets = await targetsFor(board.matchId, PER_IMMORTALS);
-    const blocked = await attack(board.matchId, PER_IMMORTALS, COMPANIONS);
-    expect(crossed.ok).toBe(true);
-    expect(crossed.movement[PER_IMMORTALS]).toBe(0);
-    expect(targets.attackable).toHaveLength(0);
-    expect(blocked.ok).toBe(false);
+    const outcome = await move(board.matchId, PER_IMMORTALS, WEST_MID);
+    const reloaded = await loadOk(board.matchId);
+    expect(outcome.ok).toBe(false);
+    expect(hexKey(unitHex(reloaded.units, PER_IMMORTALS)!)).toBe(hexKey({ q: 7, r: 2 }));
+  });
+
+  it("rejects a player attack with an enemy Persian unit", async () => {
+    const board = await newGame();
+    const outcome = await attack(board.matchId, PER_IMMORTALS, COMPANIONS);
+    expect(outcome.ok).toBe(false);
+  });
+
+  it("offers no moves or attacks for an enemy Persian unit", async () => {
+    const board = await newGame();
+    const targets = await targetsFor(board.matchId, PER_CAVALRY);
+    expect(targets.reachable.length + targets.attackable.length).toBe(0);
+  });
+
+  it("does not dim an enemy Persian unit by listing it as spent", async () => {
+    const board = await newGame();
+    expect(board.spent).not.toContain(PER_CAVALRY);
   });
 
   it("rejects an out-of-range move and leaves the unit where it started", async () => {

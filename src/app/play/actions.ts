@@ -109,7 +109,12 @@ async function currentOwner(): Promise<string> {
 
 const RIVER_EDGES = riverEdgeSet(FIRST_SLICE_MAP.rivers);
 
+function isPlayerControlled(unit: Unit): boolean {
+  return unit.owner === FIRST_SLICE_PLAYER_FACTION;
+}
+
 function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
+  if (!isPlayerControlled(unit)) return [];
   const constraints = movementConstraints(
     match.units,
     unit,
@@ -129,6 +134,7 @@ function reachableForUnit(match: MatchState, unit: Unit): readonly Hex[] {
 }
 
 function attackTargets(match: MatchState, attacker: Unit): readonly Hex[] {
+  if (!isPlayerControlled(attacker)) return [];
   return [
     ...reachableAttacks(
       match.units,
@@ -146,7 +152,9 @@ function spentUnitIds(match: MatchState): readonly string[] {
   return match.units
     .filter(
       (unit) =>
-        reachableForUnit(match, unit).length === 0 && attackTargets(match, unit).length === 0,
+        isPlayerControlled(unit) &&
+        reachableForUnit(match, unit).length === 0 &&
+        attackTargets(match, unit).length === 0,
     )
     .map((unit) => unit.id);
 }
@@ -345,7 +353,7 @@ export async function move(matchId: string, unitId: string, to: Hex): Promise<Mo
   if (match === null) return { ok: false, units: [], reachable: [], movement: {} };
 
   const unit = match.units.find((candidate) => candidate.id === unitId);
-  if (unit === undefined)
+  if (unit === undefined || !isPlayerControlled(unit))
     return { ok: false, units: match.units, reachable: [], movement: match.movement };
 
   const constraints = movementConstraints(
