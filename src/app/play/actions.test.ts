@@ -134,7 +134,7 @@ describe("Server Action intent channel against the in-memory store", () => {
 
   it("reports a unit as spent once it has no move or attack left", async () => {
     const board = await newGame();
-    const outcome = await move(board.matchId, "mac-archers", { q: 1, r: 0 });
+    const outcome = await move(board.matchId, "mac-archers", { q: 3, r: 0 });
     expect(outcome.spent).toContain("mac-archers");
   });
 
