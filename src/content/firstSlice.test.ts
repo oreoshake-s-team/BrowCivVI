@@ -8,16 +8,16 @@ describe("FIRST_SLICE_MAP", () => {
     expect(FIRST_SLICE_MAP.cities.get("pella")?.owner).toBe("macedon");
   });
 
-  it("marks Dascylium with Persian affinity", () => {
-    expect(FIRST_SLICE_MAP.cities.get("dascylium")?.affinity).toBe("persia");
+  it("marks Zeleia with Persian affinity", () => {
+    expect(FIRST_SLICE_MAP.cities.get("zeleia")?.affinity).toBe("persia");
   });
 
   it("marks Greek Ephesus with Macedon affinity", () => {
     expect(FIRST_SLICE_MAP.cities.get("ephesus")?.affinity).toBe("macedon");
   });
 
-  it("authors all fourteen named cities", () => {
-    expect(FIRST_SLICE_MAP.cities.size).toBe(14);
+  it("authors all thirteen named cities", () => {
+    expect(FIRST_SLICE_MAP.cities.size).toBe(13);
   });
 
   it("drops peripheral Cyzicus from the first slice", () => {
@@ -44,10 +44,10 @@ describe("FIRST_SLICE_MAP", () => {
     expect(FIRST_SLICE_MAP.cities.get("ilium")?.walls).toBeUndefined();
   });
 
-  it("walls exactly the eleven historically fortified cities", () => {
+  it("walls exactly the ten historically fortified cities", () => {
     expect(
       Array.from(FIRST_SLICE_MAP.cities.values()).filter((c) => c.walls === true),
-    ).toHaveLength(11);
+    ).toHaveLength(10);
   });
 
   it("models Sparta as an independent holdout (no owner)", () => {
@@ -78,7 +78,7 @@ describe("FIRST_SLICE_REGIONS", () => {
 
   it("anchors the inland Lydia label so its citation is reachable", () => {
     expect(FIRST_SLICE_REGIONS.find((region) => region.id === "lydia")?.labelHex).toEqual({
-      q: 8,
+      q: 9,
       r: 5,
     });
   });
@@ -134,9 +134,9 @@ describe("road network", () => {
     expect([royal, plain]).toEqual([true, true]);
   });
 
-  it("keeps the imperial road from Dascylium to Zeleia royal", () => {
+  it("anchors the royal road on Zeleia and runs it into Sardis", () => {
     const segment = FIRST_SLICE_MAP.roads.find(
-      (road) => road.a.q === 8 && road.a.r === 1 && road.b.q === 7 && road.b.r === 1,
+      (road) => road.a.q === 9 && road.a.r === 3 && road.b.q === 9 && road.b.r === 4,
     );
     expect(segment?.royal).toBe(true);
   });
@@ -150,7 +150,7 @@ describe("road network", () => {
   });
 
   it("carries the coast road on to Halicarnassus", () => {
-    expect(hasRoad(7, 8, 7, 9)).toBe(true);
+    expect(hasRoad(8, 8, 8, 9)).toBe(true);
   });
 
   it("leaves the Greek coast roads non-royal", () => {

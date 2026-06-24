@@ -140,9 +140,7 @@ describe("applyDivergenceEffect", () => {
   it("erodes a scorched satrapy's loyalty toward the enemy of the burner", () => {
     const before = matchWithCities();
     const after = applyDivergenceEffect(before, SCORCH, MAP_CTX);
-    expect(loyaltyOf(after, "dascylium") - loyaltyOf(before, "dascylium")).toBe(
-      SCORCHED_LOYALTY_DRIFT,
-    );
+    expect(loyaltyOf(after, "zeleia") - loyaltyOf(before, "zeleia")).toBe(SCORCHED_LOYALTY_DRIFT);
   });
 
   it("leaves cities outside the scorched region untouched", () => {
@@ -154,12 +152,12 @@ describe("applyDivergenceEffect", () => {
   it("skips the loyalty cost when no map context is supplied", () => {
     const before = matchWithCities();
     const after = applyDivergenceEffect(before, SCORCH);
-    expect(loyaltyOf(after, "dascylium")).toBe(loyaltyOf(before, "dascylium"));
+    expect(loyaltyOf(after, "zeleia")).toBe(loyaltyOf(before, "zeleia"));
   });
 
   it("flags a scorched satrapy so it scores reduced value", () => {
     const after = applyDivergenceEffect(matchWithCities(), SCORCH, MAP_CTX);
-    expect(after.cities.find((city) => city.id === "dascylium")?.scorched).toBe(true);
+    expect(after.cities.find((city) => city.id === "zeleia")?.scorched).toBe(true);
   });
 
   it("does not flag a city outside the scorched region", () => {
@@ -254,7 +252,7 @@ describe("resolveDivergenceNode", () => {
       createRng(seedFor("scorched")),
       MAP_CTX,
     );
-    expect(loyaltyOf(resolved!.state, "dascylium") - loyaltyOf(before, "dascylium")).toBe(
+    expect(loyaltyOf(resolved!.state, "zeleia") - loyaltyOf(before, "zeleia")).toBe(
       SCORCHED_LOYALTY_DRIFT,
     );
   });
@@ -268,6 +266,6 @@ describe("resolveDivergenceNode", () => {
       createRng(seedFor("pitched")),
       MAP_CTX,
     );
-    expect(loyaltyOf(resolved!.state, "dascylium")).toBe(loyaltyOf(before, "dascylium"));
+    expect(loyaltyOf(resolved!.state, "zeleia")).toBe(loyaltyOf(before, "zeleia"));
   });
 });
