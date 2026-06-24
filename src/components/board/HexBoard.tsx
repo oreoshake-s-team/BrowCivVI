@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { FULL_HP } from "@/engine/combat/resolveCombat";
 import type { Citation } from "@/engine/content/citation";
 import type { MediaLink } from "@/engine/content/media";
@@ -28,7 +34,7 @@ import { CityMarkerDefs } from "./CityMarkerDefs";
 import { CITY_SETTLEMENT_ID, cityAllegiance, sigilId } from "./cityMarkers";
 import { CityPanel, type CityPanelInfo } from "./CityPanel";
 import DebugPanel from "./DebugPanel";
-import { riverSegmentPoints } from "./geometry";
+import { riverSegmentPoints, coastSegmentPoints } from "./geometry";
 import styles from "./HexBoard.module.css";
 import { InfoPanel } from "./InfoPanel";
 import { Legend } from "./Legend";
@@ -474,6 +480,8 @@ export function HexBoard({
     };
   }, [panTarget]);
 
+  const cityOverlays: ReactNode[] = [];
+
   return (
     <div className={styles.layout} ref={containerRef}>
       <div className={styles.stage}>
@@ -537,61 +545,17 @@ export function HexBoard({
             const bankRegion = granicus !== undefined && bankKeys.has(key) ? granicus : undefined;
             const isBank = bankRegion !== undefined;
             const landBlocked = blocksLand(mapHex.terrain);
-            return (
-              <g key={key} data-testid={`hex-${key}`}>
-                <polygon
-                  data-hex={key}
-                  data-blocked={landBlocked || undefined}
-                  className={[
-                    "hex",
-                    styles.hex,
-                    landBlocked ? styles.hexBlocked : undefined,
-                    hovered === key ? styles.hexHover : undefined,
-                    isBank ? styles.hexBank : undefined,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  points={hexPolygonPoints(center, SIZE)}
-                  style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
-                  tabIndex={isBank ? 0 : undefined}
-                  role={isBank ? "button" : undefined}
-                  aria-label={
-                    isBank ? `${bankRegion.name} riverbank historical reference` : undefined
-                  }
-                  onMouseEnter={(event) => {
-                    setHovered(key);
-                    if (bankRegion !== undefined && selectedId === null && !occupiedKeys.has(key))
-                      showCitation(
-                        bankRegion.name,
-                        bankRegion.citation,
-                        event.currentTarget,
-                        bankRegion.media,
-                      );
-                  }}
-                  onMouseLeave={() => {
-                    setHovered((current) => (current === key ? null : current));
-                    if (bankRegion !== undefined) scheduleHide();
-                  }}
-                  onFocus={(event) => {
-                    if (bankRegion !== undefined)
-                      showCitation(
-                        bankRegion.name,
-                        bankRegion.citation,
-                        event.currentTarget,
-                        bankRegion.media,
-                      );
-                  }}
-                  onBlur={() => {
-                    if (bankRegion !== undefined) scheduleHide();
-                  }}
-                  onClick={() => {
-                    tapHex(mapHex.hex);
-                  }}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    if (!moved.current) tryMove(mapHex.hex);
-                  }}
-                />
+            const coastEdges = WATER_TERRAINS.has(mapHex.terrain)
+              ? []
+              : neighbors(mapHex.hex).flatMap((n) => {
+                  const neighborTile = map.hexes.get(hexKey(n));
+                  if (neighborTile === undefined || !WATER_TERRAINS.has(neighborTile.terrain))
+                    return [];
+                  const [p1, p2] = coastSegmentPoints(mapHex.hex, n, SIZE, SIZE * 0.1);
+                  return [{ id: `${hexKey(mapHex.hex)}|${hexKey(n)}`, p1, p2 }];
+                });
+            cityOverlays.push(
+              <g key={`overlay-${key}`}>
                 {city ? (
                   <polygon
                     className={styles.cityTint}
@@ -656,16 +620,6 @@ export function HexBoard({
                     pointerEvents="none"
                   />
                 ) : null}
-                {isBank ? (
-                  <polygon
-                    className={["bank", styles.bank].filter(Boolean).join(" ")}
-                    points={hexPolygonPoints(center, SIZE)}
-                    pointerEvents="none"
-                  />
-                ) : null}
-                {labeledHexKeys.has(key) || city !== undefined ? null : (
-                  <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
-                )}
                 {scorchedKeys.has(key) ? (
                   <text
                     className={styles.scorch}
@@ -677,11 +631,6 @@ export function HexBoard({
                     🔥
                   </text>
                 ) : null}
-                {showQandR && (
-                  <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
-                    {mapHex.hex.q}, {mapHex.hex.r}
-                  </text>
-                )}
                 {city && cityCitation !== undefined && hasPlayableMedia(city.media) ? (
                   <CitationTarget
                     label={city.name}
@@ -833,6 +782,89 @@ export function HexBoard({
                     )}
                   </g>
                 ) : null}
+              </g>,
+            );
+            return (
+              <g key={key} data-testid={`hex-${key}`}>
+                <polygon
+                  data-hex={key}
+                  data-blocked={landBlocked || undefined}
+                  className={[
+                    "hex",
+                    styles.hex,
+                    landBlocked ? styles.hexBlocked : undefined,
+                    hovered === key ? styles.hexHover : undefined,
+                    isBank ? styles.hexBank : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  points={hexPolygonPoints(center, SIZE)}
+                  style={{ fill: TERRAIN_COLORS[mapHex.terrain] }}
+                  tabIndex={isBank ? 0 : undefined}
+                  role={isBank ? "button" : undefined}
+                  aria-label={
+                    isBank ? `${bankRegion.name} riverbank historical reference` : undefined
+                  }
+                  onMouseEnter={(event) => {
+                    setHovered(key);
+                    if (bankRegion !== undefined && selectedId === null && !occupiedKeys.has(key))
+                      showCitation(
+                        bankRegion.name,
+                        bankRegion.citation,
+                        event.currentTarget,
+                        bankRegion.media,
+                      );
+                  }}
+                  onMouseLeave={() => {
+                    setHovered((current) => (current === key ? null : current));
+                    if (bankRegion !== undefined) scheduleHide();
+                  }}
+                  onFocus={(event) => {
+                    if (bankRegion !== undefined)
+                      showCitation(
+                        bankRegion.name,
+                        bankRegion.citation,
+                        event.currentTarget,
+                        bankRegion.media,
+                      );
+                  }}
+                  onBlur={() => {
+                    if (bankRegion !== undefined) scheduleHide();
+                  }}
+                  onClick={() => {
+                    tapHex(mapHex.hex);
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    if (!moved.current) tryMove(mapHex.hex);
+                  }}
+                />
+                {coastEdges.map((seg) => (
+                  <line
+                    key={`coast-${seg.id}`}
+                    className={styles.coastline}
+                    data-coastline={seg.id}
+                    x1={seg.p1.x}
+                    y1={seg.p1.y}
+                    x2={seg.p2.x}
+                    y2={seg.p2.y}
+                  />
+                ))}
+                {isBank ? (
+                  <polygon
+                    className={["bank", styles.bank].filter(Boolean).join(" ")}
+                    points={hexPolygonPoints(center, SIZE)}
+                    pointerEvents="none"
+                  />
+                ) : null}
+                {labeledHexKeys.has(key) || city !== undefined ? null : (
+                  <TerrainMotif terrain={mapHex.terrain} cx={center.x} cy={center.y} size={SIZE} />
+                )}
+                {showQandR && (
+                  <text className={styles.coord} x={center.x} y={center.y + SIZE * 0.74}>
+                    {mapHex.hex.q}, {mapHex.hex.r}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -853,6 +885,8 @@ export function HexBoard({
               />
             );
           })}
+
+          {cityOverlays}
 
           {reachable.map((hex) => (
             <polygon
