@@ -10,18 +10,27 @@ async function dismissDivergenceIfPresent(page: Page): Promise<void> {
   await expect(dialog).toBeHidden();
 }
 
-test("units with no actions left are dimmed on the board", async ({ page }) => {
+async function resolveDivergence(page: Page): Promise<void> {
+  const dialog = page.getByRole("dialog", { name: /The Granicus/ });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: /attack across the river/i }).click();
+  await dialog.getByRole("button", { name: "Continue" }).click();
+  await expect(dialog).toBeHidden();
+}
+
+test("a player unit that exhausts its movement is dimmed on the board", async ({ page }) => {
   await page.goto("/play");
   await dismissDivergenceIfPresent(page);
+
+  await page.getByRole("button", { name: "New game" }).click();
+  await page.getByRole("button", { name: "Yes" }).click();
+  await resolveDivergence(page);
+
   await captureScreenshot(page, "dim-spent-before");
 
-  await page.getByRole("button", { name: "End turn" }).click();
-  const confirm = page.getByText("End turn with units still to act?");
-  if ((await confirm.count()) > 0) {
-    await page.getByRole("button", { name: "End turn" }).click();
-  }
+  await page.locator('[data-unit-id="mac-archers"]').click();
+  await page.locator('[data-hex="3,0"]').click();
 
-  await expect(page.locator("[data-spent]").first()).toBeVisible({ timeout: 30000 });
-  await expect(page.getByRole("button", { name: "End turn" })).toBeEnabled({ timeout: 30000 });
+  await expect(page.locator('[data-spent="mac-archers"]')).toBeVisible({ timeout: 30000 });
   await captureScreenshot(page, "dim-spent-after");
 });
