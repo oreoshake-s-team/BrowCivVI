@@ -137,6 +137,28 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
     vi.clearAllMocks();
   });
 
+  it("canonicalizes the URL without a router navigation when the default match loads", async () => {
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    render(<PlayBoard map={SAMPLE_MAP} />);
+    await screen.findByRole("button", { name: /Pezhetairos \(macedon\)/ });
+    expect(replaceState).toHaveBeenCalledWith(null, "", `/play/${MATCH_ID}`);
+    replaceState.mockRestore();
+  });
+
+  it("does not trigger a router navigation when redirecting to the loaded match", async () => {
+    render(<PlayBoard map={SAMPLE_MAP} />);
+    await screen.findByRole("button", { name: /Pezhetairos \(macedon\)/ });
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves the URL untouched when the loaded match already matches the route", async () => {
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await screen.findByRole("button", { name: /Pezhetairos \(macedon\)/ });
+    expect(replaceState).not.toHaveBeenCalled();
+    replaceState.mockRestore();
+  });
+
   it("selects a unit, sends the move intent, and renders the authoritative result", async () => {
     const movedUnits: readonly Unit[] = SAMPLE_UNITS.map((unit) =>
       unit.id === MOVER.id ? { ...unit, hex: DEST } : unit,

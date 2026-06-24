@@ -1,4 +1,5 @@
 import { GameLibrary } from "@/components/library/GameLibrary";
+import { LibraryActions } from "@/components/library/LibraryActions";
 import { currentTimeMs } from "@/components/library/relativeTime";
 import { isAuthConfigured } from "@/lib/auth0";
 import { listOwnedSummaries } from "@/server/matchService";
@@ -34,6 +35,7 @@ export default async function Home() {
       <h1>Conquests of Alexander</h1>
       <p>334 BC — the army musters at the Granicus.</p>
       <h2 className={styles.heading}>Your campaigns</h2>
+      <LibraryActions deletableCount={Math.max(0, games.length - 1)} />
       <GameLibrary games={games} now={currentTimeMs()} />
     </main>
   );

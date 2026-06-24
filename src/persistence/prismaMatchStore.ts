@@ -54,4 +54,10 @@ export class PrismaMatchStore implements MatchStore {
       updatedAt: row.updatedAt.getTime(),
     }));
   }
+
+  async deleteByOwner(owner: string, keepId?: string): Promise<number> {
+    const where = keepId === undefined ? { owner } : { owner, id: { not: keepId } };
+    const { count } = await this.prisma.match.deleteMany({ where });
+    return count;
+  }
 }

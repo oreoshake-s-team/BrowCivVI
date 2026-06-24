@@ -3,6 +3,7 @@ import { InMemoryMatchStore } from "@/engine/match/store";
 import {
   getOrCreateDefault,
   createNewMatch,
+  deleteOldMatches,
   listOwnedSummaries,
   loadOwned,
   newMatchState,
@@ -72,6 +73,43 @@ describe("listOwnedSummaries", () => {
     await createNewMatch(store, "owner-1");
     await createNewMatch(store, "intruder");
     expect((await listOwnedSummaries(store, "owner-1")).length).toBe(1);
+  });
+});
+
+describe("deleteOldMatches", () => {
+  it("keeps the most recently played game and removes the rest", async () => {
+    const store = new InMemoryMatchStore();
+    await createNewMatch(store, "owner-1");
+    const recent = await createNewMatch(store, "owner-1");
+    await deleteOldMatches(store, "owner-1");
+    expect((await listOwnedSummaries(store, "owner-1")).map((s) => s.id)).toEqual([recent.id]);
+  });
+
+  it("reports how many old games it deleted", async () => {
+    const store = new InMemoryMatchStore();
+    await createNewMatch(store, "owner-1");
+    await createNewMatch(store, "owner-1");
+    await createNewMatch(store, "owner-1");
+    expect(await deleteOldMatches(store, "owner-1")).toBe(2);
+  });
+
+  it("deletes nothing when only one game exists", async () => {
+    const store = new InMemoryMatchStore();
+    await createNewMatch(store, "owner-1");
+    expect(await deleteOldMatches(store, "owner-1")).toBe(0);
+  });
+
+  it("deletes nothing when there are no games", async () => {
+    expect(await deleteOldMatches(new InMemoryMatchStore(), "owner-1")).toBe(0);
+  });
+
+  it("leaves another visitor's games untouched", async () => {
+    const store = new InMemoryMatchStore();
+    await createNewMatch(store, "owner-1");
+    await createNewMatch(store, "owner-1");
+    await createNewMatch(store, "intruder");
+    await deleteOldMatches(store, "owner-1");
+    expect((await listOwnedSummaries(store, "intruder")).length).toBe(1);
   });
 });
 

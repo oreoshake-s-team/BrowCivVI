@@ -92,4 +92,19 @@ describe("PrismaMatchStore", () => {
     prisma.match.findMany.mockResolvedValue([row]);
     expect((await store.listByOwner("owner-1"))[0]!.updatedAt).toBe(1_700_000_000_000);
   });
+
+  it("reports how many rows deleteByOwner removed", async () => {
+    const { prisma, store } = storeWith();
+    prisma.match.deleteMany.mockResolvedValue({ count: 3 });
+    expect(await store.deleteByOwner("owner-1")).toBe(3);
+  });
+
+  it("excludes the kept match from the delete filter", async () => {
+    const { prisma, store } = storeWith();
+    prisma.match.deleteMany.mockResolvedValue({ count: 2 });
+    await store.deleteByOwner("owner-1", "keep");
+    expect(prisma.match.deleteMany).toHaveBeenCalledWith({
+      where: { owner: "owner-1", id: { not: "keep" } },
+    });
+  });
 });

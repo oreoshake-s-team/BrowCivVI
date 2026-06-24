@@ -75,7 +75,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
         }
         store.boardLoaded(result.board);
         if (result.board.matchId !== initialMatchId) {
-          router.replace(`/play/${result.board.matchId}`);
+          window.history.replaceState(null, "", `/play/${result.board.matchId}`);
         }
       })
       .catch(() => {
@@ -84,7 +84,7 @@ export function usePlayBoard(initialMatchId?: string): PlayBoardController {
     return () => {
       active = false;
     };
-  }, [initialMatchId, router, attempt]);
+  }, [initialMatchId, attempt]);
 
   useEffect(() => {
     if (state.toast === null) return undefined;
