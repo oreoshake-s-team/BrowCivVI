@@ -43,8 +43,8 @@ export function reachableHexes(input: ReachableInput): ReadonlyMap<string, numbe
           ? roadStepCost(terrain, roads.royal.has(edgeKey))
           : terrain.moveCost + (crossingRiver ? RIVER_CROSS_COST : 0);
         const firstStep = hexKey(hex) === startKey;
-        const alwaysCross = crossingRiver && firstStep && (input.atFullMovement ?? false);
-        if (budget - cost < 0 && !alwaysCross) continue;
+        const minimumStep = firstStep && (input.atFullMovement ?? false);
+        if (budget - cost < 0 && !minimumStep) continue;
         const remaining = Math.max(0, budget - cost);
         const inZoneOfControl = zoneOfControl?.has(key) ?? false;
         const prev = best.get(key);
