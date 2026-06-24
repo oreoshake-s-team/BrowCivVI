@@ -1,0 +1,13 @@
+{
+  "pr": 272,
+  "date": "2026-06-24",
+  "repo": "oreoshake-s-team/BrowCivVI",
+  "images": [
+    "bigger-map-default-view.webp",
+    "bigger-map-full-extent.webp",
+    "granicus-before-buffer.webp",
+    "granicus-buffer-board.webp"
+  ],
+  "issue": 270,
+  "title": "Granicus buffer - Zeleia set back from the river"
+}

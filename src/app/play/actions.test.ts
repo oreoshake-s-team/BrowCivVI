@@ -356,7 +356,7 @@ describe("incite", () => {
   it("rejects a second incite in the same turn", async () => {
     const board = await newGame();
     await incite(board.matchId, "zeleia");
-    const again = await incite(board.matchId, "dascylium");
+    const again = await incite(board.matchId, "sardis");
     expect(again.ok).toBe(false);
   });
 

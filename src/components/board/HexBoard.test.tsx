@@ -3,6 +3,7 @@ import { render, screen, fireEvent, cleanup, within } from "@testing-library/rea
 import { describe, it, expect, afterEach, vi } from "vitest";
 import type { Citation } from "@/engine/content/citation";
 import type { NamedRegion } from "@/engine/content/region";
+import { mapPixelBounds } from "@/engine/map/layout";
 import { SAMPLE_MAP, SAMPLE_UNITS } from "@/engine/map/sample";
 import { createGameMap } from "@/engine/map/types";
 import { cityMaxHp, WALL_MAX_HP, type CityState } from "@/engine/match/cities";
@@ -38,6 +39,21 @@ describe("HexBoard", () => {
   it("renders a polygon for every map hex", () => {
     const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(container.querySelectorAll("polygon.hex")).toHaveLength(SAMPLE_MAP.hexes.size);
+  });
+
+  it("opens framed on the content rather than the empty map margin", () => {
+    const map = createGameMap(
+      [
+        { hex: { q: 0, r: 0 }, terrain: "plains" as const },
+        { hex: { q: 20, r: 0 }, terrain: "deepSea" as const },
+      ],
+      [{ id: "c", name: "C", hex: { q: 0, r: 0 }, owner: "persia", value: 10, defense: 5 }],
+    );
+    const { container } = render(<HexBoard map={map} units={[]} />);
+    const viewBox = container.querySelector("svg[viewBox]")?.getAttribute("viewBox") ?? "";
+    const initialWidth = Number(viewBox.split(" ")[2]);
+    const full = mapPixelBounds(map, 36);
+    expect(initialWidth).toBeLessThan(full.maxX - full.minX);
   });
 
   it("renders a token for every unit", () => {
