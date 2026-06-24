@@ -231,6 +231,56 @@ describe("reachableHexes (river crossings)", () => {
   });
 });
 
+describe("reachableHexes (minimum step at full movement)", () => {
+  const HILL_MAP = createGameMap(
+    [
+      { hex: { q: 0, r: 0 }, terrain: "plains" },
+      { hex: { q: 1, r: 0 }, terrain: "hills" },
+    ],
+    [],
+  );
+  const MOUNTAIN_MAP = createGameMap(
+    [
+      { hex: { q: 0, r: 0 }, terrain: "plains" },
+      { hex: { q: 1, r: 0 }, terrain: "mountain" },
+    ],
+    [],
+  );
+
+  it("lets a one-movement unit step onto an unaffordable hill, stopping at zero", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 1,
+      map: HILL_MAP,
+      domain: "land",
+      atFullMovement: true,
+    });
+    expect(reachable.get("1,0")).toBe(0);
+  });
+
+  it("blocks a unit that already moved from entering a hill it cannot afford", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 1,
+      map: HILL_MAP,
+      domain: "land",
+      atFullMovement: false,
+    });
+    expect(reachable.has("1,0")).toBe(false);
+  });
+
+  it("never lets the guaranteed first step enter impassable terrain", () => {
+    const reachable = reachableHexes({
+      start,
+      movement: 1,
+      map: MOUNTAIN_MAP,
+      domain: "land",
+      atFullMovement: true,
+    });
+    expect(reachable.has("1,0")).toBe(false);
+  });
+});
+
 describe("reachableHexes (roads)", () => {
   const HILL_ROW = [
     { hex: { q: 0, r: 0 }, terrain: "plains" as const },
