@@ -1,3 +1,4 @@
+import { fortifyStrengthBonus } from "@/engine/combat/fortify";
 import { attritionRate, OUT_OF_SUPPLY_MORALE } from "@/engine/supply/attrition";
 import { unitTypeById } from "@/engine/unit/catalog";
 import type { Unit } from "@/engine/unit/types";
@@ -7,6 +8,13 @@ import { FACTION_NAMES } from "./palette";
 export interface MovesInfo {
   readonly remaining: number;
   readonly max: number;
+}
+
+export interface InfoPanelProps {
+  readonly unit: Unit | null;
+  readonly moves?: MovesInfo | null;
+  readonly canDefend?: boolean;
+  readonly onDefend?: ((unitId: string) => void) | undefined;
 }
 
 function SupplyRow({ unit }: { unit: Unit }) {
@@ -26,7 +34,7 @@ function SupplyRow({ unit }: { unit: Unit }) {
   );
 }
 
-export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: MovesInfo | null }) {
+export function InfoPanel({ unit, moves = null, canDefend = false, onDefend }: InfoPanelProps) {
   if (unit === null) {
     return (
       <section className={styles.info} aria-label="Selected unit">
@@ -35,6 +43,7 @@ export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: M
     );
   }
   const type = unitTypeById(unit.typeId);
+  const fortifyBonus = unit.fortifiedTurns ? fortifyStrengthBonus(unit.fortifiedTurns) : 0;
   return (
     <section className={styles.info} aria-label="Selected unit">
       <h2 className={styles.panelHeading}>{type?.name ?? unit.typeId}</h2>
@@ -48,6 +57,12 @@ export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: M
         <dt>Morale</dt>
         <dd>{unit.morale}</dd>
         <SupplyRow unit={unit} />
+        {fortifyBonus > 0 ? (
+          <>
+            <dt>Defense</dt>
+            <dd>Fortified +{fortifyBonus}</dd>
+          </>
+        ) : null}
         {moves !== null ? (
           <>
             <dt>Moves</dt>
@@ -57,6 +72,17 @@ export function InfoPanel({ unit, moves = null }: { unit: Unit | null; moves?: M
           </>
         ) : null}
       </dl>
+      {canDefend && onDefend ? (
+        <button
+          type="button"
+          className={styles.defendButton}
+          onClick={() => {
+            onDefend(unit.id);
+          }}
+        >
+          Defend (F)
+        </button>
+      ) : null}
     </section>
   );
 }

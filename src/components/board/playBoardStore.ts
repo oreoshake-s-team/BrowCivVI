@@ -25,6 +25,11 @@ export interface PlayBoardStore extends PlayBoardState {
     spent?: readonly string[],
   ) => void;
   readonly actionRejected: (units: readonly Unit[], message: string) => void;
+  readonly defendApplied: (
+    units: readonly Unit[],
+    movement: Readonly<Record<string, number>>,
+    spent?: readonly string[],
+  ) => void;
   readonly attackApplied: (
     units: readonly Unit[],
     movement?: Readonly<Record<string, number>>,
@@ -113,6 +118,9 @@ export const usePlayBoardStore = create<PlayBoardStore>((set) => ({
   },
   actionRejected: (units, message) => {
     set({ units, toast: message });
+  },
+  defendApplied: (units, movement, spent) => {
+    set((state) => ({ units, movement, spent: spent ?? state.spent }));
   },
   attackApplied: (units, movement, events, cities, spent) => {
     set((state) => ({

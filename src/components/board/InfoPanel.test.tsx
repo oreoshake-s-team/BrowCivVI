@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen, cleanup } from "@testing-library/react";
-import { describe, it, expect, afterEach } from "vitest";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import type { Unit } from "@/engine/unit/types";
 import { InfoPanel } from "./InfoPanel";
 
@@ -65,5 +65,46 @@ describe("InfoPanel supply", () => {
   it("prompts to select a unit when none is given", () => {
     render(<InfoPanel unit={null} />);
     expect(screen.getByText("Select a unit to inspect it.")).toBeTruthy();
+  });
+});
+
+describe("InfoPanel fortify", () => {
+  it("omits the fortify row for an unfortified unit", () => {
+    render(<InfoPanel unit={BASE} />);
+    expect(panel().textContent).not.toContain("Fortified");
+  });
+
+  it("shows the level-one fortify bonus", () => {
+    render(<InfoPanel unit={{ ...BASE, fortifiedTurns: 1 }} />);
+    expect(panel().textContent).toContain("Fortified +3");
+  });
+
+  it("shows the level-two fortify bonus", () => {
+    render(<InfoPanel unit={{ ...BASE, fortifiedTurns: 2 }} />);
+    expect(panel().textContent).toContain("Fortified +6");
+  });
+});
+
+describe("InfoPanel defend action", () => {
+  it("offers the Defend button when the unit can defend", () => {
+    render(<InfoPanel unit={BASE} canDefend onDefend={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Defend (F)" })).toBeTruthy();
+  });
+
+  it("hides the Defend button when the unit cannot defend", () => {
+    render(<InfoPanel unit={BASE} canDefend={false} onDefend={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Defend (F)" })).toBeNull();
+  });
+
+  it("hides the Defend button when no handler is given", () => {
+    render(<InfoPanel unit={BASE} canDefend />);
+    expect(screen.queryByRole("button", { name: "Defend (F)" })).toBeNull();
+  });
+
+  it("invokes the handler with the unit id when clicked", () => {
+    const onDefend = vi.fn();
+    render(<InfoPanel unit={BASE} canDefend onDefend={onDefend} />);
+    fireEvent.click(screen.getByRole("button", { name: "Defend (F)" }));
+    expect(onDefend).toHaveBeenCalledWith("u1");
   });
 });

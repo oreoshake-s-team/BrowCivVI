@@ -95,10 +95,12 @@ export function PlayBoard({ map, regions = [], initialMatchId }: PlayBoardProps)
         panTarget={state.panTarget}
         defectionPulse={state.defectionPulse}
         canIncite={state.canIncite && board.canEndTurn}
+        interactive={board.canEndTurn}
         onSelect={board.select}
         onMove={board.moveUnit}
         onAttack={board.attackUnit}
         onAttackCity={board.attackCity}
+        onDefend={board.defend}
         onIncite={board.incite}
       />
       {state.toast !== null ? <Toast message={state.toast} onDismiss={board.dismissToast} /> : null}

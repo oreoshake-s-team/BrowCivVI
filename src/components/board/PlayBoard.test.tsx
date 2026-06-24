@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as actions from "@/app/play/actions";
 import type {
   BoardView,
+  DefendOutcome,
   LoadBoardResult,
   MoveOutcome,
   AttackOutcome,
@@ -39,6 +40,7 @@ vi.mock("@/app/play/actions", () => ({
   move: vi.fn(),
   attack: vi.fn(),
   attackCity: vi.fn(),
+  defend: vi.fn(),
   incite: vi.fn(),
   endTurn: vi.fn(),
   resolveDivergence: vi.fn(),
@@ -215,6 +217,75 @@ describe("PlayBoard intent flow against mocked Server Actions", () => {
 
     expect(await screen.findByText(RATE_LIMITED)).not.toBeNull();
     expect(screen.queryByText(MOVE_REJECTED)).toBeNull();
+  });
+
+  it("defends a unit with movement to spare and renders it fortified", async () => {
+    vi.mocked(actions.loadBoard).mockResolvedValue({
+      status: "ok",
+      board: {
+        matchId: MATCH_ID,
+        units: SAMPLE_UNITS,
+        movement: { [MOVER.id]: 2 },
+        playerFaction: "macedon",
+        cities: CITIES_VIEW,
+        turn: 1,
+        activeFaction: "macedon",
+        events: [],
+        scorched: [],
+        spent: [],
+        canIncite: false,
+      },
+    } satisfies LoadBoardResult);
+    const fortified: readonly Unit[] = SAMPLE_UNITS.map((unit) =>
+      unit.id === MOVER.id ? { ...unit, fortifiedTurns: 1 } : unit,
+    );
+    vi.mocked(actions.defend).mockResolvedValue({
+      ok: true,
+      units: fortified,
+      movement: { [MOVER.id]: 0 },
+      spent: [MOVER.id],
+    } satisfies DefendOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.click(screen.getByRole("button", { name: "Defend (F)" }));
+
+    await waitFor(() => {
+      expect(container.querySelector(`[data-fortify="${MOVER.id}"]`)?.textContent).toBe("1");
+    });
+    expect(actions.defend).toHaveBeenCalledWith(MATCH_ID, MOVER.id);
+  });
+
+  it("surfaces a retry toast when the server rejects a defend intent", async () => {
+    vi.mocked(actions.loadBoard).mockResolvedValue({
+      status: "ok",
+      board: {
+        matchId: MATCH_ID,
+        units: SAMPLE_UNITS,
+        movement: { [MOVER.id]: 2 },
+        playerFaction: "macedon",
+        cities: CITIES_VIEW,
+        turn: 1,
+        activeFaction: "macedon",
+        events: [],
+        scorched: [],
+        spent: [],
+        canIncite: false,
+      },
+    } satisfies LoadBoardResult);
+    vi.mocked(actions.defend).mockResolvedValue({
+      ok: false,
+      units: SAMPLE_UNITS,
+      movement: { [MOVER.id]: 2 },
+    } satisfies DefendOutcome);
+
+    const { container } = render(<PlayBoard map={SAMPLE_MAP} initialMatchId={MATCH_ID} />);
+    await selectMover(container);
+    fireEvent.click(screen.getByRole("button", { name: "Defend (F)" }));
+
+    expect(
+      await screen.findByText("Defend rejected — the board changed. Try again."),
+    ).not.toBeNull();
   });
 
   it("sends the attack intent, floats damage, and fades the defeated defender", async () => {
