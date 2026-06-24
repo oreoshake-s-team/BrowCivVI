@@ -2,6 +2,7 @@ import type { Hex, HexDirection } from "../hex";
 import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
 import type { Rng } from "../rng";
 import { isFlanked } from "./flanking";
+import { fortifyStrengthBonus } from "./fortify";
 import { PHALANX_ABILITY } from "./phalanx";
 import { effectiveUnitStrength, resolveCombat, type CombatResult } from "./resolveCombat";
 
@@ -12,6 +13,7 @@ export interface AttackUnit {
   readonly hp: number;
   readonly morale: number;
   readonly abilities: readonly string[];
+  readonly fortifiedTurns?: number;
 }
 
 export interface ResolveAttackInput {
@@ -75,6 +77,7 @@ export function resolveAttack(input: ResolveAttackInput): CombatResult {
     flanked,
     riverAttack: input.ranged === true ? false : input.riverAttack,
     ranged: input.ranged === true,
+    defenderFortifyBonus: fortifyStrengthBonus(input.defender.fortifiedTurns),
     rng: input.rng,
   });
 }

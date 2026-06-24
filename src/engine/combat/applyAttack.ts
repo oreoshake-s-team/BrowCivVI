@@ -32,6 +32,7 @@ function toAttackUnit(unit: Unit): AttackUnit {
     hp: unit.hp,
     morale: unit.morale,
     abilities: type?.abilities ?? [],
+    fortifiedTurns: unit.fortifiedTurns ?? 0,
   };
 }
 
@@ -65,7 +66,12 @@ export function applyAttack(input: ApplyAttackInput): AttackApplication {
   const units = input.units
     .map((unit) => {
       if (unit.id === input.attackerId)
-        return { ...unit, hp: unit.hp - result.attackerDamage, hasAttackedThisTurn: true };
+        return {
+          ...unit,
+          hp: unit.hp - result.attackerDamage,
+          hasAttackedThisTurn: true,
+          fortifiedTurns: 0,
+        };
       if (unit.id === input.defenderId) return { ...unit, hp: unit.hp - result.defenderDamage };
       return unit;
     })

@@ -3,11 +3,19 @@ import type { UnitCapability } from "../unit/capabilities";
 import type { UnitType } from "../unit/types";
 import { effectiveCapabilities } from "../unit/types";
 
-export type IntentKind = "moveUnit" | "attack" | "settle" | "incite" | "scorch" | "endTurn";
+export type IntentKind =
+  | "moveUnit"
+  | "attack"
+  | "defend"
+  | "settle"
+  | "incite"
+  | "scorch"
+  | "endTurn";
 
 export type Intent =
   | { readonly kind: "moveUnit"; readonly unitId: string; readonly to: Hex }
   | { readonly kind: "attack"; readonly unitId: string; readonly target: Hex }
+  | { readonly kind: "defend"; readonly unitId: string }
   | { readonly kind: "settle"; readonly unitId: string }
   | { readonly kind: "incite"; readonly cityId: string }
   | { readonly kind: "scorch"; readonly hex: Hex }

@@ -26,6 +26,7 @@ export interface Unit {
   readonly hasMovedThisTurn: boolean;
   readonly hasAttackedThisTurn?: boolean;
   readonly outOfSupplyTurns?: number;
+  readonly fortifiedTurns?: number;
 }
 
 export function effectiveCapabilities(type: UnitType): ReadonlySet<UnitCapability> {
