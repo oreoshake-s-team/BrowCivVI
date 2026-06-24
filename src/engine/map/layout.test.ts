@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hexToPixel, hexCorners, hexPolygonPoints, mapPixelBounds } from "./layout";
+import { hexToPixel, hexCorners, hexPolygonPoints, mapPixelBounds, pixelBoundsOf } from "./layout";
 import { SAMPLE_MAP } from "./sample";
 
 describe("hexToPixel", () => {
@@ -35,5 +35,17 @@ describe("hexPolygonPoints", () => {
 describe("mapPixelBounds", () => {
   it("produces a finite bounding box for the sample map", () => {
     expect(Number.isFinite(mapPixelBounds(SAMPLE_MAP, 10).maxX)).toBe(true);
+  });
+});
+
+describe("pixelBoundsOf", () => {
+  it("frames a subset of hexes tighter than the full map", () => {
+    const subset = pixelBoundsOf([{ q: 1, r: 1 }], 10);
+    const whole = mapPixelBounds(SAMPLE_MAP, 10);
+    expect(subset.maxX - subset.minX).toBeLessThan(whole.maxX - whole.minX);
+  });
+
+  it("returns an empty (infinite) box for no hexes", () => {
+    expect(pixelBoundsOf([], 10).minX).toBe(Infinity);
   });
 });

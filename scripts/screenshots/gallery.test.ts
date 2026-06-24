@@ -82,4 +82,12 @@ describe("renderRootIndexHtml", () => {
     const html = renderRootIndexHtml(entries);
     expect(html.indexOf("2026-06-19-pr-0007")).toBeLessThan(html.indexOf("2026-06-10-pr-0003"));
   });
+
+  it("starts each card on its own line so concurrent PRs do not collide", () => {
+    const entries: RootGalleryEntry[] = [
+      { folder: "2026-06-10-pr-0003", meta: { ...baseMeta, pr: 3, date: "2026-06-10" } },
+      { folder: "2026-06-19-pr-0007", meta: { ...baseMeta, pr: 7, date: "2026-06-19" } },
+    ];
+    expect(renderRootIndexHtml(entries).match(/^<a class="card"/gm)).toHaveLength(2);
+  });
 });

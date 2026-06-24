@@ -105,14 +105,14 @@ describe("reachableHexes (Granicus map)", () => {
     expect(reachable.has("2,5")).toBe(false);
   });
 
-  it("carries a unit down the royal road from Dascylium to Sardis on two movement", () => {
+  it("carries a unit down the royal road from Zeleia to Sardis on two movement", () => {
     const reachable = reachableHexes({
       start: { q: 8, r: 1 },
       movement: 2,
       map: FIRST_SLICE_MAP,
       domain: "land",
     });
-    expect(reachable.has("8,4")).toBe(true);
+    expect(reachable.has("9,4")).toBe(true);
   });
 });
 

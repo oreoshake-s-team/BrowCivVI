@@ -36,17 +36,24 @@ export function hexPolygonPoints(center: Point, size: number): string {
     .join(" ");
 }
 
-export function mapPixelBounds(map: GameMap, size: number): Bounds {
+export function pixelBoundsOf(hexes: Iterable<Hex>, size: number): Bounds {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
-  for (const mapHex of map.hexes.values()) {
-    const center = hexToPixel(mapHex.hex, size);
+  for (const hex of hexes) {
+    const center = hexToPixel(hex, size);
     minX = Math.min(minX, center.x - size);
     maxX = Math.max(maxX, center.x + size);
     minY = Math.min(minY, center.y - size);
     maxY = Math.max(maxY, center.y + size);
   }
   return { minX, minY, maxX, maxY };
+}
+
+export function mapPixelBounds(map: GameMap, size: number): Bounds {
+  return pixelBoundsOf(
+    Array.from(map.hexes.values(), (mapHex) => mapHex.hex),
+    size,
+  );
 }
