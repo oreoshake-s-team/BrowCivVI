@@ -4,6 +4,7 @@ import { applyLoyaltyPressure, type LoyaltyContext } from "../match/loyalty";
 import type { MatchState } from "../match/state";
 import { applyOutOfSupplyAttrition } from "../supply/attrition";
 import { computeSupply, type SupplyContext } from "../supply/propagation";
+import { healUnits } from "./healUnits";
 
 export interface TurnContext {
   readonly movementOf: (typeId: string) => number;
@@ -34,6 +35,10 @@ function healFactionCities(state: MatchState, faction: string, ctx: TurnContext)
   return { ...state, cities: healCities(state.cities, faction, ctx.cityMaxHp) };
 }
 
+function healFactionUnits(state: MatchState, faction: string): MatchState {
+  return { ...state, units: healUnits(state.units, faction) };
+}
+
 function restoreMovement(state: MatchState, faction: string, ctx: TurnContext): MatchState {
   const movement: Record<string, number> = { ...state.movement };
   const units = state.units.map((unit) => {
@@ -53,7 +58,7 @@ export const TURN_START_PHASES: readonly TurnPhase[] = [
   loyaltyPressure,
   defection,
 ];
-export const TURN_END_PHASES: readonly TurnPhase[] = [];
+export const TURN_END_PHASES: readonly TurnPhase[] = [healFactionUnits];
 
 function runPhases(
   phases: readonly TurnPhase[],

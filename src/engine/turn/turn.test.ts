@@ -4,6 +4,7 @@ import { createGameMap } from "../map/types";
 import { createMatch, type MatchState } from "../match/state";
 import { riverEdgeSet } from "../movement/cost";
 import type { Unit } from "../unit/types";
+import { UNIT_HEAL_RATE } from "./healUnits";
 import { advanceTurn, type TurnContext } from "./turn";
 
 const ctx: TurnContext = { movementOf: () => 4, cityMaxHp: () => 100 };
@@ -63,6 +64,13 @@ describe("advanceTurn", () => {
 
   it("leaves the off-turn faction's movement untouched", () => {
     expect(advanceTurn(match({ activeFaction: "persia" }), ctx).movement.per).toBe(0);
+  });
+
+  it("heals an idle, supplied, wounded unit at the end of its turn", () => {
+    const idle: Unit = { ...unit("mac", "macedon", false), hp: 50 };
+    const state = match({ units: [idle, unit("per", "persia", true)] });
+    const healed = advanceTurn(state, ctx).units.find((u) => u.id === "mac");
+    expect(healed?.hp).toBe(50 + UNIT_HEAL_RATE);
   });
 
   it("clears the incoming faction's hasAttackedThisTurn flag", () => {
