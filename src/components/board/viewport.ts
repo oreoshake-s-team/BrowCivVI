@@ -18,6 +18,19 @@ export function fitView(bounds: Bounds, pad: number): ViewBox {
   };
 }
 
+export function lockedView(
+  boxW: number,
+  boxH: number,
+  scale: number,
+  center: { readonly x: number; readonly y: number },
+  content: Bounds,
+  pad: number,
+): ViewBox {
+  const w = Math.max(boxW / scale, content.maxX - content.minX + pad * 2);
+  const h = Math.max(boxH / scale, content.maxY - content.minY + pad * 2);
+  return { x: center.x - w / 2, y: center.y - h / 2, w, h };
+}
+
 export function panView(view: ViewBox, dx: number, dy: number): ViewBox {
   return { ...view, x: view.x - dx, y: view.y - dy };
 }

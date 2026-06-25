@@ -1,0 +1,39 @@
+.main {
+  max-width: none;
+  margin: 0;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+
+.topBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm) var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--font-size-ui-lg);
+}
+
+.back {
+  font-size: var(--font-size-ui-sm);
+}
+
+.intro {
+  margin: 0 0 var(--space-md);
+  font-size: var(--font-size-ui-sm);
+}
+
+.intro > summary {
+  cursor: pointer;
+  color: var(--color-ink-feature);
+  font-weight: 600;
+}
+
+.introBody {
+  margin: var(--space-xs) 0 0;
+  max-width: 70ch;
+  color: var(--color-ink-muted);
+}

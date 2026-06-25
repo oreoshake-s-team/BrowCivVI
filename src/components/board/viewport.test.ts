@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   fitView,
+  lockedView,
   panView,
   zoomView,
   centerViewOn,
@@ -17,6 +18,26 @@ describe("fitView", () => {
       w: 120,
       h: 70,
     });
+  });
+});
+
+describe("lockedView", () => {
+  const tiny = { minX: 0, minY: 0, maxX: 10, maxY: 10 };
+
+  it("spans the box pixels divided by the scale so hexes keep a fixed size", () => {
+    const view = lockedView(800, 600, 2, { x: 0, y: 0 }, tiny, 0);
+    expect(view.w).toBe(400);
+  });
+
+  it("centers the viewBox on the focus point", () => {
+    const view = lockedView(800, 600, 2, { x: 5, y: 5 }, tiny, 0);
+    expect(view.x).toBe(5 - 200);
+  });
+
+  it("never shrinks below the padded content so the focus always fits", () => {
+    const wide = { minX: 0, minY: 0, maxX: 1000, maxY: 10 };
+    const view = lockedView(400, 400, 2, { x: 500, y: 5 }, wide, 20);
+    expect(view.w).toBe(1040);
   });
 });
 

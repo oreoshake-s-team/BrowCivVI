@@ -45,6 +45,7 @@ import { UnitSpriteDefs } from "./UnitSpriteDefs";
 import { hasUnitSprite, spriteIdForClass } from "./unitSprites";
 import {
   fitView,
+  lockedView,
   panView,
   zoomView,
   viewBoxString,
@@ -55,6 +56,7 @@ import {
 
 const SIZE = 36;
 const PAD = SIZE;
+const BOARD_SCALE = 1.05;
 const LOW_HP_FRACTION = 0.34;
 const PAN_THRESHOLD = 4;
 const CITATION_HIDE_MS = 700;
@@ -242,6 +244,7 @@ export function HexBoard({
   const containerRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const userAdjusted = useRef(false);
   const pointers = useRef(new Map<number, { x: number; y: number; sx: number; sy: number }>());
   const pinchDist = useRef<number | null>(null);
   const moved = useRef(false);
@@ -458,6 +461,7 @@ export function HexBoard({
         );
         pinchDist.current = dist;
         moved.current = true;
+        userAdjusted.current = true;
       }
       return;
     }
@@ -470,6 +474,7 @@ export function HexBoard({
     }
     const dx = event.clientX - prev.x;
     const dy = event.clientY - prev.y;
+    userAdjusted.current = true;
     setView((v) => panView(v, (dx / rect.width) * v.w, (dy / rect.height) * v.h));
   };
 
@@ -480,6 +485,7 @@ export function HexBoard({
       event.preventDefault();
       const rect = svg.getBoundingClientRect();
       if (rect.width === 0) return;
+      userAdjusted.current = true;
       const factor = event.deltaY > 0 ? 1.1 : 0.9;
       setView((v) =>
         zoomView(
@@ -496,6 +502,27 @@ export function HexBoard({
       svg.removeEventListener("wheel", onWheel);
     };
   }, [fitW]);
+
+  const focusMinX = focusBounds.minX;
+  const focusMinY = focusBounds.minY;
+  const focusMaxX = focusBounds.maxX;
+  const focusMaxY = focusBounds.maxY;
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (svg === null || typeof ResizeObserver === "undefined") return undefined;
+    const content = { minX: focusMinX, minY: focusMinY, maxX: focusMaxX, maxY: focusMaxY };
+    const center = { x: (focusMinX + focusMaxX) / 2, y: (focusMinY + focusMaxY) / 2 };
+    const reframe = new ResizeObserver(() => {
+      if (userAdjusted.current) return;
+      const rect = svg.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      setView(lockedView(rect.width, rect.height, BOARD_SCALE, center, content, PAD));
+    });
+    reframe.observe(svg);
+    return () => {
+      reframe.disconnect();
+    };
+  }, [focusMinX, focusMinY, focusMaxX, focusMaxY]);
 
   const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
     pointers.current.delete(event.pointerId);
