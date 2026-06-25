@@ -34,6 +34,7 @@ export const LOYALTY_MAX = 100;
 export const LOYALTY_OWNER_SEED = 50;
 export const LOYALTY_AFFINITY_SEED = 30;
 export const LOYALTY_DEFECT_THRESHOLD = 50;
+export const LOYALTY_DEFECTION_SEED = 0;
 
 export function cityMaxHp(defense: number): number {
   return defense * CITY_HP_PER_DEFENSE;

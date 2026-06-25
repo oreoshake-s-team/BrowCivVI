@@ -139,6 +139,38 @@ describe("applyDefections", () => {
     ).toBe(false);
   });
 
+  it("reseeds a flipped city to a teetering loyalty rather than a deep value", () => {
+    expect(
+      defect(town({ owner: "persia" }), {
+        id: "town",
+        owner: "persia",
+        hp: 8,
+        loyalty: 60,
+        defecting: true,
+      }).loyalty,
+    ).toBe(0);
+  });
+
+  it("resets the drift streak when a city flips so it stays volatile", () => {
+    expect(
+      defect(town({ owner: "persia" }), {
+        id: "town",
+        owner: "persia",
+        hp: 8,
+        loyalty: 60,
+        loyaltyStreak: 5,
+        defecting: true,
+      }).loyaltyStreak,
+    ).toBe(0);
+  });
+
+  it("leaves loyalty untouched on a city that only becomes pending", () => {
+    expect(
+      defect(town({ owner: "persia" }), { id: "town", owner: "persia", hp: 8, loyalty: 60 })
+        .loyalty,
+    ).toBe(60);
+  });
+
   it("returns the same state reference when no city changes", () => {
     const state = stateWith({ id: "town", owner: "persia", hp: 8, loyalty: -60 });
     expect(applyDefections(state, ctxFor(town({ owner: "persia" })))).toBe(state);

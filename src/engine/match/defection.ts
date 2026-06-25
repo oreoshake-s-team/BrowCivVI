@@ -1,6 +1,6 @@
 import { neighbors } from "../hex";
 import { hexKey } from "../map/types";
-import { LOYALTY_DEFECT_THRESHOLD, type CityState } from "./cities";
+import { LOYALTY_DEFECT_THRESHOLD, LOYALTY_DEFECTION_SEED, type CityState } from "./cities";
 import { appendDefection } from "./events";
 import type { LoyaltyContext } from "./loyalty";
 import type { MatchState } from "./state";
@@ -32,7 +32,14 @@ function nextCity(state: MatchState, ctx: LoyaltyContext, city: CityState): City
     target !== null && target !== city.owner && !underThreat(state, ctx, city.id, target);
   if (!qualifies) return city.defecting === true ? { ...city, defecting: false } : city;
   if (city.defecting === true) {
-    return { ...city, owner: target, defecting: false, sacked: false };
+    return {
+      ...city,
+      owner: target,
+      defecting: false,
+      sacked: false,
+      loyalty: LOYALTY_DEFECTION_SEED,
+      loyaltyStreak: 0,
+    };
   }
   return { ...city, defecting: true };
 }
