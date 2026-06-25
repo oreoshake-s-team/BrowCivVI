@@ -56,6 +56,30 @@ describe("HexBoard", () => {
     expect(initialWidth).toBeLessThan(full.maxX - full.minX);
   });
 
+  it("locks the on-screen hex scale to the measured board size", () => {
+    class StubResizeObserver {
+      constructor(private readonly cb: ResizeObserverCallback) {}
+      observe() {
+        this.cb([], this);
+      }
+      unobserve() {
+        return undefined;
+      }
+      disconnect() {
+        return undefined;
+      }
+    }
+    vi.stubGlobal("ResizeObserver", StubResizeObserver);
+    const rect = vi
+      .spyOn(Element.prototype, "getBoundingClientRect")
+      .mockReturnValue({ width: 1050, height: 840, top: 0, left: 0 } as DOMRect);
+    const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
+    const viewBox = container.querySelector("svg[viewBox]")?.getAttribute("viewBox") ?? "";
+    expect(Number(viewBox.split(" ")[2])).toBe(1000);
+    rect.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
   it("renders a token for every unit", () => {
     const { container } = render(<HexBoard map={SAMPLE_MAP} units={SAMPLE_UNITS} />);
     expect(container.querySelectorAll("[data-unit-id]")).toHaveLength(SAMPLE_UNITS.length);

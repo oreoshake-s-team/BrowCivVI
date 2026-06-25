@@ -17,8 +17,7 @@
 
 .board {
   width: 100%;
-  max-height: 82vh;
-  height: auto;
+  height: min(88vh, 1040px);
   background: var(--color-surface-board);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -53,6 +52,7 @@
   .board {
     max-width: 100%;
     width: 100%;
+    height: min(70vh, 560px);
   }
 
   .sidebar {
