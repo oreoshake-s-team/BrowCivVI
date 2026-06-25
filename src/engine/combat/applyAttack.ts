@@ -1,5 +1,6 @@
 import type { Rng } from "../rng";
 import { unitTypeById } from "../unit/catalog";
+import { greatGeneralByTypeId } from "../unit/greatGenerals";
 import type { Unit } from "../unit/types";
 import { resolveAttack, type AttackUnit } from "./attack";
 import { isRangedAttacker } from "./range";
@@ -25,7 +26,8 @@ export interface AttackApplication {
 
 function toAttackUnit(unit: Unit): AttackUnit {
   const type = unitTypeById(unit.typeId);
-  return {
+  const general = greatGeneralByTypeId(unit.typeId);
+  const base: AttackUnit = {
     hex: unit.hex,
     owner: unit.owner,
     strength: type?.strength ?? 0,
@@ -34,6 +36,7 @@ function toAttackUnit(unit: Unit): AttackUnit {
     abilities: type?.abilities ?? [],
     fortifiedTurns: unit.fortifiedTurns ?? 0,
   };
+  return general === undefined ? base : { ...base, generalAura: general.aura };
 }
 
 export function applyAttack(input: ApplyAttackInput): AttackApplication {

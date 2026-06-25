@@ -1,6 +1,7 @@
 import type { Hex, HexDirection } from "../hex";
-import { HEX_DIRECTION_COUNT, neighbor } from "../hex";
+import { HEX_DIRECTION_COUNT, hexDistance, neighbor } from "../hex";
 import type { Rng } from "../rng";
+import type { GeneralAura } from "../unit/greatGenerals";
 import { isFlanked } from "./flanking";
 import { fortifyStrengthBonus } from "./fortify";
 import { PHALANX_ABILITY } from "./phalanx";
@@ -14,6 +15,7 @@ export interface AttackUnit {
   readonly morale: number;
   readonly abilities: readonly string[];
   readonly fortifiedTurns?: number;
+  readonly generalAura?: GeneralAura;
 }
 
 export interface ResolveAttackInput {
@@ -47,6 +49,18 @@ function adjacentPhalangites(hex: Hex, owner: string, units: readonly AttackUnit
   return count;
 }
 
+function generalAuraDefenseMultiplier(defender: AttackUnit, others: readonly AttackUnit[]): number {
+  let multiplier = 1;
+  for (const unit of others) {
+    const aura = unit.generalAura;
+    if (aura === undefined || unit.owner !== defender.owner) continue;
+    if (hexDistance(unit.hex, defender.hex) <= aura.radius) {
+      multiplier *= aura.defenderStrengthMultiplier;
+    }
+  }
+  return multiplier;
+}
+
 export function resolveAttack(input: ResolveAttackInput): CombatResult {
   const flanked = isFlanked(input.defender.hex, input.attacker.hex, (hex) =>
     input.others.some((unit) => sameHex(unit.hex, hex) && unit.owner === input.attacker.owner),
@@ -78,6 +92,7 @@ export function resolveAttack(input: ResolveAttackInput): CombatResult {
     riverAttack: input.ranged === true ? false : input.riverAttack,
     ranged: input.ranged === true,
     defenderFortifyBonus: fortifyStrengthBonus(input.defender.fortifiedTurns),
+    defenderStrengthMultiplier: generalAuraDefenseMultiplier(input.defender, input.others),
     rng: input.rng,
   });
 }

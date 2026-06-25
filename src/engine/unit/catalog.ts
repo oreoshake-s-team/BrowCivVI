@@ -59,6 +59,13 @@ export const UNIT_TYPES: Readonly<Record<string, UnitType>> = {
     movement: 1,
     strength: 20,
   },
+  parmenion: {
+    id: "parmenion",
+    name: "Parmenion",
+    class: "support",
+    movement: 3,
+    strength: 0,
+  },
 };
 
 export function unitTypeById(id: string): UnitType | undefined {
