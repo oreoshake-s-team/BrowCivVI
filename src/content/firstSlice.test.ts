@@ -194,10 +194,10 @@ describe("FIRST_SLICE_UNITS", () => {
     );
   });
 
-  it("posts Parmenion on Macedon's defensive left wing opposite the Companions", () => {
+  it("stations Parmenion on the line behind the Macedonian center", () => {
     expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-parmenion")?.hex).toEqual({
-      q: 6,
-      r: 3,
+      q: 5,
+      r: 1,
     });
   });
 

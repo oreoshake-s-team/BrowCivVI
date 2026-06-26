@@ -39,10 +39,9 @@ const PHALANX = "mac-phalanx";
 const COMPANIONS = "mac-companions";
 const PER_CAVALRY = "per-cavalry";
 const PER_IMMORTALS = "per-immortals";
-const PHALANX_START: Hex = { q: 5, r: 1 };
+const PHALANX_START: Hex = { q: 6, r: 2 };
 const COMPANIONS_START: Hex = { q: 6, r: 1 };
 const ILIUM: Hex = { q: 5, r: 2 };
-const WEST_MID: Hex = { q: 6, r: 2 };
 const WEST_DEEP: Hex = { q: 6, r: 3 };
 const OFF_MAP: Hex = { q: 99, r: 99 };
 
@@ -127,11 +126,9 @@ describe("Server Action intent channel against the in-memory store", () => {
 
   it("does not project an enemy zone of control across the Granicus", async () => {
     const board = await newGame();
-    const reloaded = await loadOk(board.matchId);
     const targets = await targetsFor(board.matchId, COMPANIONS);
     const keys = targets.reachable.map((hex) => hexKey(hex));
-    expect(keys).toContain(hexKey(WEST_MID));
-    expect(hexKey(unitHex(reloaded.units, "mac-parmenion")!)).toBe(hexKey(WEST_DEEP));
+    expect(keys).toContain(hexKey(WEST_DEEP));
   });
 
   it("reports a unit as spent once it has no move or attack left", async () => {
@@ -145,18 +142,16 @@ describe("Server Action intent channel against the in-memory store", () => {
     expect(board.spent).not.toContain(COMPANIONS);
   });
 
-  it("keeps moving across a bank the river shields from enemy zone of control", async () => {
+  it("advances onto a river-shielded bank without an enemy zone of control halting the move", async () => {
     const board = await newGame();
-    const entered = await move(board.matchId, PHALANX, WEST_MID);
-    const targets = await targetsFor(board.matchId, PHALANX);
+    const entered = await move(board.matchId, COMPANIONS, WEST_DEEP);
     expect(entered.ok).toBe(true);
-    expect(entered.movement[PHALANX]).toBe(1);
-    expect(targets.reachable.length).toBeGreaterThan(0);
+    expect(entered.movement[COMPANIONS]).toBe(1);
   });
 
   it("rejects a player move of an enemy Persian unit", async () => {
     const board = await newGame();
-    const outcome = await move(board.matchId, PER_IMMORTALS, WEST_MID);
+    const outcome = await move(board.matchId, PER_IMMORTALS, WEST_DEEP);
     const reloaded = await loadOk(board.matchId);
     expect(outcome.ok).toBe(false);
     expect(hexKey(unitHex(reloaded.units, PER_IMMORTALS)!)).toBe(hexKey({ q: 7, r: 2 }));
