@@ -127,10 +127,11 @@ describe("Server Action intent channel against the in-memory store", () => {
 
   it("does not project an enemy zone of control across the Granicus", async () => {
     const board = await newGame();
+    const reloaded = await loadOk(board.matchId);
     const targets = await targetsFor(board.matchId, COMPANIONS);
     const keys = targets.reachable.map((hex) => hexKey(hex));
     expect(keys).toContain(hexKey(WEST_MID));
-    expect(keys).toContain(hexKey(WEST_DEEP));
+    expect(hexKey(unitHex(reloaded.units, "mac-parmenion")!)).toBe(hexKey(WEST_DEEP));
   });
 
   it("reports a unit as spent once it has no move or attack left", async () => {

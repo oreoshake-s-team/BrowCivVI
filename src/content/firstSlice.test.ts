@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { neighbors } from "@/engine/hex";
+import { hexDistance, neighbors } from "@/engine/hex";
 import { mapHexAt } from "@/engine/map/types";
+import { greatGeneralByTypeId } from "@/engine/unit/greatGenerals";
 import { FIRST_SLICE_MAP, FIRST_SLICE_REGIONS, FIRST_SLICE_UNITS } from "./firstSlice";
 
 describe("FIRST_SLICE_MAP", () => {
@@ -191,6 +192,33 @@ describe("FIRST_SLICE_UNITS", () => {
     expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "per-archers")?.typeId).toBe(
       "persian-archers",
     );
+  });
+
+  it("posts Parmenion on Macedon's defensive left wing opposite the Companions", () => {
+    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-parmenion")?.hex).toEqual({
+      q: 6,
+      r: 3,
+    });
+  });
+
+  it("fields Parmenion as a great-general support unit", () => {
+    expect(FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-parmenion")?.typeId).toBe("parmenion");
+  });
+
+  it("gives the veteran marshal the steadiest morale in the host", () => {
+    const morale = FIRST_SLICE_UNITS.filter((unit) => unit.owner === "macedon").map(
+      (u) => u.morale,
+    );
+    expect(Math.max(...morale)).toBe(
+      FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-parmenion")?.morale,
+    );
+  });
+
+  it("brings Parmenion's aura within reach of a friendly combatant so it engages in play", () => {
+    const parmenion = FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-parmenion");
+    const companions = FIRST_SLICE_UNITS.find((unit) => unit.id === "mac-companions");
+    const aura = greatGeneralByTypeId("parmenion")?.aura.radius ?? 0;
+    expect(hexDistance(parmenion!.hex, companions!.hex)).toBeLessThanOrEqual(aura);
   });
 
   it("stations every unit on land it can occupy", () => {

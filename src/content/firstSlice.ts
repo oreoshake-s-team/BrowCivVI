@@ -761,4 +761,14 @@ export const FIRST_SLICE_UNITS: readonly Unit[] = [
     supplied: true,
     hasMovedThisTurn: false,
   },
+  {
+    id: "mac-parmenion",
+    typeId: "parmenion",
+    owner: "macedon",
+    hex: { q: 6, r: 3 },
+    hp: 100,
+    morale: 92,
+    supplied: true,
+    hasMovedThisTurn: false,
+  },
 ];
