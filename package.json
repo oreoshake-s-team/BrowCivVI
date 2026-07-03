@@ -31,7 +31,7 @@
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.22.0",
     "@neondatabase/serverless": "^1.1.0",
-    "@prisma/adapter-neon": "^6",
+    "@prisma/adapter-neon": "^7",
     "@prisma/client": "^6",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
